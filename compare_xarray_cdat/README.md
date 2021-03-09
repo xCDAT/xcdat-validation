@@ -10,3 +10,6 @@ conda activate cdat_v8.2.1
 conda install -c conda-forge xarray 
 conda install -c conda-forge netcdf4 
 ```
+
+## Demo input preparation
+[PMP download data for prepare demos](https://github.com/PCMDI/pcmdi_metrics/blob/master/doc/jupyter/Demo/Demo_0_download_data.ipynb)
