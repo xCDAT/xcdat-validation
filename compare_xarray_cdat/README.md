@@ -14,6 +14,6 @@ conda install -c conda-forge netcdf4
 ## Demo input preparation
 [PMP download data for prepare demos](https://github.com/PCMDI/pcmdi_metrics/blob/master/doc/jupyter/Demo/Demo_0_download_data.ipynb)
 ```
-conda install -c anaconda wget
+conda install -c anaconda wget  ## If you don't have wget in your env
 wget https://raw.githubusercontent.com/PCMDI/pcmdi_metrics/master/doc/jupyter/Demo/Demo_0_download_data.ipynb
 ```
