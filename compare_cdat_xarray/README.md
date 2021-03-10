@@ -1,4 +1,4 @@
-# Compare Xarray and CDAT
+# Compare CDAT and Xarray
 
 Check consistency in results from Xarray and CDAT
 
