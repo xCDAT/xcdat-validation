@@ -1,3 +1,3 @@
 # XCDAT
 
-In this repository I am generating Jupyter Notebooks to archive some codes for simple testing of usage of Xarray for CMIP analysis. As first step, I reproduce CDAT capability by using Xarray and check consistency in their results. 
+In this repository we explorer usage of Xarray for climate analysis at LLNL. Jupyter Notebooks were made for some simple testing of usage of Xarray for the CMIP analysis, reproducing CDAT capability by using Xarray to check consistency in their results. 
