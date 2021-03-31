@@ -16,9 +16,9 @@ In this repository we explorer usage of Xarray for climate analysis at LLNL. Jup
 - Regrid
   - [Regrid example](compare_cdat_xarray/Regrid_ex1.ipynb)
 
-## NOTE 
 
-Useful external resources
+
+### FYI: Useful external resources:
 
 - Xarray usage examples on online
   - [A Quick Introduction to CMIP6](https://towardsdatascience.com/a-quick-introduction-to-cmip6-e017127a49d3)
