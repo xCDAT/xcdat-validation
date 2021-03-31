@@ -12,7 +12,7 @@ In this repository we explorer usage of Xarray for climate analysis at LLNL. Jup
   - [Explore spatial averages](compare_cdat_xarray/explore_spatial_averages.ipynb)
 
 - Regrid
-  - [Regrid example 1](compare_cdat_xarray/Regrid_ex1.ipynb)
+  - [Regrid example](compare_cdat_xarray/Regrid_ex1.ipynb)
 
 ## NOTE
 
