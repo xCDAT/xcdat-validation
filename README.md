@@ -2,6 +2,17 @@
 
 In this repository we explorer usage of Xarray for climate analysis at LLNL. Jupyter Notebooks were made for some simple testing of usage of Xarray for the CMIP analysis, reproducing CDAT capability by using Xarray to check consistency in their results. 
 
+- Temporal average
+  - [Seasonal average](compare_cdat_xarray/seasonal_averages.ipynb)
+  - [Annual cycle](compare_cdat_xarray/annual_cycle.ipynb)
+  - [Annual cycle departure](compare_cdat_xarray/annual_cycle_departure.ipynb)
+  - [Annual cycle climatology](compare_cdat_xarray/annual_cycle_climatology.ipynb)
+
+- Spatial average
+  - [Explore spatial averages](compare_cdat_xarray/explore_spatial_averages.ipynb)
+
+- Regrid
+  - [Regrid example 1](compare_cdat_xarray/Regrid_ex1.ipynb)
 
 ## NOTE
 
