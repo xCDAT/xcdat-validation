@@ -1,6 +1,6 @@
 # xcdat_test
 
-In this repository we explorer usage of [xcdat](https://github.com/XCDAT/xcdat) for climate analysis at LLNL. Jupyter Notebooks were made for some simple testing of usage of Xarray for the CMIP analysis, reproducing CDAT capability by using Xarray to check consistency in their results. The effort for creating an actual package is directed to [here](https://github.com/tomvothecoder/xcdat).
+In this repository we explorer usage of xarray and [xcdat](https://github.com/XCDAT/xcdat) for climate analysis at LLNL. Jupyter Notebooks were made for some simple testing of usage of Xarray for the CMIP analysis, reproducing CDAT capability by using Xarray to check consistency in their results. The effort for creating an actual package is directed to [here](https://github.com/XCDAT/xcdat).
 
 ### Contents
 
