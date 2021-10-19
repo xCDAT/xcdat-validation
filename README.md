@@ -4,6 +4,12 @@ This repository explores the the capabilities of [xarray](https://github.com/pyd
 
 ## Getting Started
 
+### Directory Layout
+
+- `scripts/` stores utility scripts (e.g., the PCMDI xml reader that Steve wrote)
+- `tutorials/` stores tutorials on how to use xarray and XCDAT -- may be moved to the official XCDAT docs in the future
+- `validation/` stores CDAT vs. xarray/XCDAT comparison notebooks
+
 ### Setup
 
 1. Clone this repo
@@ -24,7 +30,7 @@ This repository explores the the capabilities of [xarray](https://github.com/pyd
 
 ### Demo input preparation
 
-[PMP download data for prepare demos](https://github.com/PCMDI/pcmdi_metrics/blob/master/doc/jupyter/Demo/Demo_0_download_data.ipynb)
+[Sample PMP download data for demos](https://github.com/PCMDI/pcmdi_metrics/blob/master/doc/jupyter/Demo/Demo_0_download_data.ipynb)
 
 ```bash
 wget https://raw.githubusercontent.com/PCMDI/pcmdi_metrics/master/doc/jupyter/Demo/Demo_0_download_data.ipynb
