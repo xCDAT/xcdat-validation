@@ -16,7 +16,7 @@ dependencies:
   # XCDAT
   - xcdat=0.1.0
   # CDAT
-: - cdat::cdat=8.2.1
+  - cdat::cdat=8.2.1
   - mesalib=17.3.9
   # Additional
   - jupyterlab=3.2.0
