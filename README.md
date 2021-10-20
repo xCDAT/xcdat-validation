@@ -1,6 +1,6 @@
 # XCDAT Validation and Tutorials
 
-This repository explores the the capabilities of [xarray](https://github.com/pydata/xarray) and [XCDAT](https://github.com/XCDAT/xcdat) for climate data analysis. It comprises of tutorials and validation of a subset of [CDAT](https://github.com/CDAT/cdat) functions in xarray/XCDAT using Jupyter Notebooks.
+This repository explores the capabilities of [xarray](https://github.com/pydata/xarray) and [XCDAT](https://github.com/XCDAT/xcdat) for climate data analysis. It consists of Jupyter Notebooks for tutorials and the validation of a subset of [CDAT](https://github.com/CDAT/cdat) functions replicated using xarray/XCDAT.
 
 ## Getting Started
 
