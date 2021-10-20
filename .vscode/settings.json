@@ -1,0 +1,12 @@
+{
+  "[python]": {
+    // [comments, max line length, wrap line length]
+    // Black does not wrap comments.
+    "editor.rulers": [80, 88, 120],
+    "editor.wordWrap": "wordWrapColumn",
+    "editor.wordWrapColumn": 120,
+    "editor.defaultFormatter": "ms-python.python"
+  },
+  "python.pythonPath": "/opt/miniconda3/envs/xcdat_test/bin/python",
+  "jupyter.notebookFileRoot": "${workspaceFolder}"
+}

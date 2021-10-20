@@ -1,38 +1,54 @@
-# xcdat_test
+# XCDAT Validation and Tutorials
 
-In this repository we explorer usage of xarray and [xcdat](https://github.com/XCDAT/xcdat) for climate analysis at LLNL. Jupyter Notebooks were made for some simple testing of usage of Xarray for the CMIP analysis, reproducing CDAT capability by using Xarray to check consistency in their results. The effort for creating an actual package is directed to [here](https://github.com/XCDAT/xcdat).
+This repository explores the capabilities of [xarray](https://github.com/pydata/xarray) and [XCDAT](https://github.com/XCDAT/xcdat) for climate data analysis. It consists of Jupyter Notebooks for tutorials and the validation of a subset of [CDAT](https://github.com/CDAT/cdat) functions replicated using xarray/XCDAT.
 
-### Contents
+## Getting Started
 
-#### XCDAT example usage
-- [Open dataset, subset, and land-sea mask](xcdat_tutorial/demo_open_dataset.ipynb)
+### Directory Layout
 
-#### Comparison to cdms
+- `scripts/` stores utility scripts (e.g., the PCMDI xml reader that Steve wrote)
+- `tutorials/` stores tutorials on how to use xarray and XCDAT -- may be moved to the official XCDAT docs in the future
+- `validation/` stores CDAT vs. xarray/XCDAT comparison notebooks
+ 
+### Setup
 
-- Temporal average
-  - [Seasonal average](compare_cdat_xarray/seasonal_averages.ipynb)
-  - [Annual cycle](compare_cdat_xarray/annual_cycle.ipynb)
-  - [Annual cycle departure](compare_cdat_xarray/annual_cycle_departure.ipynb)
-  - [Annual cycle climatology](compare_cdat_xarray/annual_cycle_climatology.ipynb)
+1. Clone this repo
 
-- Spatial average
-  - [Explore spatial averages](compare_cdat_xarray/explore_spatial_averages.ipynb)
+   ```bash
+   git clone https://github.com/XCDAT/xcdat_test
+   ```
 
-- Regrid
-  - [Regrid example](compare_cdat_xarray/Regrid_ex1.ipynb)
+2. Create and activate the XCDAT Anaconda test environment
 
+   ```bash
+   cd xcdat_test
+   conda env create -f conda-env/test.yml
+   conda activate xcdat_test
+   ```
 
+3. Start working with the Jupyter Notebooks!
 
-### FYI: Useful external resources:
+### Demo input preparation
 
-- Xarray usage examples on online
+[Sample PMP download data for demos](https://github.com/PCMDI/pcmdi_metrics/blob/master/doc/jupyter/Demo/Demo_0_download_data.ipynb)
+
+```bash
+wget https://raw.githubusercontent.com/PCMDI/pcmdi_metrics/master/doc/jupyter/Demo/Demo_0_download_data.ipynb
+```
+
+## FYI: Useful External Resources
+
+- [Xarray Docs](https://xarray.pydata.org/en/stable/index.html)
+- [XCDAT Docs](https://xcdat.readthedocs.com)
+- Xarray usage examples
+
   - [A Quick Introduction to CMIP6](https://towardsdatascience.com/a-quick-introduction-to-cmip6-e017127a49d3)
   - [Creating a subset of dataset using Xarray](https://www.nccs.nasa.gov/nccs-users/instructional/adapt-instructional/python/xarray-monthly-climatology)
   - [Xarray Access CMIP5 Data (NCI data training)](https://nci-data-training.readthedocs.io/en/latest/_notebook/climate/1_01_Xarray_access_CMIP5.html)
   - [Visualize Climate data with Python](https://nordicesmhub.github.io/climate-data-tutorial/03-visualization-python/)
 
-- Some visualization examples on online
+- Visualization examples
+
   - [Hawkins Warming Stripes](https://towardsdatascience.com/climate-heatmaps-made-easy-6ec5be0be6ff)
   - [Map using proplot](https://towardsdatascience.com/a-quick-introduction-to-cmip6-e017127a49d3)
   - [Map using cartopy](https://nordicesmhub.github.io/climate-data-tutorial/03-visualization-python/)
-
