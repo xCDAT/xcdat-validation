@@ -4,6 +4,11 @@ In this repository we explorer usage of xarray and [xcdat](https://github.com/XC
 
 ### Contents
 
+#### XCDAT example usage
+- [Open dataset, subset, and land-sea mask](xcdat_tutorial/demo_open_dataset.ipynb)
+
+#### Comparison to cdms
+
 - Temporal average
   - [Seasonal average](compare_cdat_xarray/seasonal_averages.ipynb)
   - [Annual cycle](compare_cdat_xarray/annual_cycle.ipynb)
