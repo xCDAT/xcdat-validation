@@ -9,7 +9,7 @@ This repository explores the capabilities of [xarray](https://github.com/pydata/
 - `scripts/` stores utility scripts (e.g., the PCMDI xml reader that Steve wrote)
 - `tutorials/` stores tutorials on how to use xarray and XCDAT -- may be moved to the official XCDAT docs in the future
 - `validation/` stores CDAT vs. xarray/XCDAT comparison notebooks
-
+ 
 ### Setup
 
 1. Clone this repo
