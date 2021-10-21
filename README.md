@@ -38,8 +38,8 @@ wget https://raw.githubusercontent.com/PCMDI/pcmdi_metrics/master/doc/jupyter/De
 
 ## FYI: Useful External Resources
 
+- [XCDAT Docs](https://xcdat.readthedocs.io)
 - [Xarray Docs](https://xarray.pydata.org/en/stable/index.html)
-- [XCDAT Docs](https://xcdat.readthedocs.com)
 - Xarray usage examples
 
   - [A Quick Introduction to CMIP6](https://towardsdatascience.com/a-quick-introduction-to-cmip6-e017127a49d3)
