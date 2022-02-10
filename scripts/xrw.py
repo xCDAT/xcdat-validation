@@ -284,16 +284,20 @@ def filter_dpaths(dpaths, keyMap, crit):
         return dpaths, keyMap
 
     # only update dictionary if need be
+    rdpaths = []
     for dpath in dpaths:
         if crit not in keyMap[dpath].keys():
             cdate, publish, tpoints = get_dataset_metadata(dpath)
             # if the dataset cannot be loaded, remove it
             if 0 in (cdate, publish, tpoints):
-                dpaths.remove(dpath)
+                rdpaths.append(dpath)
             # update dictionary
             keyMap[dpath]['cdate'] = cdate
             keyMap[dpath]['publish'] = publish
             keyMap[dpath]['tpoints'] = tpoints
+    # remove problematic dpaths
+    for dpath in rdpaths:
+        dpaths.remove(dpath)
     # get values
     values = []
     for dpath in dpaths:
