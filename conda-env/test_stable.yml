@@ -1,0 +1,40 @@
+# Conda environment for testing the latest XCDAT stable release on Anaconda.
+name: xcdat_test_stable
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+    # XCDAT
+    # ==================
+    - python=3.9.10
+    - pip=21.2.4
+    - numpy=1.22.0
+    - pandas=1.3.4
+    - xarray=0.20.2
+    - cf_xarray=0.6.3
+    - dask=2021.12.0
+    - netcdf4=1.5.8
+    - xcdat=0.2.0
+    # CDAT
+    # ==================
+    - cdms2=3.1.5
+    - cdutil=8.2.1
+    - cdat_info=8.2.1
+    - cdms2=3.1.5
+    - genutil=8.2.1
+    # Additional
+    # ==================
+    - jupyterlab=3.2.0
+    - matplotlib=3.4.3
+    - cartopy=0.20.1
+    - wget=1.20.3
+    # Quality Assurance
+    # ==================
+    # If versions are updated, also update 'rev' in `.pre-commit.config.yaml`
+    - black
+    - isort
+    - flake8
+    - flake8-isort
+    - mypy
+    - ipykernel
+prefix: /opt/miniconda3/envs/xcdat_test_stable
