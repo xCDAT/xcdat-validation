@@ -1,1 +1,1 @@
-This directory is for testings during the development process.
+This directory is for interim tests during the development process.
