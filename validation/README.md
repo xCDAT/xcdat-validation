@@ -1,6 +1,6 @@
 # xCDAT Validation
 
-`validation/` stores Python scripts and Jupyter Notebooks to validate `xarray` and `xCDAT` against `CDAT` packages (`cdms2`, `cdutil`, and `genutil`) CDAT vs. xarray/xCDAT comparison notebooks
+This directory stores Python scripts and Jupyter Notebooks to validate `xarray` and `xCDAT` against `CDAT` packages (`cdms2`, `cdutil`, and `genutil`). Some of the validation processes include floating point closeness, performance benchmarking, and plot comparisons.
 
 ## `/prototyping`
 
@@ -21,9 +21,13 @@ The content in this directory explores `xarray` and its capabilities compared to
 
 ## `/v0.1.0`
 
+Version Changelog: https://github.com/xCDAT/xcdat/releases/tag/v0.1.0
+
 - [Demo opening and analyzing datasets](/validation/v0.1.0/demo_open_dataset.ipynb)
 
 ## `/v0.2.0`
+
+Version Changelog: https://github.com/xCDAT/xcdat/releases/tag/v0.2.0
 
 - `/temporal_average`
   - [Floating point comparisons](/validation/v0.2.0/temporal_average/floating_point_comparisons.ipynb)
@@ -31,6 +35,8 @@ The content in this directory explores `xarray` and its capabilities compared to
   - [Departures API plot comparisons](/validation/v0.2.0/temporal_average/plot_comparison_annual_cycle_departs.ipynb)
 
 ## `/v1.0.0`
+
+Version Changelog: Not released yet
 
 - `/horizontal_regridding`
   - [API comparison (CDAT vs. xCDAT)](/validation/v1.0.0/horizontal_regridding/regrid_cdat_xcdat.ipynb)
