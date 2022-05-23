@@ -15,8 +15,13 @@ The content in this directory explores `xarray` and its capabilities compared to
 
 - `/spatial_average`
   - [Spatial average](/validation/prototyping/spatial_average/spatial_averaging_cdat_xarray.ipynb)
+
 - `/landsea_mask`
   - [Land Sea mask](/validation/prototyping/landsea_mask/landsea_mask.ipynb)
+
+## `/v0.1.0`
+
+- [Demo opening and analyzing datasets](/validation/v0.1.0/demo_open_dataset.ipynb)
 
 ## `/v0.2.0`
 
