@@ -6,10 +6,9 @@ This repository explores the capabilities of [xarray](https://github.com/pydata/
 
 ### Directory Layout
 
-- `scripts/` stores utility scripts (e.g., the PCMDI xml reader that Steve wrote)
-- `tutorials/` stores tutorials on how to use xarray and xCDAT -- may be moved to the official xCDAT docs in the future
+- `scripts/` stores utility scripts
 - `validation/` stores CDAT vs. xarray/xCDAT comparison notebooks
- 
+
 ### Setup
 
 1. Clone this repo
@@ -18,13 +17,28 @@ This repository explores the capabilities of [xarray](https://github.com/pydata/
    git clone https://github.com/xCDAT/xcdat_test
    ```
 
-2. Create and activate the xCDAT Anaconda test environment
+2. Create and activate a conda environment that includes `xcdat`, `cdms2`, `cdutil`, and `genutil`.
 
-   ```bash
-   cd xcdat_test
-   conda env create -f conda-env/test.yml
-   conda activate xcdat_test
-   ```
+   - Work with the latest stable version of `xcdat` from `conda-forge`
+
+      ```bash
+      cd xcdat_test
+      conda env create -f conda-env/test_stable.yml
+      conda activate xcdat_test_stable
+      ```
+
+   - Work with the latest version of `xcdat` on the `main` branch
+
+      ```bash
+      cd xcdat_test
+      conda env create -f conda-env/test_dev.yml
+      conda activate xcdat_test_dev
+
+      # Clone the latest version of xcdat and install into the `xcdat_test_dev` env
+      git clone https://github.com/xCDAT/xcdat
+      cd xcdat
+      python -m pip install .
+      ```
 
 3. Start working with the Jupyter Notebooks!
 
