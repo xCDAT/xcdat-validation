@@ -1,13 +1,13 @@
-# xCDAT Validation and Tutorials
+# xCDAT Validation
 
-This repository explores the capabilities of [xarray](https://github.com/pydata/xarray) and [xCDAT](https://github.com/xCDAT/xcdat) for climate data analysis. It consists of Jupyter Notebooks for tutorials and the validation of a subset of [CDAT](https://github.com/CDAT/cdat) functions replicated using xarray/xCDAT.
+This repository is dedicated to xCDAT feature prototyping and validation. It is utilized in conjunction with the pull requests in the main repository [here](https://github.com/xCDAT/xcdat). Validation consists of Python scripts and Jupyter Notebooks, including comparisons of `xarray`/`xcdat` against a subset of [CDAT](https://github.com/CDAT/cdat) functionality via `cdms2`, `cdutil`, and `genutil`.
 
 ## Getting Started
 
 ### Directory Layout
 
 - `scripts/` stores utility scripts
-- `validation/` stores CDAT vs. xarray/xCDAT comparison notebooks
+- `validation/` stores validation scripts and notebooks
 
 ### Setup
 
