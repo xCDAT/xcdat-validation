@@ -1,12 +1,12 @@
-# Conda environment for testing a local build of XCDAT.
-# `cd` into a local clone of the XCDAT repo and run `pip install .`.
+# Conda environment for testing a local build of xCDAT.
+# `cd` into a local clone of the xCDAT repo and run `pip install .`.
 # You can switch branches to a development branch to test the changes as well.
 name: xcdat_test_dev
 channels:
   - conda-forge
   - defaults
 dependencies:
-    # XCDAT
+    # xCDAT
     # ==================
     - python=3.9.10
     - pip=21.2.4

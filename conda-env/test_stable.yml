@@ -1,10 +1,10 @@
-# Conda environment for testing the latest XCDAT stable release on Anaconda.
+# Conda environment for testing the latest xCDAT stable release on Anaconda.
 name: xcdat_test_stable
 channels:
   - conda-forge
   - defaults
 dependencies:
-    # XCDAT
+    # xCDAT
     # ==================
     - python=3.9.10
     - pip=21.2.4

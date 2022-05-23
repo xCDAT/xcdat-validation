@@ -1,24 +1,24 @@
-# XCDAT Validation and Tutorials
+# xCDAT Validation and Tutorials
 
-This repository explores the capabilities of [xarray](https://github.com/pydata/xarray) and [XCDAT](https://github.com/XCDAT/xcdat) for climate data analysis. It consists of Jupyter Notebooks for tutorials and the validation of a subset of [CDAT](https://github.com/CDAT/cdat) functions replicated using xarray/XCDAT.
+This repository explores the capabilities of [xarray](https://github.com/pydata/xarray) and [xCDAT](https://github.com/xCDAT/xcdat) for climate data analysis. It consists of Jupyter Notebooks for tutorials and the validation of a subset of [CDAT](https://github.com/CDAT/cdat) functions replicated using xarray/xCDAT.
 
 ## Getting Started
 
 ### Directory Layout
 
 - `scripts/` stores utility scripts (e.g., the PCMDI xml reader that Steve wrote)
-- `tutorials/` stores tutorials on how to use xarray and XCDAT -- may be moved to the official XCDAT docs in the future
-- `validation/` stores CDAT vs. xarray/XCDAT comparison notebooks
+- `tutorials/` stores tutorials on how to use xarray and xCDAT -- may be moved to the official xCDAT docs in the future
+- `validation/` stores CDAT vs. xarray/xCDAT comparison notebooks
  
 ### Setup
 
 1. Clone this repo
 
    ```bash
-   git clone https://github.com/XCDAT/xcdat_test
+   git clone https://github.com/xCDAT/xcdat_test
    ```
 
-2. Create and activate the XCDAT Anaconda test environment
+2. Create and activate the xCDAT Anaconda test environment
 
    ```bash
    cd xcdat_test
@@ -38,7 +38,7 @@ wget https://raw.githubusercontent.com/PCMDI/pcmdi_metrics/master/doc/jupyter/De
 
 ## FYI: Useful External Resources
 
-- [XCDAT Docs](https://xcdat.readthedocs.io)
+- [xCDAT Docs](https://xcdat.readthedocs.io)
 - [Xarray Docs](https://xarray.pydata.org/en/stable/index.html)
 - Xarray usage examples
 

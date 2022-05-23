@@ -1,4 +1,4 @@
-`validation/` stores CDAT vs. xarray/XCDAT comparison notebooks
+`validation/` stores CDAT vs. xarray/xCDAT comparison notebooks
 
 - `temporal_average/`
 
