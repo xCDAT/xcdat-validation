@@ -33,4 +33,4 @@ The content in this directory explores `xarray` and its capabilities compared to
   - [API comparison (CDAT vs. xarray vs. xCDAT)](/validation/v1.0.0/horizontal_regridding/regrid_cdat_xarray_xcdat.ipynb)
 
 - `/temporal_average`
-  - [Simple averages with time dimension removed](/validation/v1.0.0/temporal_average/floating_point_comparison.ipynb)
+  - [Simple averages floating point comparison](/validation/v1.0.0/temporal_average/floating_point_comparison.ipynb)
