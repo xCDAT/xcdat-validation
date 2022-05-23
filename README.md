@@ -1,30 +1,44 @@
-# XCDAT Validation and Tutorials
+# xCDAT Validation
 
-This repository explores the capabilities of [xarray](https://github.com/pydata/xarray) and [XCDAT](https://github.com/XCDAT/xcdat) for climate data analysis. It consists of Jupyter Notebooks for tutorials and the validation of a subset of [CDAT](https://github.com/CDAT/cdat) functions replicated using xarray/XCDAT.
+This repository is dedicated to xCDAT feature prototyping and validation. It is utilized in conjunction with the pull requests in the main repository [here](https://github.com/xCDAT/xcdat). Validation consists of Python scripts and Jupyter Notebooks, including comparisons of `xarray`/`xcdat` against a subset of [CDAT](https://github.com/CDAT/cdat) functionality via `cdms2`, `cdutil`, and `genutil`.
 
 ## Getting Started
 
 ### Directory Layout
 
-- `scripts/` stores utility scripts (e.g., the PCMDI xml reader that Steve wrote)
-- `tutorials/` stores tutorials on how to use xarray and XCDAT -- may be moved to the official XCDAT docs in the future
-- `validation/` stores CDAT vs. xarray/XCDAT comparison notebooks
- 
+- `scripts/` stores utility scripts
+- `validation/` stores validation scripts and notebooks
+
 ### Setup
 
 1. Clone this repo
 
    ```bash
-   git clone https://github.com/XCDAT/xcdat_test
+   git clone https://github.com/xCDAT/xcdat_test
    ```
 
-2. Create and activate the XCDAT Anaconda test environment
+2. Create and activate a conda environment that includes `xcdat`, `cdms2`, `cdutil`, and `genutil`.
 
-   ```bash
-   cd xcdat_test
-   conda env create -f conda-env/test.yml
-   conda activate xcdat_test
-   ```
+   - Work with the latest stable version of `xcdat` from `conda-forge`
+
+      ```bash
+      cd xcdat_test
+      conda env create -f conda-env/test_stable.yml
+      conda activate xcdat_test_stable
+      ```
+
+   - Work with the latest version of `xcdat` on the `main` branch
+
+      ```bash
+      cd xcdat_test
+      conda env create -f conda-env/test_dev.yml
+      conda activate xcdat_test_dev
+
+      # Clone the latest version of xcdat and install into the `xcdat_test_dev` env
+      git clone https://github.com/xCDAT/xcdat
+      cd xcdat
+      python -m pip install .
+      ```
 
 3. Start working with the Jupyter Notebooks!
 
@@ -38,7 +52,7 @@ wget https://raw.githubusercontent.com/PCMDI/pcmdi_metrics/master/doc/jupyter/De
 
 ## FYI: Useful External Resources
 
-- [XCDAT Docs](https://xcdat.readthedocs.io)
+- [xCDAT Docs](https://xcdat.readthedocs.io)
 - [Xarray Docs](https://xarray.pydata.org/en/stable/index.html)
 - Xarray usage examples
 
