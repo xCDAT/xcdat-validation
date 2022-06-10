@@ -16,6 +16,10 @@ dependencies:
     - cf_xarray=0.6.3
     - dask=2021.12.0
     - netcdf4=1.5.8
+    - xesmf=0.6.2
+    - esmpy=8.2.0
+    - numba
+
     # CDAT
     # ==================
     - cdms2=3.1.5
