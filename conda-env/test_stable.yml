@@ -4,18 +4,23 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-    # xCDAT
-    # ==================
+    # Base
+    # ============================
     - python=3.10.5
     - pip=22.1.2
-    - xcdat=0.3.0
+    # xCDAT
+    # ============================
+    - xcdat=0.3.2
+    # xCDAT Optional Dependencies
+    # ============================
+    - xesmf=0.6.3
     # CDAT
     # ==================
     - cdms2=3.1.5
     - cdutil=8.2.1
     - genutil=8.2.1
     - cdat_info=8.2.1
-    # Additional
+    # Additional Tools
     # ==================
     - jupyterlab=3.4.2
     - matplotlib=3.5.2
