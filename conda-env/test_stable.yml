@@ -1,7 +1,7 @@
 # Conda environment for testing a local build of xCDAT.
 # `cd` into a local clone of the xCDAT repo and run `pip install .`.
 # You can switch branches to a development branch to test the changes as well.
-name: xcdat_test_dev
+name: xcdat_test_stable
 channels:
   - conda-forge
   - defaults
@@ -9,9 +9,11 @@ dependencies:
     # Base
     # ==================
     - python >=3.9
+    - pandas
+    - numpy >=1.23.0
+    - xarray >=2023.02.0
     - xcdat >=0.6.0
     - xesmf >=0.7.0
-    - xgcm
     # CDAT
     # ==================
     - cdms2=3.1.5
@@ -25,4 +27,4 @@ dependencies:
     - cartopy=0.20.2
     - wget=1.20.3
     - ipykernel=6.13.0
-prefix: /opt/miniconda3/envs/xcdat_test_dev
+prefix: /opt/miniconda3/envs/xcdat_test_stable
