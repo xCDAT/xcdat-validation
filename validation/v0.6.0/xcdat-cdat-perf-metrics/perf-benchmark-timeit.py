@@ -39,7 +39,6 @@ from xcdat._logger import _setup_custom_logger
 warnings.filterwarnings(
     action="ignore", category=xr.SerializationWarning, module=".*conventions"
 )
-
 # FIXME: I can't get the logger to not print out two messages.
 # I already tried logger.propagate=False and using the root logger.
 logger = _setup_custom_logger(__name__, propagate=True)
@@ -76,31 +75,31 @@ FILES_DICT: Dict[str, Dict[str, str]] = {
         "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/NCAR/CESM2/historical/r1i1p1f1/day/tas/gn/v20190308/",
         "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/day/tas/CMIP6.CMIP.historical.NCAR.CESM2.r1i1p1f1.day.tas.atmos.glb-p8-gn.v20190308.0000000.0.xml",
     },
-    "12_gb": {
-        "var_key": "tas",
-        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MRI/MRI-ESM2-0/amip/r1i1p1f1/3hr/tas/gn/v20190829/",
-        "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/3hr/tas/CMIP6.CMIP.historical.MRI.MRI-ESM2-0.r1i1p1f1.3hr.tas.gn.v20190829.0000000.0.xml",
-    },
-    "22_gb": {
-        "var_key": "ta",
-        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r5i1p1f3/day/ta/gn/v20191115/",
-        "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.MOHC.UKESM1-0-LL.r5i1p1f3.day.ta.atmos.glb-p8-gn.v20191115.0000000.0.xml",
-    },
-    "50_gb": {
-        "var_key": "ta",
-        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/NCAR/CESM2/historical/r1i1p1f1/day/ta/gn/v20190308/",
-        "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.NCAR.CESM2.r1i1p1f1.day.ta.atmos.glb-p8-gn.v20190308.0000000.0.xml",
-    },
-    "74_gb": {
-        "var_key": "ta",
-        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/CCCma/CanESM5/historical/r1i1p2f1/CFday/ta/gn/v20190429/",
-        "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.CCCma.CanESM5.r1i1p2f1.CFday.ta.atmos.glb-p80-gn.v20190429.0000000.0.xml",
-    },
-    "105_gb": {
-        "var_key": "ta",
-        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MOHC/HadGEM3-GC31-MM/historical/r2i1p1f3/day/ta/gn/v20191218",
-        "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.MOHC.HadGEM3-GC31-MM.r2i1p1f3.day.ta.atmos.glb-p8-gn.v20191218.0000000.0.xml",
-    },
+    # "12_gb": {
+    #     "var_key": "tas",
+    #     "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MRI/MRI-ESM2-0/amip/r1i1p1f1/3hr/tas/gn/v20190829/",
+    #     "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/3hr/tas/CMIP6.CMIP.historical.MRI.MRI-ESM2-0.r1i1p1f1.3hr.tas.gn.v20190829.0000000.0.xml",
+    # },
+    # "22_gb": {
+    #     "var_key": "ta",
+    #     "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r5i1p1f3/day/ta/gn/v20191115/",
+    #     "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.MOHC.UKESM1-0-LL.r5i1p1f3.day.ta.atmos.glb-p8-gn.v20191115.0000000.0.xml",
+    # },
+    # "50_gb": {
+    #     "var_key": "ta",
+    #     "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/NCAR/CESM2/historical/r1i1p1f1/day/ta/gn/v20190308/",
+    #     "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.NCAR.CESM2.r1i1p1f1.day.ta.atmos.glb-p8-gn.v20190308.0000000.0.xml",
+    # },
+    # "74_gb": {
+    #     "var_key": "ta",
+    #     "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/CCCma/CanESM5/historical/r1i1p2f1/CFday/ta/gn/v20190429/",
+    #     "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.CCCma.CanESM5.r1i1p2f1.CFday.ta.atmos.glb-p80-gn.v20190429.0000000.0.xml",
+    # },
+    # "105_gb": {
+    #     "var_key": "ta",
+    #     "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MOHC/HadGEM3-GC31-MM/historical/r2i1p1f3/day/ta/gn/v20191218",
+    #     "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.MOHC.HadGEM3-GC31-MM.r2i1p1f3.day.ta.atmos.glb-p8-gn.v20191218.0000000.0.xml",
+    # },
 }
 
 
@@ -140,14 +139,14 @@ def main(repeat: int):
     df_xc_times.to_csv(f"{XC_FILENAME}.csv", index=False)
 
     # 2. Get CDAT runtimes and plot results.
-    df_cdat_times = _get_cdat_runtimes(repeat=repeat)
-    df_cdat_times = df_cdat_times.sort_values(by=["pkg", "api", "gb"])
-    df_cdat_times.to_csv(f"{CD_FILENAME}.csv", index=False)
+    # df_cdat_times = _get_cdat_runtimes(repeat=repeat)
+    # df_cdat_times = df_cdat_times.sort_values(by=["pkg", "api", "gb"])
+    # df_cdat_times.to_csv(f"{CD_FILENAME}.csv", index=False)
 
     # 3. Plot the results.
     # TODO: Update plots to dynamically fit larger floating point values.
-    plot_xcdat_runtimes(df_xc_times)
-    plot_cdat_runtimes(df_cdat_times)
+    # plot_xcdat_runtimes(df_xc_times)
+    # plot_cdat_runtimes(df_cdat_times)
 
 
 def _get_xcdat_runtimes(
@@ -200,8 +199,10 @@ def _get_xcdat_runtimes(
                 "api": api,
             }
 
+            stmt = use_flox + call + "\nds_res.compute()"
             try:
-                runtime = _get_runtime(setup=setup, stmt=use_flox + call, repeat=repeat)
+
+                runtime = _get_runtime(setup=setup, stmt=stmt, repeat=repeat)
             except Exception as e:
                 print(e)
                 runtime = None
@@ -237,12 +238,14 @@ def _get_xr_setup(dir_path: str, chunks: None | Dict[str, str], parallel: bool):
     )
 
 
-def _get_xr_api_map(var_key: str):
+
+
+def _get_xr_api_map(ds:xr.Dataset, var_key: str):
     return {
-        "spatial_avg": f"ds.spatial.average('{var_key}', axis=['X', 'Y'])",
-        "temporal_avg": f"ds.temporal.average('{var_key}', weighted=True)",
-        "climatology": f"ds.temporal.climatology('{var_key}', freq='month', weighted=True)",
-        "departures": f"ds.temporal.departures('{var_key}', freq='month', weighted=True)",
+        "spatial_avg": ds.spatial.average(var_key, axis=['X', 'Y']),
+        "temporal_avg": ds.temporal.average(var_key, weighted=True),
+        "climatology": ds.temporal.climatology(var_key, freq='month', weighted=True),
+        "departures": ds.temporal.departures(var_key, freq='month', weighted=True),
     }
 
 
@@ -394,4 +397,10 @@ def plot_cdat_runtimes(df_cdat: pd.DataFrame):
 
 
 if __name__ == "__main__":
-    main(repeat=3)
+
+   from dask.distributed import Client, LocalCluster
+
+#    cluster = LocalCluster(n_workers=8)
+   client = Client(n_workers=8)
+
+   main(repeat=1)
