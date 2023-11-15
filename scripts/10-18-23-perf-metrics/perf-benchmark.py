@@ -1,32 +1,42 @@
-# %%
 """
-A script that compares the API runtimes of xCDAT against CDAT using multi-file
+A performance benchmarking script that captures and compares the API runtimes of
+xCDAT against CDAT.
+
+Overview:
+--------
+It uses using multi-file
 time series datasets with varying sizes. The default number of samples taken
 for each API runtime is 3 and the minimum value is recorded. Runtimes only
 include computation and exclude I/O.  xCDAT can operate in serial or parallel,
 while CDAT can only operate in serial.
 
-
-
-xCDAT's parallel configuration:
-  - Uses Dask Distributed local sechduler with multiprocessing
-    - Docs: https://docs.dask.org/en/stable/scheduling.html#dask-distributed-local
-    - Number of workers based on logical cores (num_workers=None), no memory limit
-  - Datasets are chunked using the "time" axis with Dask's auto chunking option.
-  - Datasets are opened in parallel using the `parallel=True` which uses
-    `dask.delayed`.
-  - The `flox` package is used for map-reduce grouping instead of the native
-    Xarray serial grouping logic for temporal averaging APIs that use Xarray's
-    groupby() under the hood. This includes `group_average()`, `climatology()`,
-    and `departures()`)
-
-How to use:
+How to use it
+--------------
    1. Must have direct access to LLNL Climate Program filesystem with CMIP data.
    2. Create the conda/mamba environment:
       - `mamba env create -f conda-env/test_stable.yml`
       - `mamba activate xcdat_test_stable`
    3. Run the script
       - `python xcdat-cdat-runtime-comparison.py`
+
+Specifications for original machine used to run this script
+-----------------------------------------------------------
+  - OS: RHEL 7
+  - Memory: 1,000 GiB
+  - CPU: Intel(R) Xeon(r) CPU E7-8890v4 @ 2.20GHz
+
+How xCDAT is configured for parallelism
+---------------------------------------
+  - Uses Dask Distributed local sechduler with multiprocessing
+    - Docs: https://docs.dask.org/en/stable/scheduling.html#dask-distributed-local
+    - Number of workers based on logical cores (num_workers=None), no memory limit
+  - Datasets are chunked on the "time" axis using Dask's auto chunking option.
+  - Datasets are opened in parallel using the `parallel=True` which uses
+    `dask.delayed`.
+  - For temporal averaging APIs, the underlying Xarray `groupby()` call uses the
+    `flox` package is used for map-reduce grouping, instead of Xarray's native
+    grouping logic. Xarray's native grouping logic is much slower because it
+    runs serially. More info can be found here: https://xarray.dev/blog/flox.
 """
 from __future__ import annotations
 
@@ -36,24 +46,11 @@ import timeit
 import warnings
 from typing import Dict, List, Tuple
 
-import dask
 import numpy as np
 import pandas as pd
 import xarray as xr
 import xcdat as xc
 from dask.distributed import Client
-
-# Thread configs
-# --------------------------
-# Used by numpy, causes too many threads to spawn otherwise.
-# https://docs.dask.org/en/stable/array-best-practices.html#avoid-oversubscribing-threads
-# When using the distributed scheduler, the OMP_NUM_THREADS, MKL_NUM_THREADS,
-# and OPENBLAS_NUM_THREADS environment variables are automatically set to 1
-# when using Nanny workers. This helps avoid oversubscribing threads in common
-# cases.
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["MKL_NUM_THREADS"] = "1"
 
 # Logger configs
 # --------------------------
@@ -84,40 +81,39 @@ PLOT_CONFIG: pd.DataFrame.plot.__init__ = {
 # the floating point labels above the bars.
 BAR_LABEL_CONFIG = {"fmt": "{:10.2f}", "label_type": "edge", "padding": 3}
 
-
 # Input data configs
-# -------------------------
+# ------------------
 FILES_DICT: Dict[str, Dict[str, str]] = {
     "7_gb": {
         "var_key": "tas",
         "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/NCAR/CESM2/historical/r1i1p1f1/day/tas/gn/v20190308/",
         "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/day/tas/CMIP6.CMIP.historical.NCAR.CESM2.r1i1p1f1.day.tas.atmos.glb-p8-gn.v20190308.0000000.0.xml",
     },
-    # "12_gb": {
-    #     "var_key": "tas",
-    #     "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MRI/MRI-ESM2-0/amip/r1i1p1f1/3hr/tas/gn/v20190829/",
-    #     "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/3hr/tas/CMIP6.CMIP.historical.MRI.MRI-ESM2-0.r1i1p1f1.3hr.tas.gn.v20190829.0000000.0.xml",
-    # },
-    # "22_gb": {
-    #     "var_key": "ta",
-    #     "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r5i1p1f3/day/ta/gn/v20191115/",
-    #     "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.MOHC.UKESM1-0-LL.r5i1p1f3.day.ta.atmos.glb-p8-gn.v20191115.0000000.0.xml",
-    # },
-    # "50_gb": {
-    #     "var_key": "ta",
-    #     "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/NCAR/CESM2/historical/r1i1p1f1/day/ta/gn/v20190308/",
-    #     "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.NCAR.CESM2.r1i1p1f1.day.ta.atmos.glb-p8-gn.v20190308.0000000.0.xml",
-    # },
-    # "74_gb": {
-    #     "var_key": "ta",
-    #     "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/CCCma/CanESM5/historical/r1i1p2f1/CFday/ta/gn/v20190429/",
-    #     "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.CCCma.CanESM5.r1i1p2f1.CFday.ta.atmos.glb-p80-gn.v20190429.0000000.0.xml",
-    # },
-    # "105_gb": {
-    #     "var_key": "ta",
-    #     "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MOHC/HadGEM3-GC31-MM/historical/r2i1p1f3/day/ta/gn/v20191218",
-    #     "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.MOHC.HadGEM3-GC31-MM.r2i1p1f3.day.ta.atmos.glb-p8-gn.v20191218.0000000.0.xml",
-    # },
+    "12_gb": {
+        "var_key": "tas",
+        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MRI/MRI-ESM2-0/amip/r1i1p1f1/3hr/tas/gn/v20190829/",
+        "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/3hr/tas/CMIP6.CMIP.historical.MRI.MRI-ESM2-0.r1i1p1f1.3hr.tas.gn.v20190829.0000000.0.xml",
+    },
+    "22_gb": {
+        "var_key": "ta",
+        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r5i1p1f3/day/ta/gn/v20191115/",
+        "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.MOHC.UKESM1-0-LL.r5i1p1f3.day.ta.atmos.glb-p8-gn.v20191115.0000000.0.xml",
+    },
+    "50_gb": {
+        "var_key": "ta",
+        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/NCAR/CESM2/historical/r1i1p1f1/day/ta/gn/v20190308/",
+        "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.NCAR.CESM2.r1i1p1f1.day.ta.atmos.glb-p8-gn.v20190308.0000000.0.xml",
+    },
+    "74_gb": {
+        "var_key": "ta",
+        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/CCCma/CanESM5/historical/r1i1p2f1/CFday/ta/gn/v20190429/",
+        "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.CCCma.CanESM5.r1i1p2f1.CFday.ta.atmos.glb-p80-gn.v20190429.0000000.0.xml",
+    },
+    "105_gb": {
+        "var_key": "ta",
+        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MOHC/HadGEM3-GC31-MM/historical/r2i1p1f3/day/ta/gn/v20191218",
+        "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.MOHC.HadGEM3-GC31-MM.r2i1p1f3.day.ta.atmos.glb-p8-gn.v20191218.0000000.0.xml",
+    },
 }
 
 APIS_TO_BENCHMARK = [
@@ -182,7 +178,7 @@ def get_xcdat_runtimes(
             api_runtimes = []
 
             for idx in range(0, repeat):
-                runtime = _get_xcdat_runtime(ds, var_key, api)
+                runtime = _get_xcdat_runtime(ds, parallel, var_key, api)
                 api_runtimes.append(runtime)
 
                 print(f"    * Runtime ({(idx+1)} of {repeat}): {runtime}")
@@ -433,4 +429,3 @@ if __name__ == "__main__":
     # TODO: Update plots to dynamically fit larger floating point values.
     _plot_xcdat_runtimes(df_xc_parallel)
     _plot_cdat_runtimes(df_cdat_times)
-# %%

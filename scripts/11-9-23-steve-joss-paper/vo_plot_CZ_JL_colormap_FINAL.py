@@ -63,10 +63,11 @@ plt.contourf(
     cmap=mycolormap(),
     extend="both",
 )
-plt.colorbar(orientation="horizontal", ticks=np.arange(-4.0, 4.01, 1), shrink=0.9)
+plt.colorbar(
+    label="[K]", orientation="horizontal", ticks=np.arange(-4.0, 4.01, 1), shrink=0.9
+)
 ax = plt.gca()
 ax.coastlines()
-ax.set_ylabel("[K]")
 plt.title("")
 
 
@@ -85,12 +86,12 @@ ax.spines.top.set_visible(False)
 # Only show ticks on the left and bottom spines
 ax.yaxis.set_ticks_position("left")
 ax.xaxis.set_ticks_position("bottom")
-ax.set_ylabel("Surface Temperature Anormalies [K]")
+ax.set_ylabel("Surface Temperature Anomalies [K]")
 
 # plot labels
 f = plt.gcf()
-f.text(0.2, 1.025, "A. Surface Temperature Anormalies (September 1850)", fontsize=12)
-f.text(0.2, 0.475, "B. Global Mean Surface Temperature Anormalies", fontsize=12)
+f.text(0.2, 1.025, "A. Surface Temperature Anomalies (September 1850)", fontsize=12)
+f.text(0.2, 0.475, "B. Global Mean Surface Temperature Anomalies", fontsize=12)
 
 plt.tight_layout()
 plt.savefig("fig2.png", bbox_inches="tight")

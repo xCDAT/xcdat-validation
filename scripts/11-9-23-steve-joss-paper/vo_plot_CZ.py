@@ -38,7 +38,6 @@ plt.contourf(
 plt.colorbar(orientation="horizontal", ticks=np.arange(-4.0, 4.01, 1), shrink=0.9)
 ax = plt.gca()
 ax.coastlines()
-ax.set_ylabel("[K]")
 plt.title("")
 
 
