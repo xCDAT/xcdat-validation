@@ -6,10 +6,15 @@ for each API runtime is 3 and the minimum value is recorded. Runtimes only
 include computation and exclude I/O.  xCDAT can operate in serial or parallel,
 while CDAT can only operate in serial.
 
+
+
 xCDAT's parallel configuration:
-  - datasets are chunked using the "time" axis with Dask's auto chunking option.
-  - datasets are also opened in parallel using the `parallel=True`
-    (uses `dask.delayed`).
+  - Uses Dask Distributed local sechduler with multiprocessing
+    - Docs: https://docs.dask.org/en/stable/scheduling.html#dask-distributed-local
+    - Number of workers based on logical cores (num_workers=None), no memory limit
+  - Datasets are chunked using the "time" axis with Dask's auto chunking option.
+  - Datasets are opened in parallel using the `parallel=True` which uses
+    `dask.delayed`.
   - The `flox` package is used for map-reduce grouping instead of the native
     Xarray serial grouping logic for temporal averaging APIs that use Xarray's
     groupby() under the hood. This includes `group_average()`, `climatology()`,
@@ -31,11 +36,12 @@ import timeit
 import warnings
 from typing import Dict, List, Tuple
 
+import dask
 import numpy as np
 import pandas as pd
 import xarray as xr
 import xcdat as xc
-from xcdat._logger import _setup_custom_logger
+from dask.distributed import Client
 
 # Thread configs
 # --------------------------
@@ -54,14 +60,11 @@ os.environ["MKL_NUM_THREADS"] = "1"
 warnings.filterwarnings(
     action="ignore", category=xr.SerializationWarning, module=".*conventions"
 )
-# FIXME: I can't get the logger to not print out two messages.
-# I already tried logger.propagate=False and using the root logger.
-logger = _setup_custom_logger(__name__, propagate=True)
 
 # Output file configurations
 # --------------------------
 TIME_STR = time.strftime("%Y%m%d-%H%M%S")
-PROOT_DIR="validation/v0.6.0/xcdat-cdat-perf-metrics/"
+ROOT_DIR = "validation/v0.6.0/xcdat-cdat-perf-metrics/"
 XC_FILENAME = f"{ROOT_DIR}/{TIME_STR}-xcdat-runtimes"
 CD_FILENAME = f"{ROOT_DIR}/{TIME_STR}-cdat-runtimes"
 
@@ -117,66 +120,27 @@ FILES_DICT: Dict[str, Dict[str, str]] = {
     # },
 }
 
-APIS_TO_BENCHMARK = ["spatial_avg", "temporal_avg", "group_avg", "climatology", "departures"]
-
-def main(repeat: int):
-    """Get the API runtimes for xCDAT and CDAT.
-
-    APIs tested include:
-      - Spatial averaging
-      - Time averaging (single snap-shot)
-      - Climatology
-      - Depatures
-
-    Parameters
-    ----------
-    repeat : int
-        Number of samples to take for each API call. The minimum runtime is
-        taken as the final runtime (refer to Notes).
-
-    Notes
-    -----
-    According to `Timer.repeat()`:
-
-        "In a typical case, the lowest value gives a lower bound for how fast
-        your machine can run the given code snippet; higher values in the result
-        vector are typically not caused by variability in Python's speed, but by
-        other processes interfering with your timing accuracy. So the min() of
-        the result is probably the only number you should be interested in."
-
-    Source: https://github.com/python/cpython/blob/2587b9f64eefde803a5e0b050171ad5f6654f31b/Lib/timeit.py#L193-L203
-    """
-    # 1. Get xCDAT runtimes and plot results.
-    df_xc_serial = get_xcdat_runtimes(parallel=False, repeat=repeat)
-    df_xc_parallel = get_xcdat_runtimes(parallel=True, repeat=repeat)
-
-    df_xc_times = pd.merge(df_xc_serial, df_xc_parallel, on=["pkg", "gb", "api"])
-    df_xc_times = df_xc_times.sort_values(by=["pkg", "api", "gb"])
-    df_xc_times.to_csv(f"{XC_FILENAME}.csv", index=False)
-
-    # 2. Get CDAT runtimes and plot results.
-    # df_cdat_times = _get_cdat_runtimes(repeat=repeat)
-    # df_cdat_times = df_cdat_times.sort_values(by=["pkg", "api", "gb"])
-    # df_cdat_times.to_csv(f"{CD_FILENAME}.csv", index=False)
-
-    # 3. Plot the results.
-    # TODO: Update plots to dynamically fit larger floating point values.
-    # _plot_xcdat_runtimes(df_xc_times)
-    # _plot_cdat_runtimes(df_cdat_times)
+APIS_TO_BENCHMARK = [
+    "spatial_avg",
+    # "temporal_avg",
+    # "group_avg",
+    # "climatology",
+    # "departures",
+]
 
 
 def get_xcdat_runtimes(
-    parallel: bool,
     repeat: int,
+    parallel: bool,
 ) -> pd.DataFrame:
-    """Get the xCDAT API runtimes for spatial and temporal averaging.
+    """Get xCDAT API runtimes.
 
     Parameters
     ----------
     parallel : bool
-        Whether to run the APIs using Dask parallelism (True) or in serial
-        (False). If in parallel, datasets are chunked on the time axis using
-        Dask's auto chunking, and `flox` is used for temporal averaging.
+        Whether to run the APIs in parallel (True) or serial (False). If
+        parallel, datasets are chunked on the time axis using Dask's auto
+        chunking, and `flox` is used for temporal averaging.
     repeat : int
         Number of samples to take for each API call. The minimum runtime is
         taken as the final runtime.
@@ -186,55 +150,88 @@ def get_xcdat_runtimes(
     pd.DataFrame
         A DataFrame of API runtimes.
     """
-    chunks, use_flox = _get_xr_config(parallel)
-    api_runtimes: List[Dict[str, str | float | None]] = []
-
     process_type = "serial" if parallel is False else "parallel"
-    logger.info(f"Getting xCDAT {process_type} runtimes.")
-    for fsize, finfo in FILES_DICT.items():
+    print(f"Benchmarking xCDAT {process_type} API runtimes")
+    print("---------------------------------------------------------------------")
+
+    # Settings based on parallel or serial.
+    _set_xr_config(parallel)
+    chunks = _get_chunks_arg(parallel)
+
+    # A list of dictionary entries storing information about each runtime.
+    all_runtimes: List[Dict[str, str | float | None]] = []
+
+    # For each file and api, get the runtime N number of times.
+    for idx, (fsize, finfo) in enumerate(FILES_DICT.items()):
         dir_path = finfo["dir_path"]
         var_key = finfo["var_key"]
 
-        logger.info(
-            f"Variable: '{var_key}', File Size: {fsize}, Dir Path: `{dir_path}`."
+        print(f"Case ({idx+1}) - ")
+        print(f" * file size: {fsize}, variable: '{var_key}', path: `{dir_path}`")
+
+        ds = xc.open_mfdataset(
+            dir_path, chunks=chunks, add_bounds=["X", "Y", "T"], parallel=parallel
         )
+        # For serial API calls, load the dataset into memory beforehand.
+        if not parallel:
+            print("    * Loading dataset into memory for serial computation.")
+            ds.load()
 
         for api in APIS_TO_BENCHMARK:
-            # I/O
-            ds = xc.open_mfdataset(dir_path, chunks=chunks, add_bounds=['X', 'Y', 'T'], parallel=parallel)
+            print(f"  * API: {api}")
+            api_runtimes = []
 
-            # Computation, get the minimum out of N samples.
-            runtimes = []
-            logger.info(f"  * Getting runtime for {api}")
-            with xr.set_options(use_flox=use_flox):
-                for _ in range (0, repeat):
-                    start = timeit.default_timer()
+            for idx in range(0, repeat):
+                runtime = _get_xcdat_runtime(ds, var_key, api)
+                api_runtimes.append(runtime)
 
-                    ds_res = _run_xcdat_api(ds, var_key, api)
-                    logger.info(f"  * Loading into memory:")
+                print(f"    * Runtime ({(idx+1)} of {repeat}): {runtime}")
 
-                    ds_res.load(n_workers=1)
-
-                    end = timeit.default_timer()
-
-                    runtime = end - start
-                    print(runtime)
-                    runtimes.append(runtime)
-
-            min_runtime = min(runtimes)
-            logger.info(f"  * Runtime: {min_runtime}")
+            min_runtime = min(api_runtimes)
+            print(f"  * Min Runtime (out of {repeat} runs): {min_runtime}")
 
             entry = {
                 "pkg": "xcdat",
                 "gb": fsize.split("_")[0],
                 "api": api,
-                f"runtime_{process_type}": min_runtime
+                f"runtime_{process_type}": min_runtime,
             }
-            api_runtimes.append(entry)
+            all_runtimes.append(entry)
 
-    df_runtimes = pd.DataFrame(api_runtimes)
+    df_runtimes = pd.DataFrame(all_runtimes)
 
     return df_runtimes
+
+
+def _get_xcdat_runtime(ds: xr.Dataset, parallel: bool, var_key: str, api: str) -> float:
+    start = 0.0
+    end = 0.0
+
+    try:
+        start = timeit.default_timer()
+        ds_res = _run_xcdat_api(ds, var_key, api)
+
+        if parallel:
+            ds_res.compute()
+
+        end = timeit.default_timer()
+    except RuntimeError as e:
+        # Retry the code again
+        if "RuntimeError: NetCDF: Not a valid ID" in str(e):
+            start = timeit.default_timer()
+            ds_res = _run_xcdat_api(ds, var_key, api)
+
+            if parallel:
+                ds_res.compute()
+
+            end = timeit.default_timer()
+        else:
+            raise e
+
+    runtime = end - start
+
+    return runtime
+
 
 def get_cdat_runtimes(repeat: int) -> pd.DataFrame:
     """Get the CDAT API runtimes (only supports serial).
@@ -249,7 +246,7 @@ def get_cdat_runtimes(repeat: int) -> pd.DataFrame:
     pd.DataFrame
         A DataFrame of runtimes for CDAT APIs.
     """
-    logger.info("Getting CDAT runtimes (serial-only).")
+    print("Getting CDAT runtimes (serial-only).")
 
     runtimes = []
 
@@ -260,11 +257,9 @@ def get_cdat_runtimes(repeat: int) -> pd.DataFrame:
         setup = _get_cdat_setup(var_key, xml_path)
         api_map = _get_cdat_api_map()
 
-        logger.info(
-            f"Variable: '{var_key}', File Size: {fsize}, XML Path: `{xml_path}`."
-        )
+        print(f"Variable: '{var_key}', File Size: {fsize}, XML Path: `{xml_path}`.")
         for api, call in api_map.items():
-            logger.info(f"  * Getting runtime for {api}: `{call}`.")
+            print(f"  * Getting runtime for {api}: `{call}`.")
 
             entry: Dict[str, str | float | None] = {
                 "pkg": "cdat",
@@ -274,11 +269,11 @@ def get_cdat_runtimes(repeat: int) -> pd.DataFrame:
             try:
                 runtime = _get_runtime(setup=setup, stmt=call, repeat=repeat)
             except Exception as e:
-                logger.error(e)
+                print(e)
                 runtime = None
 
             entry["runtime_serial"] = runtime
-            logger.info(f"  * Runtime: {runtime}")
+            print(f"  * Runtime: {runtime}")
 
         runtimes.append(entry)
 
@@ -287,27 +282,35 @@ def get_cdat_runtimes(repeat: int) -> pd.DataFrame:
     return df_runtimes
 
 
-def _get_xr_config(parallel: bool) -> Tuple[None | Dict[str, str], bool, str]:
+def _get_chunks_arg(parallel: bool) -> None | Dict[str, str]:
     if not parallel:
-        chunks = None
-        use_flox = True
+        return None
     elif parallel:
-        chunks = {"time": "auto"}
-        use_flox = False
+        return {"time": "auto"}
 
-    return chunks, use_flox
+
+def _set_xr_config(parallel: bool):
+    if not parallel:
+        xr.set_options(use_flox=True)
+    elif parallel:
+        xr.set_options(use_flox=False)
+
+        # Setup the Dask client using local distributed scheduler. This client
+        # will be automatically used by Xarray when calling .compute()/.load().
+        Client()
+
 
 def _run_xcdat_api(ds: xr.Dataset, var_key: str, api: str) -> xr.Dataset:
     if api == "spatial_avg":
-        return ds.spatial.average(var_key, axis=['X', 'Y'])
+        return ds.spatial.average(var_key, axis=["X", "Y"])
     elif api == "temporal_avg":
         return ds.temporal.average(var_key, weighted=True)
     elif api == "group_avg":
-        return ds.temporal.group_average(var_key, weighted=True)
+        return ds.temporal.group_average(var_key, freq="month", weighted=True)
     elif api == "climatology":
-        return ds.temporal.climatology(var_key, freq='month', weighted=True)
+        return ds.temporal.climatology(var_key, freq="month", weighted=True)
     elif api == "departures":
-        return ds.temporal.departures(var_key, freq='month', weighted=True)
+        return ds.temporal.departures(var_key, freq="month", weighted=True)
 
 
 def _get_cdat_setup(var_key: str, xml_path: str):
@@ -407,10 +410,27 @@ def _plot_cdat_runtimes(df_cdat: pd.DataFrame):
 
 
 if __name__ == "__main__":
-   # https://docs.dask.org/en/latest/scheduling.html#standalone-python-scripts
-   # https://examples.dask.org/xarray.html#Start-Dask-Client-for-Dashboard
-#    from dask.distributed import Client
+    repeat = 5
 
-#    client = Client(n_workers=1, threads_per_worker=1)
+    # 1. Get xCDAT runtimes and plot results.
+    df_xc_serial = get_xcdat_runtimes(repeat, parallel=False)
+    df_xc_parallel = get_xcdat_runtimes(repeat, parallel=True)
 
-   main(repeat=1)
+    df_xc_times = pd.merge(df_xc_serial, df_xc_parallel, on=["pkg", "gb", "api"])
+    df_xc_times = df_xc_times.sort_values(by=["pkg", "api", "gb"])
+    df_xc_times.to_csv(f"{XC_FILENAME}.csv", index=False)
+
+    df_xc_parallel = get_xcdat_runtimes(parallel=True, repeat=repeat)
+    df_xc_parallel = df_xc_parallel.sort_values(by=["pkg", "api", "gb"])
+    df_xc_parallel.to_csv(f"{XC_FILENAME}.csv", index=False)
+
+    # 2. Get CDAT runtimes and plot results.
+    df_cdat_times = get_cdat_runtimes(repeat=repeat)
+    df_cdat_times = df_cdat_times.sort_values(by=["pkg", "api", "gb"])
+    df_cdat_times.to_csv(f"{CD_FILENAME}.csv", index=False)
+
+    # 3. Plot the results.
+    # TODO: Update plots to dynamically fit larger floating point values.
+    _plot_xcdat_runtimes(df_xc_parallel)
+    _plot_cdat_runtimes(df_cdat_times)
+# %%
