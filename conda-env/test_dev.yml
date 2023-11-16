@@ -21,6 +21,10 @@ dependencies:
     - xarray >=2022.02.0
     - xesmf >=0.7.0
     - xgcm
+      # Optional - enables additional features.
+    # =========================================
+    - matplotlib-base >=3.7.0
+    - nc-time-axis=1.4.1
     # CDAT
     # ==================
     - cdms2=3.1.5
@@ -29,9 +33,10 @@ dependencies:
     - cdat_info=8.2.1
     # Additional
     # ==================
-    - jupyterlab=3.4.2
-    - matplotlib=3.5.2
-    - cartopy=0.20.2
-    - wget=1.20.3
-    - ipykernel=6.13.0
+    - jupyterlab
+    - matplotlib-base
+    - cartopy
+    - wget
+    - ipykernel
+    - jupyter-server-proxy
 prefix: /opt/miniconda3/envs/xcdat_test_dev
