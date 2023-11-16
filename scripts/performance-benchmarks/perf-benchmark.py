@@ -40,17 +40,17 @@ How xCDAT is configured for parallelism
 """
 from __future__ import annotations
 
-import os
 import time
 import timeit
 import warnings
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 import xcdat as xc
 from dask.distributed import Client
+from numpy.core._exceptions import _ArrayMemoryError
 
 # Logger configs
 # --------------------------
@@ -211,8 +211,8 @@ def _get_xcdat_runtime(ds: xr.Dataset, parallel: bool, var_key: str, api: str) -
             ds_res.compute()
 
         end = timeit.default_timer()
-    except RuntimeError as e:
-        # Retry the code again
+    except (RuntimeError, _ArrayMemoryError) as e:
+        # Retry the code again if it is thet NetCDF error.
         if "RuntimeError: NetCDF: Not a valid ID" in str(e):
             start = timeit.default_timer()
             ds_res = _run_xcdat_api(ds, var_key, api)
@@ -222,7 +222,7 @@ def _get_xcdat_runtime(ds: xr.Dataset, parallel: bool, var_key: str, api: str) -
 
             end = timeit.default_timer()
         else:
-            raise e
+            print(e)
 
     runtime = end - start
 
@@ -364,68 +364,29 @@ def _get_runtime(setup: str, stmt: str, repeat: int = 5, number: int = 1) -> flo
     return min
 
 
-def _plot_xcdat_runtimes(df_xcdat: pd.DataFrame):
-    apis = df_xcdat.api.unique()
-
-    for api in apis:
-        ax = df_xcdat.plot(**PLOT_CONFIG)
-
-        for cont in ax.containers:
-            ax.bar_label(cont, **BAR_LABEL_CONFIG)
-
-        ax.margins(y=0.1)
-        ax.legend(["Serial", "Parallel"], fontsize="medium", loc="upper center", ncol=2)
-
-        fig = ax.get_figure()
-
-        api_title = api.title().replace("_", " ")
-        fig.suptitle(f"xCDAT {api_title} Runtime")
-        fig.tight_layout()
-        fig.savefig(f"{XC_FILENAME}-{api}.png")
-
-
-def _plot_cdat_runtimes(df_cdat: pd.DataFrame):
-    apis = df_cdat.api.unique()
-
-    for api in apis:
-        ax = df_cdat.plot(**PLOT_CONFIG)
-
-        for cont in ax.containers:
-            ax.bar_label(cont, **BAR_LABEL_CONFIG)
-
-        ax.margins(y=0.1)
-        ax.legend(["Serial"], fontsize="medium", loc="upper center", ncol=1)
-
-        fig = ax.get_figure()
-
-        api_title = api.title().replace("_", " ")
-        fig.suptitle(f"CDAT {api_title} Runtime")
-        fig.tight_layout()
-
-        fig.savefig(f"{CD_FILENAME}-{api}.png")
+def _sort_dataframe(df: pd.DataFrame):
+    return df.sort_values(by=["pkg", "api", "gb"])
 
 
 if __name__ == "__main__":
     repeat = 5
 
-    # 1. Get xCDAT runtimes and plot results.
+    # 1. Get xCDAT runtimes.
+    # xCDAT serial
     df_xc_serial = get_xcdat_runtimes(repeat, parallel=False)
-    df_xc_parallel = get_xcdat_runtimes(repeat, parallel=True)
+    df_xc_serial = _sort_dataframe(df_xc_serial)
+    df_xc_serial.to_csv(f"{XC_FILENAME}_serial.csv", index=False)
 
-    df_xc_times = pd.merge(df_xc_serial, df_xc_parallel, on=["pkg", "gb", "api"])
-    df_xc_times = df_xc_times.sort_values(by=["pkg", "api", "gb"])
-    df_xc_times.to_csv(f"{XC_FILENAME}.csv", index=False)
-
+    # xCDAT parallel
     df_xc_parallel = get_xcdat_runtimes(parallel=True, repeat=repeat)
     df_xc_parallel = df_xc_parallel.sort_values(by=["pkg", "api", "gb"])
-    df_xc_parallel.to_csv(f"{XC_FILENAME}.csv", index=False)
+    df_xc_parallel.to_csv(f"{XC_FILENAME}_parallel.csv", index=False)
 
-    # 2. Get CDAT runtimes and plot results.
+    df_xc_times = pd.merge(df_xc_serial, df_xc_parallel, on=["pkg", "gb", "api"])
+    df_xc_times.to_csv(f"{XC_FILENAME}.csv", index=False)
+    df_xc_times = _sort_dataframe(df_xc_times)
+
+    # 2. Get CDAT runtimes.
     df_cdat_times = get_cdat_runtimes(repeat=repeat)
-    df_cdat_times = df_cdat_times.sort_values(by=["pkg", "api", "gb"])
+    df_cdat_times = _sort_dataframe(df_xc_times)
     df_cdat_times.to_csv(f"{CD_FILENAME}.csv", index=False)
-
-    # 3. Plot the results.
-    # TODO: Update plots to dynamically fit larger floating point values.
-    _plot_xcdat_runtimes(df_xc_parallel)
-    _plot_cdat_runtimes(df_cdat_times)
