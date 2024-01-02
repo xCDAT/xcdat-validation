@@ -9,7 +9,7 @@ import pandas as pd
 # %% Get the CSV data into DataFrames.
 ROOT_PATH = "./scripts/performance-benchmarks/spatial-avg/"
 xcdat_csv_path = os.path.join(ROOT_PATH, "20231115-092731-xcdat-runtimes.csv")
-cdat_csv_path = os.path.join(ROOT_PATH, "20231018-125456-cdat-runtimes.csv")
+cdat_csv_path = os.path.join(ROOT_PATH, "20231115-092731-cdat-runtimes.csv")
 
 
 df_xcdat = pd.read_csv(xcdat_csv_path)
