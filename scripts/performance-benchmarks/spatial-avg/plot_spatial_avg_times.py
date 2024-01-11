@@ -8,8 +8,8 @@ import pandas as pd
 
 # %% Get the CSV data into DataFrames.
 ROOT_PATH = "./scripts/performance-benchmarks/spatial-avg/"
-xcdat_csv_path = os.path.join(ROOT_PATH, "20231115-092731-xcdat-runtimes.csv")
-cdat_csv_path = os.path.join(ROOT_PATH, "20231115-092731-cdat-runtimes.csv")
+xcdat_csv_path = os.path.join(ROOT_PATH, "20240102-135850-xcdat-runtimes.csv")
+cdat_csv_path = os.path.join(ROOT_PATH, "20240102-135850-cdat-runtimes.csv")
 
 
 df_xcdat = pd.read_csv(xcdat_csv_path)
@@ -69,13 +69,13 @@ ax.xaxis.set_ticks_position("bottom")
 # The base bar label configuration passed to axis containers to add
 # the floating point labels above the bars.
 BAR_LABEL_CONFIG = {
-    "fmt": "{:10.2f}",
+    "fmt": "{:10.0f}",
     "label_type": "edge",
     "padding": 2,
     "fontsize": 7,
 }
 for cont in ax.containers:
-    labels = ["{:10.2f}".format(v) if v > 0.00 else "" for v in cont.datavalues]
+    labels = ["{:10.0f}".format(v) if v > 0.00 else "" for v in cont.datavalues]
     ax.bar_label(cont, **BAR_LABEL_CONFIG, labels=labels)
 
 # %% Save the figure
