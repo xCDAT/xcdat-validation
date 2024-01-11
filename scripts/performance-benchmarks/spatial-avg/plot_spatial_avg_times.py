@@ -69,10 +69,9 @@ ax.xaxis.set_ticks_position("bottom")
 # The base bar label configuration passed to axis containers to add
 # the floating point labels above the bars.
 BAR_LABEL_CONFIG = {
-    "fmt": "{:10.0f}",
     "label_type": "edge",
     "padding": 2,
-    "fontsize": 7,
+    "fontsize": 10,
 }
 for cont in ax.containers:
     labels = ["{:10.0f}".format(v) if v > 0.00 else "" for v in cont.datavalues]

@@ -11,7 +11,7 @@ ds = xc.open_mfdataset(dpath)
 ds_anom = ds.temporal.departures("ts", freq="month")
 
 # 3. Compute global average.
-ds_anom_global = ds_anom.spatial.average("ts")
+ds_anom_glb = ds_anom.spatial.average("ts")
 
 # 4. Calculate annual averages
-ds_anom_global_ann = ds_anom_global.temporal.group_average("ts", freq="year")
+ds_anom_glb_ann = ds_anom_glb.temporal.group_average("ts", freq="year")
