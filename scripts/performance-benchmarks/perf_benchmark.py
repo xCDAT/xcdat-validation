@@ -374,6 +374,6 @@ if __name__ == "__main__":
     df_xc_times.to_csv(f"{XC_FILENAME}.csv", index=False)
     df_xc_times = _sort_dataframe(df_xc_times)
 
-#    2. Get CDAT runtimes.
+    # 2. Get CDAT runtimes.
     df_cdat_times = get_cdat_runtimes(repeat=repeat)
     df_cdat_times.to_csv(f"{CD_FILENAME}.csv", index=False)
