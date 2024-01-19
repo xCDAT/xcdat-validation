@@ -40,17 +40,23 @@ How xCDAT is configured for parallelism
 """
 from __future__ import annotations
 
+import os
 import time
 import timeit
 import warnings
 from typing import Dict, List
 
+import cdms2
+import cdutil
 import numpy as np
 import pandas as pd
 import xarray as xr
 import xcdat as xc
 from dask.distributed import Client
 from numpy.core._exceptions import _ArrayMemoryError
+
+# Make sure cdms2 generates bounds if they don't exist.
+cdms2.setAutoBounds("on")
 
 # Logger configs
 # --------------------------
@@ -61,9 +67,9 @@ warnings.filterwarnings(
 # Output file configurations
 # --------------------------
 TIME_STR = time.strftime("%Y%m%d-%H%M%S")
-ROOT_DIR = "validation/v0.6.0/xcdat-cdat-perf-metrics/"
-XC_FILENAME = f"{ROOT_DIR}/{TIME_STR}-xcdat-runtimes"
-CD_FILENAME = f"{ROOT_DIR}/{TIME_STR}-cdat-runtimes"
+ROOT_DIR = "scripts/performance-benchmarks/"
+XC_FILENAME = os.path.join(ROOT_DIR, f"{TIME_STR}-xcdat-runtimes")
+CD_FILENAME = os.path.join(ROOT_DIR, f"{TIME_STR}-cdat-runtimes")
 
 # Plot configs
 # -------------------
@@ -103,11 +109,6 @@ FILES_DICT: Dict[str, Dict[str, str]] = {
         "var_key": "ta",
         "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/NCAR/CESM2/historical/r1i1p1f1/day/ta/gn/v20190308/",
         "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.NCAR.CESM2.r1i1p1f1.day.ta.atmos.glb-p8-gn.v20190308.0000000.0.xml",
-    },
-    "74_gb": {
-        "var_key": "ta",
-        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/CCCma/CanESM5/historical/r1i1p2f1/CFday/ta/gn/v20190429/",
-        "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.CCCma.CanESM5.r1i1p2f1.CFday.ta.atmos.glb-p80-gn.v20190429.0000000.0.xml",
     },
     "105_gb": {
         "var_key": "ta",
@@ -163,7 +164,7 @@ def get_xcdat_runtimes(
         var_key = finfo["var_key"]
 
         print(f"Case ({idx+1}) - ")
-        print(f" * file size: {fsize}, variable: '{var_key}', path: `{dir_path}`")
+        print(f" * file size: {fsize}, variable: '{var_key}', path: {dir_path!r}")
 
         ds = xc.open_mfdataset(
             dir_path, chunks=chunks, add_bounds=["X", "Y", "T"], parallel=parallel
@@ -178,7 +179,7 @@ def get_xcdat_runtimes(
             api_runtimes = []
 
             for idx in range(0, repeat):
-                runtime = _get_xcdat_runtime(ds, parallel, var_key, api)
+                runtime = _get_xcdat_runtime(ds.copy(), parallel, var_key, api)
                 api_runtimes.append(runtime)
 
                 print(f"    * Runtime ({(idx+1)} of {repeat}): {runtime}")
@@ -197,6 +198,24 @@ def get_xcdat_runtimes(
     df_runtimes = pd.DataFrame(all_runtimes)
 
     return df_runtimes
+
+
+def _get_chunks_arg(parallel: bool) -> None | Dict[str, str]:
+    if not parallel:
+        return None
+    elif parallel:
+        return {"time": "auto"}
+
+
+def _set_xr_config(parallel: bool):
+    if not parallel:
+        xr.set_options(use_flox=True)
+    elif parallel:
+        xr.set_options(use_flox=False)
+
+        # Setup the Dask client using local distributed scheduler. This client
+        # will be automatically used by Xarray when calling .compute()/.load().
+        Client()
 
 
 def _get_xcdat_runtime(ds: xr.Dataset, parallel: bool, var_key: str, api: str) -> float:
@@ -229,6 +248,19 @@ def _get_xcdat_runtime(ds: xr.Dataset, parallel: bool, var_key: str, api: str) -
     return runtime
 
 
+def _run_xcdat_api(ds: xr.Dataset, var_key: str, api: str) -> xr.Dataset:
+    if api == "spatial_avg":
+        return ds.spatial.average(var_key, axis=["X", "Y"], lat_bounds=(-30, 30))
+    elif api == "temporal_avg":
+        return ds.temporal.average(var_key, weighted=True)
+    elif api == "group_avg":
+        return ds.temporal.group_average(var_key, freq="month", weighted=True)
+    elif api == "climatology":
+        return ds.temporal.climatology(var_key, freq="month", weighted=True)
+    elif api == "departures":
+        return ds.temporal.departures(var_key, freq="month", weighted=True)
+
+
 def get_cdat_runtimes(repeat: int) -> pd.DataFrame:
     """Get the CDAT API runtimes (only supports serial).
 
@@ -244,124 +276,80 @@ def get_cdat_runtimes(repeat: int) -> pd.DataFrame:
     """
     print("Getting CDAT runtimes (serial-only).")
 
-    runtimes = []
+    all_runtimes = []
 
-    for fsize, finfo in FILES_DICT.items():
+    # For each file and api, get the runtime N number of times.
+    for idx, (fsize, finfo) in enumerate(FILES_DICT.items()):
         xml_path = finfo["xml_path"]
         var_key = finfo["var_key"]
 
-        setup = _get_cdat_setup(var_key, xml_path)
-        api_map = _get_cdat_api_map()
+        print(f"Case ({idx+1}) - ")
+        print(f" * file size: {fsize}, variable: '{var_key}', path: {xml_path!r}")
 
-        print(f"Variable: '{var_key}', File Size: {fsize}, XML Path: `{xml_path}`.")
-        for api, call in api_map.items():
-            print(f"  * Getting runtime for {api}: `{call}`.")
+        # Generate time bounds if they are missing.
+        ds = cdms2.open(xml_path)
+        t_var = ds[var_key]
+        t_var.getTime().getBounds()
 
-            entry: Dict[str, str | float | None] = {
+        reg = cdutil.region.domain(latitude=(-30.0, 30.0))
+        t_var_reg = reg.select(t_var)
+
+        for api in APIS_TO_BENCHMARK:
+            print(f"  * API: {api}")
+            api_runtimes = []
+
+            for idx in range(0, repeat):
+                runtime = _get_cdat_runtime(t_var_reg, api)
+                api_runtimes.append(runtime)
+
+                print(f"    * Runtime ({(idx+1)} of {repeat}): {runtime}")
+
+            min_runtime = min(api_runtimes)
+            print(f"  * Min Runtime (out of {repeat} runs): {min_runtime}")
+
+            entry = {
                 "pkg": "cdat",
                 "gb": fsize.split("_")[0],
                 "api": api,
+                f"runtime_serial": min_runtime,
             }
-            try:
-                runtime = _get_runtime(setup=setup, stmt=call, repeat=repeat)
-            except Exception as e:
-                print(e)
-                runtime = None
+            all_runtimes.append(entry)
 
-            entry["runtime_serial"] = runtime
-            print(f"  * Runtime: {runtime}")
-
-        runtimes.append(entry)
-
-    df_runtimes = pd.DataFrame(runtimes)
+    df_runtimes = pd.DataFrame(all_runtimes)
 
     return df_runtimes
 
 
-def _get_chunks_arg(parallel: bool) -> None | Dict[str, str]:
-    if not parallel:
-        return None
-    elif parallel:
-        return {"time": "auto"}
+def _get_cdat_runtime(t_var: cdms2.dataset.FileVariable, api: str) -> float:
+    start = 0.0
+    end = 0.0
+
+    try:
+        start = timeit.default_timer()
+        _run_cdat_api(t_var, api)
+
+        end = timeit.default_timer()
+
+        runtime = end - start
+    except _ArrayMemoryError as e:
+        print(e)
+
+        runtime = 0
+
+    return runtime
 
 
-def _set_xr_config(parallel: bool):
-    if not parallel:
-        xr.set_options(use_flox=True)
-    elif parallel:
-        xr.set_options(use_flox=False)
-
-        # Setup the Dask client using local distributed scheduler. This client
-        # will be automatically used by Xarray when calling .compute()/.load().
-        Client()
-
-
-def _run_xcdat_api(ds: xr.Dataset, var_key: str, api: str) -> xr.Dataset:
+def _run_cdat_api(
+    t_var: cdms2.dataset.FileVariable, api: str
+) -> cdms2.tvariable.TransientVariable:
     if api == "spatial_avg":
-        return ds.spatial.average(var_key, axis=["X", "Y"])
+        return cdutil.averager(t_var, axis="xy", weights="weighted")
     elif api == "temporal_avg":
-        return ds.temporal.average(var_key, weighted=True)
-    elif api == "group_avg":
-        return ds.temporal.group_average(var_key, freq="month", weighted=True)
+        return cdutil.averager(t_var, axis="t", weights="weighted")
     elif api == "climatology":
-        return ds.temporal.climatology(var_key, freq="month", weighted=True)
+        return cdutil.ANNUALCYCLE.climatology(t_var)
     elif api == "departures":
-        return ds.temporal.departures(var_key, freq="month", weighted=True)
-
-
-def _get_cdat_setup(var_key: str, xml_path: str):
-    setup = (
-        "import cdms2\n"
-        "import cdutil\n"
-        "cdms2.setAutoBounds('on')\n"
-        f"ds = cdms2.open('{xml_path}')\n"
-        f"t_var = ds['{var_key}']\n"
-        "tvar.getTime().getBounds()"
-    )
-
-    return setup
-
-
-def _get_cdat_api_map():
-    api_calls = {
-        "spatial_avg": "cdutil.averager(t_var, axis='xy')",
-        "temporal_avg": "cdutil.averager(t_var, axis='t')",
-        "climatology": "cdutil.ANNUALCYCLE.climatology(t_var)",
-        "departures": "cdutil.ANNUALCYCLE.departures(t_var)",
-    }
-
-    return api_calls
-
-
-def _get_runtime(setup: str, stmt: str, repeat: int = 5, number: int = 1) -> float:
-    """Get the minimum runtime for a code statement using timeit.
-
-    Parameters
-    ----------
-    setup : str
-        The setup code (e.g,. imports).
-    stmt : str
-        The statement to measure performance on (e.g., API calls).
-    repeat : int, optional
-        Number of samples to take, by default 5.
-    number : int, optional
-        Number of times to repeat the statement for each sample, by default 1.
-
-    Returns
-    -------
-    float
-        The average minimum runtime out of all of the samples.
-    """
-    runtimes: List[float] = timeit.repeat(
-        setup=setup,
-        stmt=stmt,
-        repeat=repeat,
-        number=number,
-    )
-
-    min = np.around(np.min(runtimes), decimals=6)
-
-    return min
+        return cdutil.ANNUALCYCLE.departures(t_var)
 
 
 def _sort_dataframe(df: pd.DataFrame):
@@ -388,5 +376,4 @@ if __name__ == "__main__":
 
     # 2. Get CDAT runtimes.
     df_cdat_times = get_cdat_runtimes(repeat=repeat)
-    df_cdat_times = _sort_dataframe(df_xc_times)
     df_cdat_times.to_csv(f"{CD_FILENAME}.csv", index=False)

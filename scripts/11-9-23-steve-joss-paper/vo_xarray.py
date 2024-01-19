@@ -9,20 +9,23 @@ dpath = (
 ds = xr.open_mfdataset(dpath + "*.nc")
 
 # 2. Calculate monthly departures.
-ts_monthly = ds.ts.groupby("time.month")  # group by months
-ts_monthly_clim = ts_monthly.mean(dim="time")  # calculate climatology
-ts_anom = ts_monthly - ts_monthly_clim  # difference to determine anomalies
+ts_mon = ds.ts.groupby("time.month")
+ts_mon_clim = ts_mon.mean(dim="time")
+ts_anom = ts_mon - ts_mon_clim
 
 # 3. Compute global average.
 coslat = np.cos(np.deg2rad(ds.lat))
-ts_anom_weighted = ts_anom.weighted(coslat)
-ts_anom_global = ts_anom_weighted.mean(dim="lat").mean(dim="lon")
+ts_anom_wgt = ts_anom.weighted(coslat)
+ts_anom_global = ts_anom_wgt.mean(dim="lat").mean(dim="lon")
 
-# 4. Calculate annual averages
-# Source: https://ncar.github.io/esds/posts/2021/yearly-averages-xarray/
-month_len = ts_anom_global.time.dt.days_in_month
-month_len_by_year = month_len.groupby("time.year")
-wgts = month_len_by_year / month_len_by_year.sum()
-temp_sum = (ts_anom_global * wgts).resample(time="AS").sum(dim="time")
-denominator_sum = (wgts).resample(time="AS").sum(dim="time")
-ts_anom_global_ann = temp_sum / denominator_sum
+# 4. Calculate annual averages.
+# ncar.github.io/esds/posts/2021/yearly-averages-xarray/
+mon_len = ts_anom_global.time.dt.days_in_month
+mon_len_by_year = mon_len.groupby("time.year")
+wgts = mon_len_by_year / mon_len_by_year.sum()
+
+temp_sum = ts_anom_global * wgts
+temp_sum = temp_sum.resample(time="AS").sum(dim="time")
+denom_sum = (wgts).resample(time="AS").sum(dim="time")
+
+ts_anom_global_ann = temp_sum / denom_sum
