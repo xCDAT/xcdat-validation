@@ -40,6 +40,7 @@ How xCDAT is configured for parallelism
 """
 from __future__ import annotations
 
+import os
 import time
 import timeit
 import warnings
@@ -66,9 +67,9 @@ warnings.filterwarnings(
 # Output file configurations
 # --------------------------
 TIME_STR = time.strftime("%Y%m%d-%H%M%S")
-ROOT_DIR = "validation/v0.6.0/xcdat-cdat-perf-metrics/"
-XC_FILENAME = f"{ROOT_DIR}/{TIME_STR}-xcdat-runtimes"
-CD_FILENAME = f"{ROOT_DIR}/{TIME_STR}-cdat-runtimes"
+ROOT_DIR = "scripts/performance-benchmarks/"
+XC_FILENAME = os.path.join(ROOT_DIR, f"{TIME_STR}-xcdat-runtimes")
+CD_FILENAME = os.path.join(ROOT_DIR, f"{TIME_STR}-cdat-runtimes")
 
 # Plot configs
 # -------------------
@@ -108,11 +109,6 @@ FILES_DICT: Dict[str, Dict[str, str]] = {
         "var_key": "ta",
         "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/NCAR/CESM2/historical/r1i1p1f1/day/ta/gn/v20190308/",
         "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.NCAR.CESM2.r1i1p1f1.day.ta.atmos.glb-p8-gn.v20190308.0000000.0.xml",
-    },
-    "74_gb": {
-        "var_key": "ta",
-        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/CCCma/CanESM5/historical/r1i1p2f1/CFday/ta/gn/v20190429/",
-        "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.CCCma.CanESM5.r1i1p2f1.CFday.ta.atmos.glb-p80-gn.v20190429.0000000.0.xml",
     },
     "105_gb": {
         "var_key": "ta",
@@ -168,7 +164,7 @@ def get_xcdat_runtimes(
         var_key = finfo["var_key"]
 
         print(f"Case ({idx+1}) - ")
-        print(f" * file size: {fsize}, variable: '{var_key}', path: `{dir_path}`")
+        print(f" * file size: {fsize}, variable: '{var_key}', path: {dir_path!r}")
 
         ds = xc.open_mfdataset(
             dir_path, chunks=chunks, add_bounds=["X", "Y", "T"], parallel=parallel
@@ -183,7 +179,7 @@ def get_xcdat_runtimes(
             api_runtimes = []
 
             for idx in range(0, repeat):
-                runtime = _get_xcdat_runtime(ds, parallel, var_key, api)
+                runtime = _get_xcdat_runtime(ds.copy(), parallel, var_key, api)
                 api_runtimes.append(runtime)
 
                 print(f"    * Runtime ({(idx+1)} of {repeat}): {runtime}")
@@ -288,20 +284,22 @@ def get_cdat_runtimes(repeat: int) -> pd.DataFrame:
         var_key = finfo["var_key"]
 
         print(f"Case ({idx+1}) - ")
-        print(f" * file size: {fsize}, variable: '{var_key}', path: `{xml_path}`")
+        print(f" * file size: {fsize}, variable: '{var_key}', path: {xml_path!r}")
 
         # Generate time bounds if they are missing.
-        ds = cdms2.open("{xml_path}")
-        t_var = ds["{var_key}"]
+        ds = cdms2.open(xml_path)
+        t_var = ds[var_key]
         t_var.getTime().getBounds()
 
+        reg = cdutil.region.domain(latitude=(-30.0, 30.0))
+        t_var_reg = reg.select(t_var)
 
         for api in APIS_TO_BENCHMARK:
             print(f"  * API: {api}")
             api_runtimes = []
 
             for idx in range(0, repeat):
-                runtime = _get_cdat_runtime(t_var, api)
+                runtime = _get_cdat_runtime(t_var_reg, api)
                 api_runtimes.append(runtime)
 
                 print(f"    * Runtime ({(idx+1)} of {repeat}): {runtime}")
@@ -333,7 +331,9 @@ def _get_cdat_runtime(t_var: cdms2.dataset.FileVariable, api: str) -> float:
         end = timeit.default_timer()
 
         runtime = end - start
-    except (RuntimeError, _ArrayMemoryError) as e:
+    except _ArrayMemoryError as e:
+        print(e)
+
         runtime = 0
 
     return runtime
@@ -374,7 +374,6 @@ if __name__ == "__main__":
     df_xc_times.to_csv(f"{XC_FILENAME}.csv", index=False)
     df_xc_times = _sort_dataframe(df_xc_times)
 
-    # 2. Get CDAT runtimes.
+#    2. Get CDAT runtimes.
     df_cdat_times = get_cdat_runtimes(repeat=repeat)
-    df_cdat_times = _sort_dataframe(df_xc_times)
     df_cdat_times.to_csv(f"{CD_FILENAME}.csv", index=False)
