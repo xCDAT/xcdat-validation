@@ -1,5 +1,5 @@
-# Conda environment for testing a stable build of xCDAT.
-name: xcdat_test_stable
+# Conda environment for testing a stable build of xCDAT and Uxarray.
+name: xcdat_test_uxarray
 channels:
   - conda-forge
   - defaults
@@ -9,6 +9,7 @@ dependencies:
     - python >=3.9
     - pandas
     - numpy >=1.23.0
+    - uxarray >=2024.02.0
     - xarray >=2023.02.0
     - xcdat >=0.6.0
     - xesmf >=0.7.0
@@ -16,12 +17,6 @@ dependencies:
     # =========================================
     - matplotlib-base >=3.7.0
     - nc-time-axis=1.4.1
-    # CDAT
-    # ==================
-    - cdms2=3.1.5
-    - cdutil=8.2.1
-    - genutil=8.2.1
-    - cdat_info=8.2.1
     # Additional
     # ==================
     - jupyterlab
@@ -30,4 +25,3 @@ dependencies:
     - wget
     - ipykernel
     - jupyter-server-proxy
-prefix: /opt/miniconda3/envs/xcdat_test_stable
