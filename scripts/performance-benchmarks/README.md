@@ -27,29 +27,33 @@ in serial or parallel, while CDAT can only operate in serial.
    ```
 
 2. (REQUIRED for external users) Download the datasets from ESGF online using wget
-   (HTTP): The files will be downloaded to the `input-dataset` directory.
+   and HTTP: The files will be downloaded to the `input-dataset` directory. It is
+   recommended that you run this script in `tmux` or another persistent terminal in
+   case there is an issue with downloading at any point.
 
    ```bash
-     bash ./1_esgf-download-datasets.sh
+     # -s is required to bypass credential requirements
+     # Related issue: https://github.com/esgf2-us/metagrid/issues/617#issuecomment-1984677121
+     python 1_esgf_download_datasets.py
    ```
 
 3. Create the XML files that link multi-file datasets together to open up with `cdms2`.
 
    ```bash
-   bash ./2_create-cdms2-xmls.sh
+    python 2_create-cdms2-xmls.py
    ```
 
 4. Run the performance benchmarking script:
 
    ```bash
-   python 3_perf_benchmark.py
+    python 3_perf_benchmark.py
    ```
 
 5. Run the plotting scripts. Make sure to update the `ROOT_DIR` directory to
    the directory storing the output CSV files with the runtimes.
 
    ```bash
-   python 4_plot_perf_benchmark.py
+    python 4_plot_perf_benchmark.py
    ```
 
 ## Specifications for original machine used to run this script (Dec/2023)
