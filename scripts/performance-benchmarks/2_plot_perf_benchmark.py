@@ -5,6 +5,8 @@ import pandas as pd
 # Output file configurations
 # --------------------------
 TIME_STR = time.strftime("%Y%m%d-%H%M%S")
+
+# TODO: Update ROOT_DIR directory.
 ROOT_DIR = "scripts/10-18-23-perf-metrics/"
 XC_FILENAME = f"{ROOT_DIR}/{TIME_STR}-xcdat-runtimes"
 CD_FILENAME = f"{ROOT_DIR}/{TIME_STR}-cdat-runtimes"

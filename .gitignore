@@ -140,3 +140,5 @@ cython_debug/
 # Quality assurance
 qa/
 input/
+
+*.nc
