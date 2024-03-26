@@ -1,4 +1,8 @@
-# %%
+"""
+A script for generating cdscan XML files for the input datasets to open
+with cdms2 for benchmarking.
+"""
+
 import glob
 import os
 import stat

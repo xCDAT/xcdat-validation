@@ -1,3 +1,8 @@
+"""
+A script for downloading input datasets from ESGF using the ESGF wget scripts.
+These input datasets are used in the performance benchmark.
+"""
+
 import glob
 import os
 import shutil
