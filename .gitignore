@@ -143,3 +143,4 @@ input/
 
 *.nc
 *.xml
+*.sh.status

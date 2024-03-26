@@ -1,6 +1,7 @@
 import glob
 import os
 import shutil
+import stat
 import subprocess
 
 # Example: `/home/vo13/xCDAT/xcdat-validation/scripts/performance-benchmarks/`
@@ -12,6 +13,10 @@ WGET_FILEPATHS = glob.glob(os.path.join(ROOT_DIR, "**/**/*.sh"))
 
 def main():
     for path in WGET_FILEPATHS:
+        # Make sure the wget script has the correct permissions for subprocess
+        # to run.
+        os.chmod(path, stat.S_IRWXU | stat.S_IRWXO)
+
         # -s flag is required to bypass ESG credential check.
         # Related issue: https://github.com/esgf2-us/metagrid/issues/617
         subprocess.call([path, "-s"])

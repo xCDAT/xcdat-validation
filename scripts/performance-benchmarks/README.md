@@ -34,13 +34,14 @@ in serial or parallel, while CDAT can only operate in serial.
    ```bash
      # -s is required to bypass credential requirements
      # Related issue: https://github.com/esgf2-us/metagrid/issues/617#issuecomment-1984677121
-     python 1_esgf_download_datasets.py
+     python scripts/performance-benchmarks/1_esgf_download_datasets.py
    ```
 
-3. Create the XML files that link multi-file datasets together to open up with `cdms2`.
+3. (REQUIRED for external users) Create the XML files that link multi-file datasets
+   together to open up with `cdms2`.
 
    ```bash
-    python 2_create-cdms2-xmls.py
+    python scripts/performance-benchmarks/2_create-cdms2-xmls.py
    ```
 
 4. Run the performance benchmarking script:
