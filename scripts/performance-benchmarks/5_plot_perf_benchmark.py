@@ -1,15 +1,20 @@
+import os
 import time
 
 import pandas as pd
 
-# Output file configurations
+# Input CSV file configurations
+# -----------------------------
+# TODO: Update ROOT_DIR, XC_CSV_FILENAME, and CD_CSV_FILENAME
+ROOT_DIR = "./scripts/performance-benchmarks/joss-paper-results-spatial-avg/"
+XC_CSV_FILENAME = os.path.join(ROOT_DIR, "20240102-135850-xcdat-runtimes.csv")
+CD_CSV_FILENAME = os.path.join(ROOT_DIR, "20240102-135850-cdat-runtimes.csv")
+
+# Output plot configurations
 # --------------------------
 TIME_STR = time.strftime("%Y%m%d-%H%M%S")
-
-# TODO: Update ROOT_DIR directory.
-ROOT_DIR = "scripts/10-18-23-perf-metrics/"
-XC_FILENAME = f"{ROOT_DIR}/{TIME_STR}-xcdat-runtimes"
-CD_FILENAME = f"{ROOT_DIR}/{TIME_STR}-cdat-runtimes"
+XC_PLOT_FILEPATH = f"{ROOT_DIR}/{TIME_STR}-xcdat-runtimes"
+CD_PLOT_FILENAME = f"{ROOT_DIR}/{TIME_STR}-cdat-runtimes"
 
 # Plot configs
 # -------------------
@@ -31,6 +36,16 @@ BAR_LABEL_CONFIG = {
     "padding": 3,
     "fontsize": 8,
 }
+
+
+def main():
+    # 1. Plot xCDAT runtimes
+    df_xc = pd.read_csv(XC_CSV_FILENAME)
+    _plot_xcdat_runtimes(df_xc)
+
+    # 2. Plot CDAT runtimes
+    df_cdat = pd.read_csv(CD_CSV_FILENAME)
+    _plot_cdat_runtimes(df_cdat)
 
 
 def _plot_xcdat_runtimes(df_xcdat: pd.DataFrame):
@@ -56,7 +71,7 @@ def _plot_xcdat_runtimes(df_xcdat: pd.DataFrame):
         api_title = api.title().replace("_", " ")
         fig.suptitle(f"xCDAT {api_title} Runtime")
         fig.tight_layout()
-        fig.savefig(f"{XC_FILENAME}-{api}.png")
+        fig.savefig(f"{XC_PLOT_FILEPATH}-{api}.png")
 
 
 def _plot_cdat_runtimes(df_cdat: pd.DataFrame):
@@ -77,16 +92,8 @@ def _plot_cdat_runtimes(df_cdat: pd.DataFrame):
         fig.suptitle(f"CDAT {api_title} Runtime")
         fig.tight_layout()
 
-        fig.savefig(f"{CD_FILENAME}-{api}.png")
+        fig.savefig(f"{CD_PLOT_FILENAME}-{api}.png")
 
 
 if __name__ == "__main__":
-    # 1. Plot xCDAT runtimes
-    df_xc = pd.read_csv(
-        "/home/vo13/xCDAT/xcdat_test/scripts/10-18-23-perf-metrics/11-15-23-perf-metrics-spatial-avg/20231115-092731-xcdat-runtimes.csv"
-    )
-    _plot_xcdat_runtimes(df_xc)
-
-    # 2. Plot CDAT runtimes
-    # df_cdat = pd.read_csv("")
-    # _plot_cdat_runtimes(df_cdat_times)
+    main()

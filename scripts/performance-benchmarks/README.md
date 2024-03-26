@@ -43,7 +43,7 @@ runtimes for global spatial averaging.**
    together, which will be opened by `cdms2` in step 4.
 
    ```bash
-    python scripts/performance-benchmarks/2_create-cdms2-xmls.py
+    python scripts/performance-benchmarks/2_create_cdms2_xmls.py
    ```
 
 4. Run the performance benchmarking script.
@@ -56,7 +56,7 @@ runtimes for global spatial averaging.**
    the directory storing the output CSV files with the runtimes.
 
    ```bash
-    python scripts/performance-benchmarks/4_plot_perf_benchmark.py
+    python scripts/performance-benchmarks/4_plot_spatial_avg_times.py
    ```
 
 ### Misc. Info

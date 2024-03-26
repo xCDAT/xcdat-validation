@@ -36,9 +36,44 @@ XC_FILENAME = os.path.join(ROOT_DIR, f"{TIME_STR}-xcdat-runtimes")
 CD_FILENAME = os.path.join(ROOT_DIR, f"{TIME_STR}-cdat-runtimes")
 
 
-# Input data configs
-# ------------------
-def _get_input_dataset_dict() -> Dict[str, Dict[str, str]]:
+# TODO: Currently, only global spatial averaging has been benchmarked.
+# Need to benchmark the other APIs.
+APIS_TO_BENCHMARK = [
+    "spatial_avg",
+    # "temporal_avg",
+    # "group_avg",
+    # "climatology",
+    # "departures",
+]
+
+# A type annotation for the file dictionary.
+FilesDict = Dict[str, Dict[str, str]]
+
+
+def main():
+    files_dict = _get_input_dataset_dict()
+    repeat = 5
+
+    # xCDAT serial runtimes.
+    df_xc_serial = get_xcdat_runtimes(files_dict, repeat, parallel=False)
+    df_xc_serial = _sort_dataframe(df_xc_serial)
+    df_xc_serial.to_csv(f"{XC_FILENAME}_serial.csv", index=False)
+
+    # xCDAT parallel runtimes.
+    df_xc_parallel = get_xcdat_runtimes(files_dict, parallel=True, repeat=repeat)
+    df_xc_parallel = df_xc_parallel.sort_values(by=["pkg", "api", "gb"])
+    df_xc_parallel.to_csv(f"{XC_FILENAME}_parallel.csv", index=False)
+
+    df_xc_times = pd.merge(df_xc_serial, df_xc_parallel, on=["pkg", "gb", "api"])
+    df_xc_times.to_csv(f"{XC_FILENAME}.csv", index=False)
+    df_xc_times = _sort_dataframe(df_xc_times)
+
+    # CDAT runtimes (serial-only).
+    df_cdat_times = get_cdat_runtimes(files_dict, repeat=repeat)
+    df_cdat_times.to_csv(f"{CD_FILENAME}.csv", index=False)
+
+
+def _get_input_dataset_dict() -> FilesDict:
     """Get the dictionary of input datasets.
 
     This function will either return a dict mapping paths on the LLNL filesystem
@@ -47,10 +82,10 @@ def _get_input_dataset_dict() -> Dict[str, Dict[str, str]]:
 
     Returns
     -------
-    Dict[str, Dict[str, str]]
+    FilesDict
         The dictionary of input datasets.
     """
-    if os.path.isdir("/p/css03/esgf_publish/CMIP6/CMIP/"):
+    if os.path.isdir("/p/css03/esgf_publish/CMIP6/CMIP/hello"):
         return {
             "7_gb": {
                 "var_key": "tas",
@@ -82,52 +117,40 @@ def _get_input_dataset_dict() -> Dict[str, Dict[str, str]]:
         "7_gb": {
             "var_key": "tas",
             "dir_path": "./scripts/performance-benchmarks/input-datasets/7gb/",
-            "xml_path": "/scripts/performance-benchmarks/input-datasets/7gb/7.xml",
+            "xml_path": "./scripts/performance-benchmarks/input-datasets/7gb/7.xml",
         },
         "12_gb": {
             "var_key": "tas",
             "dir_path": "./scripts/performance-benchmarks/input-datasets/12gb/",
-            "xml_path": "/scripts/performance-benchmarks/input-datasets/12gb/12gb.xml",
+            "xml_path": "./scripts/performance-benchmarks/input-datasets/12gb/12gb.xml",
         },
         "22_gb": {
             "var_key": "ta",
             "dir_path": "./scripts/performance-benchmarks/input-datasets/22gb/",
-            "xml_path": "/scripts/performance-benchmarks/input-datasets/22gb/22gb.xml",
+            "xml_path": "./scripts/performance-benchmarks/input-datasets/22gb/22gb.xml",
         },
         "50_gb": {
             "var_key": "ta",
             "dir_path": "./scripts/performance-benchmarks/input-datasets/50gb",
-            "xml_path": "/scripts/performance-benchmarks/input-datasets/50gb/50gb.xml",
+            "xml_path": "./scripts/performance-benchmarks/input-datasets/50gb/50gb.xml",
         },
         "105_gb": {
             "var_key": "ta",
             "dir_path": "./scripts/performance-benchmarks/input-datasets/105gb",
-            "xml_path": "/scripts/performance-benchmarks/input-datasets/105gb/105gb.xml",
+            "xml_path": "./scripts/performance-benchmarks/input-datasets/105gb/105gb.xml",
         },
     }
 
 
-FILES_DICT = _get_input_dataset_dict()
-
-# TODO: Currently, only global spatial averaging has been benchmarked.
-# Need to benchmark the other APIs.
-APIS_TO_BENCHMARK = [
-    "spatial_avg",
-    # "temporal_avg",
-    # "group_avg",
-    # "climatology",
-    # "departures",
-]
-
-
 def get_xcdat_runtimes(
-    repeat: int,
-    parallel: bool,
+    files_dict: FilesDict, repeat: int, parallel: bool
 ) -> pd.DataFrame:
     """Get xCDAT API runtimes.
 
     Parameters
     ----------
+    files_dict : FilesDict
+        A dictionary of input files.
     parallel : bool
         Whether to run the APIs in parallel (True) or serial (False). If
         parallel, datasets are chunked on the time axis using Dask's auto
@@ -153,7 +176,7 @@ def get_xcdat_runtimes(
     all_runtimes: List[Dict[str, str | float | None]] = []
 
     # For each file and api, get the runtime N number of times.
-    for idx, (fsize, finfo) in enumerate(FILES_DICT.items()):
+    for idx, (fsize, finfo) in enumerate(files_dict.items()):
         dir_path = finfo["dir_path"]
         var_key = finfo["var_key"]
 
@@ -255,11 +278,13 @@ def _run_xcdat_api(ds: xr.Dataset, var_key: str, api: str) -> xr.Dataset:
         return ds.temporal.departures(var_key, freq="month", weighted=True)
 
 
-def get_cdat_runtimes(repeat: int) -> pd.DataFrame:
+def get_cdat_runtimes(files_dict: FilesDict, repeat: int) -> pd.DataFrame:
     """Get the CDAT API runtimes (only supports serial).
 
     Parameters
     ----------
+    files_dict : FilesDict
+        A dictionary of input files.
     repeat : int
         Number of samples to take for each API call.
 
@@ -273,7 +298,7 @@ def get_cdat_runtimes(repeat: int) -> pd.DataFrame:
     all_runtimes = []
 
     # For each file and api, get the runtime N number of times.
-    for idx, (fsize, finfo) in enumerate(FILES_DICT.items()):
+    for idx, (fsize, finfo) in enumerate(files_dict.items()):
         xml_path = finfo["xml_path"]
         var_key = finfo["var_key"]
 
@@ -351,23 +376,4 @@ def _sort_dataframe(df: pd.DataFrame):
 
 
 if __name__ == "__main__":
-    repeat = 5
-
-    # 1. Get xCDAT runtimes.
-    # xCDAT serial
-    df_xc_serial = get_xcdat_runtimes(repeat, parallel=False)
-    df_xc_serial = _sort_dataframe(df_xc_serial)
-    df_xc_serial.to_csv(f"{XC_FILENAME}_serial.csv", index=False)
-
-    # xCDAT parallel
-    df_xc_parallel = get_xcdat_runtimes(parallel=True, repeat=repeat)
-    df_xc_parallel = df_xc_parallel.sort_values(by=["pkg", "api", "gb"])
-    df_xc_parallel.to_csv(f"{XC_FILENAME}_parallel.csv", index=False)
-
-    df_xc_times = pd.merge(df_xc_serial, df_xc_parallel, on=["pkg", "gb", "api"])
-    df_xc_times.to_csv(f"{XC_FILENAME}.csv", index=False)
-    df_xc_times = _sort_dataframe(df_xc_times)
-
-    # 2. Get CDAT runtimes.
-    df_cdat_times = get_cdat_runtimes(repeat=repeat)
-    df_cdat_times.to_csv(f"{CD_FILENAME}.csv", index=False)
+    main()

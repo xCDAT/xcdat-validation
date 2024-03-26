@@ -7,13 +7,13 @@ import numpy as np
 import pandas as pd
 
 # %% Get the CSV data into DataFrames.
-ROOT_PATH = "./scripts/performance-benchmarks/spatial-avg/"
-xcdat_csv_path = os.path.join(ROOT_PATH, "20240102-135850-xcdat-runtimes.csv")
-cdat_csv_path = os.path.join(ROOT_PATH, "20240102-135850-cdat-runtimes.csv")
+# TODO: Update ROOT_PATH, XCDAT_CSV_PATH, and CDAT_CSV_PATH
+ROOT_PATH = "./scripts/performance-benchmarks/joss-paper-results-spatial-avg/"
+XCDAT_CSV_PATH = os.path.join(ROOT_PATH, "20240102-135850-xcdat-runtimes.csv")
+CDAT_CSV_PATH = os.path.join(ROOT_PATH, "20240102-135850-cdat-runtimes.csv")
 
-
-df_xcdat = pd.read_csv(xcdat_csv_path)
-df_cdat = pd.read_csv(cdat_csv_path)
+df_xcdat = pd.read_csv(XCDAT_CSV_PATH)
+df_cdat = pd.read_csv(CDAT_CSV_PATH)
 
 # %% Get x / y series.
 bar_width = 0.25
