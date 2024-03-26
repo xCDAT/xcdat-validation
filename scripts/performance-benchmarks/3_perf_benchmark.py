@@ -1,43 +1,8 @@
+"""JOSS performance benchmark script.
+
+Refer to the `README.md` for more instructions and more information.
 """
-A performance benchmarking script that captures and compares the API runtimes of
-xCDAT against CDAT.
 
-Overview:
---------
-It uses using multi-file
-time series datasets with varying sizes. The default number of samples taken
-for each API runtime is 3 and the minimum value is recorded. Runtimes only
-include computation and exclude I/O.  xCDAT can operate in serial or parallel,
-while CDAT can only operate in serial.
-
-How to use it
---------------
-   1. Must have direct access to LLNL Climate Program filesystem with CMIP data.
-   2. Create the conda/mamba environment:
-      - `mamba env create -f conda-env/test_stable.yml`
-      - `mamba activate xcdat_test_stable`
-   3. Run the script
-      - `python xcdat-cdat-runtime-comparison.py`
-
-Specifications for original machine used to run this script
------------------------------------------------------------
-  - OS: RHEL 7
-  - Memory: 1,000 GiB
-  - CPU: Intel(R) Xeon(r) CPU E7-8890v4 @ 2.20GHz
-
-How xCDAT is configured for parallelism
----------------------------------------
-  - Uses Dask Distributed local sechduler with multiprocessing
-    - Docs: https://docs.dask.org/en/stable/scheduling.html#dask-distributed-local
-    - Number of workers based on logical cores (num_workers=None), no memory limit
-  - Datasets are chunked on the "time" axis using Dask's auto chunking option.
-  - Datasets are opened in parallel using the `parallel=True` which uses
-    `dask.delayed`.
-  - For temporal averaging APIs, the underlying Xarray `groupby()` call uses the
-    `flox` package is used for map-reduce grouping, instead of Xarray's native
-    grouping logic. Xarray's native grouping logic is much slower because it
-    runs serially. More info can be found here: https://xarray.dev/blog/flox.
-"""
 from __future__ import annotations
 
 import os
@@ -48,14 +13,13 @@ from typing import Dict, List
 
 import cdms2
 import cdutil
-import numpy as np
 import pandas as pd
 import xarray as xr
 import xcdat as xc
 from dask.distributed import Client
 from numpy.core._exceptions import _ArrayMemoryError
 
-# Make sure cdms2 generates bounds if they don't exist.
+# Make sure cdms2 generates bounds if they don't exist in the dataset.
 cdms2.setAutoBounds("on")
 
 # Logger configs
@@ -71,52 +35,9 @@ ROOT_DIR = "scripts/performance-benchmarks/"
 XC_FILENAME = os.path.join(ROOT_DIR, f"{TIME_STR}-xcdat-runtimes")
 CD_FILENAME = os.path.join(ROOT_DIR, f"{TIME_STR}-cdat-runtimes")
 
-# Plot configs
-# -------------------
-# The base plot configuration passed to Panda's DataFrame plotting API.
-PLOT_CONFIG: pd.DataFrame.plot.__init__ = {
-    "kind": "bar",
-    "legend": True,
-    "rot": 0,
-    "x": "gb",
-    "xlabel": "File Size (GB)",
-    "ylabel": "Runtime (secs)",
-    "figsize": (6, 4),
-}
-# The base bar label configuration passed to axis containers to add
-# the floating point labels above the bars.
-BAR_LABEL_CONFIG = {"fmt": "{:10.2f}", "label_type": "edge", "padding": 3}
 
-# Input data configs
-# ------------------
-FILES_DICT: Dict[str, Dict[str, str]] = {
-    "7_gb": {
-        "var_key": "tas",
-        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/NCAR/CESM2/historical/r1i1p1f1/day/tas/gn/v20190308/",
-        "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/day/tas/CMIP6.CMIP.historical.NCAR.CESM2.r1i1p1f1.day.tas.atmos.glb-p8-gn.v20190308.0000000.0.xml",
-    },
-    "12_gb": {
-        "var_key": "tas",
-        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MRI/MRI-ESM2-0/amip/r1i1p1f1/3hr/tas/gn/v20190829/",
-        "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/3hr/tas/CMIP6.CMIP.historical.MRI.MRI-ESM2-0.r1i1p1f1.3hr.tas.gn.v20190829.0000000.0.xml",
-    },
-    "22_gb": {
-        "var_key": "ta",
-        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r5i1p1f3/day/ta/gn/v20191115/",
-        "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.MOHC.UKESM1-0-LL.r5i1p1f3.day.ta.atmos.glb-p8-gn.v20191115.0000000.0.xml",
-    },
-    "50_gb": {
-        "var_key": "ta",
-        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/NCAR/CESM2/historical/r1i1p1f1/day/ta/gn/v20190308/",
-        "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.NCAR.CESM2.r1i1p1f1.day.ta.atmos.glb-p8-gn.v20190308.0000000.0.xml",
-    },
-    "105_gb": {
-        "var_key": "ta",
-        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MOHC/HadGEM3-GC31-MM/historical/r2i1p1f3/day/ta/gn/v20191218",
-        "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.MOHC.HadGEM3-GC31-MM.r2i1p1f3.day.ta.atmos.glb-p8-gn.v20191218.0000000.0.xml",
-    },
-}
-
+# TODO: Currently, only global spatial averaging has been benchmarked.
+# Need to benchmark the other APIs.
 APIS_TO_BENCHMARK = [
     "spatial_avg",
     # "temporal_avg",
@@ -125,15 +46,111 @@ APIS_TO_BENCHMARK = [
     # "departures",
 ]
 
+# A type annotation for the file dictionary.
+FilesDict = Dict[str, Dict[str, str]]
+
+
+def main():
+    files_dict = _get_input_dataset_dict()
+    repeat = 5
+
+    # xCDAT serial runtimes.
+    df_xc_serial = get_xcdat_runtimes(files_dict, repeat, parallel=False)
+    df_xc_serial = _sort_dataframe(df_xc_serial)
+    df_xc_serial.to_csv(f"{XC_FILENAME}_serial.csv", index=False)
+
+    # xCDAT parallel runtimes.
+    df_xc_parallel = get_xcdat_runtimes(files_dict, parallel=True, repeat=repeat)
+    df_xc_parallel = df_xc_parallel.sort_values(by=["pkg", "api", "gb"])
+    df_xc_parallel.to_csv(f"{XC_FILENAME}_parallel.csv", index=False)
+
+    df_xc_times = pd.merge(df_xc_serial, df_xc_parallel, on=["pkg", "gb", "api"])
+    df_xc_times.to_csv(f"{XC_FILENAME}.csv", index=False)
+    df_xc_times = _sort_dataframe(df_xc_times)
+
+    # CDAT runtimes (serial-only).
+    df_cdat_times = get_cdat_runtimes(files_dict, repeat=repeat)
+    df_cdat_times.to_csv(f"{CD_FILENAME}.csv", index=False)
+
+
+def _get_input_dataset_dict() -> FilesDict:
+    """Get the dictionary of input datasets.
+
+    This function will either return a dict mapping paths on the LLNL filesystem
+    connected to the ESGF node for internal LLNL users, or falls back to paths
+    of downloaded data and user-generated XML files for external users.
+
+    Returns
+    -------
+    FilesDict
+        The dictionary of input datasets.
+    """
+    if os.path.isdir("/p/css03/esgf_publish/CMIP6/CMIP/hello"):
+        return {
+            "7_gb": {
+                "var_key": "tas",
+                "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/NCAR/CESM2/historical/r1i1p1f1/day/tas/gn/v20190308/",
+                "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/day/tas/CMIP6.CMIP.historical.NCAR.CESM2.r1i1p1f1.day.tas.atmos.glb-p8-gn.v20190308.0000000.0.xml",
+            },
+            "12_gb": {
+                "var_key": "tas",
+                "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MRI/MRI-ESM2-0/amip/r1i1p1f1/3hr/tas/gn/v20190829/",
+                "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/3hr/tas/CMIP6.CMIP.historical.MRI.MRI-ESM2-0.r1i1p1f1.3hr.tas.gn.v20190829.0000000.0.xml",
+            },
+            "22_gb": {
+                "var_key": "ta",
+                "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r5i1p1f3/day/ta/gn/v20191115/",
+                "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.MOHC.UKESM1-0-LL.r5i1p1f3.day.ta.atmos.glb-p8-gn.v20191115.0000000.0.xml",
+            },
+            "50_gb": {
+                "var_key": "ta",
+                "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/NCAR/CESM2/historical/r1i1p1f1/day/ta/gn/v20190308/",
+                "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.NCAR.CESM2.r1i1p1f1.day.ta.atmos.glb-p8-gn.v20190308.0000000.0.xml",
+            },
+            "105_gb": {
+                "var_key": "ta",
+                "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MOHC/HadGEM3-GC31-MM/historical/r2i1p1f3/day/ta/gn/v20191218",
+                "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.MOHC.HadGEM3-GC31-MM.r2i1p1f3.day.ta.atmos.glb-p8-gn.v20191218.0000000.0.xml",
+            },
+        }
+    return {
+        "7_gb": {
+            "var_key": "tas",
+            "dir_path": "./scripts/performance-benchmarks/input-datasets/7gb/",
+            "xml_path": "./scripts/performance-benchmarks/input-datasets/7gb/7.xml",
+        },
+        "12_gb": {
+            "var_key": "tas",
+            "dir_path": "./scripts/performance-benchmarks/input-datasets/12gb/",
+            "xml_path": "./scripts/performance-benchmarks/input-datasets/12gb/12gb.xml",
+        },
+        "22_gb": {
+            "var_key": "ta",
+            "dir_path": "./scripts/performance-benchmarks/input-datasets/22gb/",
+            "xml_path": "./scripts/performance-benchmarks/input-datasets/22gb/22gb.xml",
+        },
+        "50_gb": {
+            "var_key": "ta",
+            "dir_path": "./scripts/performance-benchmarks/input-datasets/50gb",
+            "xml_path": "./scripts/performance-benchmarks/input-datasets/50gb/50gb.xml",
+        },
+        "105_gb": {
+            "var_key": "ta",
+            "dir_path": "./scripts/performance-benchmarks/input-datasets/105gb",
+            "xml_path": "./scripts/performance-benchmarks/input-datasets/105gb/105gb.xml",
+        },
+    }
+
 
 def get_xcdat_runtimes(
-    repeat: int,
-    parallel: bool,
+    files_dict: FilesDict, repeat: int, parallel: bool
 ) -> pd.DataFrame:
     """Get xCDAT API runtimes.
 
     Parameters
     ----------
+    files_dict : FilesDict
+        A dictionary of input files.
     parallel : bool
         Whether to run the APIs in parallel (True) or serial (False). If
         parallel, datasets are chunked on the time axis using Dask's auto
@@ -159,7 +176,7 @@ def get_xcdat_runtimes(
     all_runtimes: List[Dict[str, str | float | None]] = []
 
     # For each file and api, get the runtime N number of times.
-    for idx, (fsize, finfo) in enumerate(FILES_DICT.items()):
+    for idx, (fsize, finfo) in enumerate(files_dict.items()):
         dir_path = finfo["dir_path"]
         var_key = finfo["var_key"]
 
@@ -261,11 +278,13 @@ def _run_xcdat_api(ds: xr.Dataset, var_key: str, api: str) -> xr.Dataset:
         return ds.temporal.departures(var_key, freq="month", weighted=True)
 
 
-def get_cdat_runtimes(repeat: int) -> pd.DataFrame:
+def get_cdat_runtimes(files_dict: FilesDict, repeat: int) -> pd.DataFrame:
     """Get the CDAT API runtimes (only supports serial).
 
     Parameters
     ----------
+    files_dict : FilesDict
+        A dictionary of input files.
     repeat : int
         Number of samples to take for each API call.
 
@@ -279,7 +298,7 @@ def get_cdat_runtimes(repeat: int) -> pd.DataFrame:
     all_runtimes = []
 
     # For each file and api, get the runtime N number of times.
-    for idx, (fsize, finfo) in enumerate(FILES_DICT.items()):
+    for idx, (fsize, finfo) in enumerate(files_dict.items()):
         xml_path = finfo["xml_path"]
         var_key = finfo["var_key"]
 
@@ -357,23 +376,4 @@ def _sort_dataframe(df: pd.DataFrame):
 
 
 if __name__ == "__main__":
-    repeat = 5
-
-    # 1. Get xCDAT runtimes.
-    # xCDAT serial
-    df_xc_serial = get_xcdat_runtimes(repeat, parallel=False)
-    df_xc_serial = _sort_dataframe(df_xc_serial)
-    df_xc_serial.to_csv(f"{XC_FILENAME}_serial.csv", index=False)
-
-    # xCDAT parallel
-    df_xc_parallel = get_xcdat_runtimes(parallel=True, repeat=repeat)
-    df_xc_parallel = df_xc_parallel.sort_values(by=["pkg", "api", "gb"])
-    df_xc_parallel.to_csv(f"{XC_FILENAME}_parallel.csv", index=False)
-
-    df_xc_times = pd.merge(df_xc_serial, df_xc_parallel, on=["pkg", "gb", "api"])
-    df_xc_times.to_csv(f"{XC_FILENAME}.csv", index=False)
-    df_xc_times = _sort_dataframe(df_xc_times)
-
-    # 2. Get CDAT runtimes.
-    df_cdat_times = get_cdat_runtimes(repeat=repeat)
-    df_cdat_times.to_csv(f"{CD_FILENAME}.csv", index=False)
+    main()
