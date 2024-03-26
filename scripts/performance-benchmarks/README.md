@@ -17,10 +17,13 @@ runtimes for global spatial averaging.**
 
    1. Be an internal user at LLNL to access the LLNL Climate Program filesystem
       with direct access to the LLNL ESGF node (internal user)
-   2. Download the datasets from ESGF using the provided wget scripts. Instructions
-      are provided below.
-      - It is recommended that you run this script in `tmux` or another persistent
-        terminal in case there is an issue with downloading at any point.
+   2. Download the datasets from ESGF using either (1) `1_esgf_download_datasets.py` or
+      (2) the ESGF2 Globus Endpoint links. Instructions are provided below.
+      - If you run (1) `1_esgf_download_datasets.py`, it is recommended to do so in
+        `tmux` or another persistent terminal in case there is an issue with downloading at any point.
+      - Downloading via (2) the ESGF Globus Endpoint is significantly faster than (1),
+        which uses wget/HTTP. However, you need to do some extra work in choosing the
+        correct directory to store each multi-file dataset.
 
 ## How to use it
 
