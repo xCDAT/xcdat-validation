@@ -142,3 +142,4 @@ qa/
 input/
 
 *.nc
+*.xml
