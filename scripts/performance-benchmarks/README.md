@@ -31,9 +31,13 @@ runtimes for global spatial averaging.**
    mamba activate xcdat_test_stable
    ```
 
-2. (REQUIRED for external users) Download the datasets from ESGF online using wget
-   and HTTP. The files will be stored in the sub-directories of the `input-dataset`
-   directory.
+2. (REQUIRED for external users) Download the datasets from ESGF.
+   You can either use (1) `1_esgf_download_datasets.py`, which downloads the files using
+   ESGF wget scripts (2) **Download the files from ESGF2's Globus endpoint**. If you download
+   the files using Globus, make sure they are stored correctly in the sub-directories
+   found in `scripts/performance-benchmarks/input-dataset` (each sub-directory
+   corresponds to a multi-file dataset, labeled by size). Links to Globus are located
+   in the "Links to Datasets on ESGF" section below.
 
    ```bash
      python scripts/performance-benchmarks/1_esgf_download_datasets.py
@@ -59,6 +63,38 @@ runtimes for global spatial averaging.**
     python scripts/performance-benchmarks/4_plot_spatial_avg_times.py
    ```
 
+### Links to Datasets on ESGF
+
+#### 7 GB
+
+- MetaGrid: https://aims2.llnl.gov/search?project=CMIP6&activeFacets=%7B%22activity_id%22%3A%22CMIP%22%2C%22institution_id%22%3A%22NCAR%22%2C%22source_id%22%3A%22CESM2%22%2C%22experiment_id%22%3A%22historical%22%2C%22variant_label%22%3A%22r1i1p1f1%22%2C%22grid_label%22%3A%22gn%22%2C%22frequency%22%3A%22day%22%2C%22variable_id%22%3A%22tas%22%2C%22dataNode%22%3A%5B%22aims3.llnl.gov%22%2C%22esgf-data1.llnl.gov%22%2C%22esgf-data2.llnl.gov%22%5D%7D
+
+- Globus: https://app.globus.org/file-manager?origin_id=1889ea03-25ad-4f9f-8110-1ce8833a9d7e&origin_path=%2Fcss03_data%2FCMIP6%2FCMIP%2FNCAR%2FCESM2%2Fhistorical%2Fr1i1p1f1%2Fday%2Ftas%2Fgn%2Fv20190308%2F
+
+#### 12 GB
+
+- MetaGrid: https://aims2.llnl.gov/search?project=CMIP6&activeFacets=%7B%22variable_id%22%3A%22tas%22%2C%22source_id%22%3A%22MRI-ESM2-0%22%2C%22frequency%22%3A%223hrPt%22%2C%22table_id%22%3A%223hr%22%2C%22variant_label%22%3A%22r1i1p1f1%22%2C%22institution_id%22%3A%22MRI%22%2C%22grid_label%22%3A%22gn%22%2C%22activity_id%22%3A%22CMIP%22%2C%22experiment_id%22%3A%22amip%22%2C%22dataNode%22%3A%5B%22aims3.llnl.gov%22%2C%22esgf-data1.llnl.gov%22%2C%22esgf-data2.llnl.gov%22%5D%7D
+
+- Globus: https://app.globus.org/file-manager?origin_id=1889ea03-25ad-4f9f-8110-1ce8833a9d7e&origin_path=%2Fcss03_data%2FCMIP6%2FCMIP%2FMRI%2FMRI-ESM2-0%2Famip%2Fr1i1p1f1%2F3hr%2Ftas%2Fgn%2Fv20190829%2F
+
+#### 22 GB
+
+- MetaGrid: https://aims2.llnl.gov/search?project=CMIP6&activeFacets=%7B%22activity_id%22%3A%22CMIP%22%2C%22institution_id%22%3A%22MOHC%22%2C%22source_id%22%3A%22UKESM1-0-LL%22%2C%22variant_label%22%3A%22r5i1p1f3%22%2C%22grid_label%22%3A%22gn%22%2C%22frequency%22%3A%22day%22%2C%22variable_id%22%3A%22ta%22%2C%22table_id%22%3A%22day%22%2C%22dataNode%22%3A%5B%22aims3.llnl.gov%22%2C%22esgf-data1.llnl.gov%22%2C%22esgf-data2.llnl.gov%22%5D%7D
+
+- Globus: https://app.globus.org/file-manager?origin_id=1889ea03-25ad-4f9f-8110-1ce8833a9d7e&origin_path=%2Fcss03_data%2FCMIP6%2FCMIP%2FMOHC%2FUKESM1-0-LL%2Fhistorical%2Fr5i1p1f3%2Fday%2Fta%2Fgn%2Fv20191115%2F
+
+#### 50 GB
+
+- MetaGrid: https://aims2.llnl.gov/search?project=CMIP6&activeFacets=%7B%22activity_id%22%3A%22CMIP%22%2C%22institution_id%22%3A%22NCAR%22%2C%22source_id%22%3A%22CESM2%22%2C%22experiment_id%22%3A%22historical%22%2C%22grid_label%22%3A%22gn%22%2C%22table_id%22%3A%22day%22%2C%22variable_id%22%3A%22ta%22%2C%22variant_label%22%3A%22r1i1p1f1%22%2C%22dataNode%22%3A%5B%22aims3.llnl.gov%22%2C%22esgf-data1.llnl.gov%22%2C%22esgf-data2.llnl.gov%22%5D%7D
+
+- Globus: https://app.globus.org/file-manager?origin_id=1889ea03-25ad-4f9f-8110-1ce8833a9d7e&origin_path=%2Fcss03_data%2FCMIP6%2FCMIP%2FNCAR%2FCESM2%2Fhistorical%2Fr1i1p1f1%2Fday%2Fta%2Fgn%2Fv20190308%2F
+
+#### 105 GB
+
+- MetaGrid: https://aims2.llnl.gov/search?project=CMIP6&activeFacets=%7B%22activity_id%22%3A%22CMIP%22%2C%22source_id%22%3A%22HadGEM3-GC31-MM%22%2C%22institution_id%22%3A%22MOHC%22%2C%22experiment_id%22%3A%22historical%22%2C%22variant_label%22%3A%22r2i1p1f3%22%2C%22variable_id%22%3A%22ta%22%2C%22table_id%22%3A%22day%22%2C%22dataNode%22%3A%5B%22aims3.llnl.gov%22%2C%22esgf-data1.llnl.gov%22%2C%22esgf-data2.llnl.gov%22%5D%7D
+
+- Globus: https://app.globus.org/file-manager?origin_id=1889ea03-25ad-4f9f-8110-1ce8833a9d7e&origin_path=%2Fcss03_data%2FCMIP6%2FCMIP%2FMOHC%2FHadGEM3-GC31-MM%2Fhistorical%2Fr2i1p1f3%2Fday%2Fta%2Fgn%2Fv20191218%2F
+
 ### Misc. Info
 
 #### Specifications for original machine for performance benchmarks for JOSS paper (Dec/2023)
@@ -79,15 +115,3 @@ runtimes for global spatial averaging.**
   `flox` package is used for map-reduce grouping, instead of Xarray's native
   grouping logic. Xarray's native grouping logic is much slower because it
   runs serially. More info can be found here: https://xarray.dev/blog/flox.
-
-### Links to Datasets on ESGF (MetaGrid)
-
-- 7 GB: https://esgf-node.ornl.gov/search?project=CMIP6&resultType=originals+only&activeFacets=%7B%22activity_id%22%3A%22CMIP%22%2C%22institution_id%22%3A%22NCAR%22%2C%22source_id%22%3A%22CESM2%22%2C%22experiment_id%22%3A%22historical%22%2C%22variant_label%22%3A%22r1i1p1f1%22%2C%22grid_label%22%3A%22gn%22%2C%22frequency%22%3A%22day%22%2C%22variable_id%22%3A%22tas%22%7D
-
-- 12 GB: # https://esgf-node.ornl.gov/search?project=CMIP6&activeFacets=%7B%22variable_id%22%3A%22tas%22%2C%22source_id%22%3A%22MRI-ESM2-0%22%2C%22frequency%22%3A%223hrPt%22%2C%22table_id%22%3A%223hr%22%2C%22variant_label%22%3A%22r1i1p1f1%22%2C%22institution_id%22%3A%22MRI%22%2C%22grid_label%22%3A%22gn%22%2C%22activity_id%22%3A%22CMIP%22%2C%22experiment_id%22%3A%22amip%22%7D
-
-- 22 GB: https://esgf-node.ornl.gov/search?project=CMIP6&activeFacets=%7B%22activity_id%22%3A%22CMIP%22%2C%22institution_id%22%3A%22MOHC%22%2C%22source_id%22%3A%22UKESM1-0-LL%22%2C%22variant_label%22%3A%22r5i1p1f3%22%2C%22grid_label%22%3A%22gn%22%2C%22frequency%22%3A%22day%22%2C%22variable_id%22%3A%22ta%22%2C%22table_id%22%3A%22day%22%7D
-
-- 50 GB: https://esgf-node.ornl.gov/search?project=CMIP6&activeFacets=%7B%22activity_id%22%3A%22CMIP%22%2C%22institution_id%22%3A%22NCAR%22%2C%22source_id%22%3A%22CESM2%22%2C%22experiment_id%22%3A%22historical%22%2C%22grid_label%22%3A%22gn%22%2C%22table_id%22%3A%22day%22%2C%22variable_id%22%3A%22ta%22%2C%22variant_label%22%3A%22r1i1p1f1%22%7D
-
-- 105 GB: https://esgf-node.ornl.gov/search?project=CMIP6&activeFacets=%7B%22activity_id%22%3A%22CMIP%22%2C%22source_id%22%3A%22HadGEM3-GC31-MM%22%2C%22institution_id%22%3A%22MOHC%22%2C%22experiment_id%22%3A%22historical%22%2C%22variant_label%22%3A%22r2i1p1f3%22%2C%22variable_id%22%3A%22ta%22%2C%22table_id%22%3A%22day%22%7D
