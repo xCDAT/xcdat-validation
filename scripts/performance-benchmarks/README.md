@@ -5,7 +5,7 @@ A performance benchmarking script that captures and compares the API runtimes of
 ## Overview
 
 This performance benchmark uses multi-file time series datasets of varying sizes. The
-default number of samples taken for each API runtime is 3 and the minimum value is
+default number of samples taken for each API runtime is 5 and the minimum value is
 recorded. Runtimes only include computation, excluding I/O. xCDAT can operate in serial
 or parallel, while CDAT can only operate in serial. **Currently, it only compares the
 runtimes for global spatial averaging.**
@@ -79,3 +79,15 @@ runtimes for global spatial averaging.**
   `flox` package is used for map-reduce grouping, instead of Xarray's native
   grouping logic. Xarray's native grouping logic is much slower because it
   runs serially. More info can be found here: https://xarray.dev/blog/flox.
+
+### Links to Datasets on ESGF (MetaGrid)
+
+- 7 GB: https://esgf-node.ornl.gov/search?project=CMIP6&resultType=originals+only&activeFacets=%7B%22activity_id%22%3A%22CMIP%22%2C%22institution_id%22%3A%22NCAR%22%2C%22source_id%22%3A%22CESM2%22%2C%22experiment_id%22%3A%22historical%22%2C%22variant_label%22%3A%22r1i1p1f1%22%2C%22grid_label%22%3A%22gn%22%2C%22frequency%22%3A%22day%22%2C%22variable_id%22%3A%22tas%22%7D
+
+- 12 GB: # https://esgf-node.ornl.gov/search?project=CMIP6&activeFacets=%7B%22variable_id%22%3A%22tas%22%2C%22source_id%22%3A%22MRI-ESM2-0%22%2C%22frequency%22%3A%223hrPt%22%2C%22table_id%22%3A%223hr%22%2C%22variant_label%22%3A%22r1i1p1f1%22%2C%22institution_id%22%3A%22MRI%22%2C%22grid_label%22%3A%22gn%22%2C%22activity_id%22%3A%22CMIP%22%2C%22experiment_id%22%3A%22amip%22%7D
+
+- 22 GB: https://esgf-node.ornl.gov/search?project=CMIP6&activeFacets=%7B%22activity_id%22%3A%22CMIP%22%2C%22institution_id%22%3A%22MOHC%22%2C%22source_id%22%3A%22UKESM1-0-LL%22%2C%22variant_label%22%3A%22r5i1p1f3%22%2C%22grid_label%22%3A%22gn%22%2C%22frequency%22%3A%22day%22%2C%22variable_id%22%3A%22ta%22%2C%22table_id%22%3A%22day%22%7D
+
+- 50 GB: https://esgf-node.ornl.gov/search?project=CMIP6&activeFacets=%7B%22activity_id%22%3A%22CMIP%22%2C%22institution_id%22%3A%22NCAR%22%2C%22source_id%22%3A%22CESM2%22%2C%22experiment_id%22%3A%22historical%22%2C%22grid_label%22%3A%22gn%22%2C%22table_id%22%3A%22day%22%2C%22variable_id%22%3A%22ta%22%2C%22variant_label%22%3A%22r1i1p1f1%22%7D
+
+- 105 GB: https://esgf-node.ornl.gov/search?project=CMIP6&activeFacets=%7B%22activity_id%22%3A%22CMIP%22%2C%22source_id%22%3A%22HadGEM3-GC31-MM%22%2C%22institution_id%22%3A%22MOHC%22%2C%22experiment_id%22%3A%22historical%22%2C%22variant_label%22%3A%22r2i1p1f3%22%2C%22variable_id%22%3A%22ta%22%2C%22table_id%22%3A%22day%22%7D

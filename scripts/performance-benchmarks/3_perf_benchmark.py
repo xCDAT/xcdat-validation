@@ -13,14 +13,13 @@ from typing import Dict, List
 
 import cdms2
 import cdutil
-import numpy as np
 import pandas as pd
 import xarray as xr
 import xcdat as xc
 from dask.distributed import Client
 from numpy.core._exceptions import _ArrayMemoryError
 
-# Make sure cdms2 generates bounds if they don't exist.
+# Make sure cdms2 generates bounds if they don't exist in the dataset.
 cdms2.setAutoBounds("on")
 
 # Logger configs
@@ -37,46 +36,81 @@ XC_FILENAME = os.path.join(ROOT_DIR, f"{TIME_STR}-xcdat-runtimes")
 CD_FILENAME = os.path.join(ROOT_DIR, f"{TIME_STR}-cdat-runtimes")
 
 
-def _get_input_dataset_map():
-    if os.path.isdir("/p/css03/esgf_publish/CMIP6/CMIP/"):
-
-
-
 # Input data configs
 # ------------------
-FILES_DICT: Dict[str, Dict[str, str]] = {
-    # https://esgf-node.ornl.gov/search?project=CMIP6&resultType=originals+only&activeFacets=%7B%22activity_id%22%3A%22CMIP%22%2C%22institution_id%22%3A%22NCAR%22%2C%22source_id%22%3A%22CESM2%22%2C%22experiment_id%22%3A%22historical%22%2C%22variant_label%22%3A%22r1i1p1f1%22%2C%22grid_label%22%3A%22gn%22%2C%22frequency%22%3A%22day%22%2C%22variable_id%22%3A%22tas%22%7D
-    "7_gb": {
-        "var_key": "tas",
-        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/NCAR/CESM2/historical/r1i1p1f1/day/tas/gn/v20190308/",
-        "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/day/tas/CMIP6.CMIP.historical.NCAR.CESM2.r1i1p1f1.day.tas.atmos.glb-p8-gn.v20190308.0000000.0.xml",
-    },
-    # https://esgf-node.ornl.gov/search?project=CMIP6&activeFacets=%7B%22variable_id%22%3A%22tas%22%2C%22source_id%22%3A%22MRI-ESM2-0%22%2C%22frequency%22%3A%223hrPt%22%2C%22table_id%22%3A%223hr%22%2C%22variant_label%22%3A%22r1i1p1f1%22%2C%22institution_id%22%3A%22MRI%22%2C%22grid_label%22%3A%22gn%22%2C%22activity_id%22%3A%22CMIP%22%2C%22experiment_id%22%3A%22amip%22%7D
-    "12_gb": {
-        "var_key": "tas",
-        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MRI/MRI-ESM2-0/amip/r1i1p1f1/3hr/tas/gn/v20190829/",
-        "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/3hr/tas/CMIP6.CMIP.historical.MRI.MRI-ESM2-0.r1i1p1f1.3hr.tas.gn.v20190829.0000000.0.xml",
-    },
-    # https://esgf-node.ornl.gov/search?project=CMIP6&activeFacets=%7B%22activity_id%22%3A%22CMIP%22%2C%22institution_id%22%3A%22MOHC%22%2C%22source_id%22%3A%22UKESM1-0-LL%22%2C%22variant_label%22%3A%22r5i1p1f3%22%2C%22grid_label%22%3A%22gn%22%2C%22frequency%22%3A%22day%22%2C%22variable_id%22%3A%22ta%22%2C%22table_id%22%3A%22day%22%7D
-    "22_gb": {
-        "var_key": "ta",
-        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r5i1p1f3/day/ta/gn/v20191115/",
-        "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.MOHC.UKESM1-0-LL.r5i1p1f3.day.ta.atmos.glb-p8-gn.v20191115.0000000.0.xml",
-    },
-    # https://esgf-node.ornl.gov/search?project=CMIP6&activeFacets=%7B%22activity_id%22%3A%22CMIP%22%2C%22institution_id%22%3A%22NCAR%22%2C%22source_id%22%3A%22CESM2%22%2C%22experiment_id%22%3A%22historical%22%2C%22grid_label%22%3A%22gn%22%2C%22table_id%22%3A%22day%22%2C%22variable_id%22%3A%22ta%22%2C%22variant_label%22%3A%22r1i1p1f1%22%7D
-    "50_gb": {
-        "var_key": "ta",
-        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/NCAR/CESM2/historical/r1i1p1f1/day/ta/gn/v20190308/",
-        "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.NCAR.CESM2.r1i1p1f1.day.ta.atmos.glb-p8-gn.v20190308.0000000.0.xml",
-    },
-    # https://esgf-node.ornl.gov/search?project=CMIP6&activeFacets=%7B%22activity_id%22%3A%22CMIP%22%2C%22source_id%22%3A%22HadGEM3-GC31-MM%22%2C%22institution_id%22%3A%22MOHC%22%2C%22experiment_id%22%3A%22historical%22%2C%22variant_label%22%3A%22r2i1p1f3%22%2C%22variable_id%22%3A%22ta%22%2C%22table_id%22%3A%22day%22%7D
-    "105_gb": {
-        "var_key": "ta",
-        "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MOHC/HadGEM3-GC31-MM/historical/r2i1p1f3/day/ta/gn/v20191218",
-        "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.MOHC.HadGEM3-GC31-MM.r2i1p1f3.day.ta.atmos.glb-p8-gn.v20191218.0000000.0.xml",
-    },
-}
+def _get_input_dataset_dict() -> Dict[str, Dict[str, str]]:
+    """Get the dictionary of input datasets.
 
+    This function will either return a dict mapping paths on the LLNL filesystem
+    connected to the ESGF node for internal LLNL users, or falls back to paths
+    of downloaded data and user-generated XML files for external users.
+
+    Returns
+    -------
+    Dict[str, Dict[str, str]]
+        The dictionary of input datasets.
+    """
+    if os.path.isdir("/p/css03/esgf_publish/CMIP6/CMIP/"):
+        return {
+            "7_gb": {
+                "var_key": "tas",
+                "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/NCAR/CESM2/historical/r1i1p1f1/day/tas/gn/v20190308/",
+                "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/day/tas/CMIP6.CMIP.historical.NCAR.CESM2.r1i1p1f1.day.tas.atmos.glb-p8-gn.v20190308.0000000.0.xml",
+            },
+            "12_gb": {
+                "var_key": "tas",
+                "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MRI/MRI-ESM2-0/amip/r1i1p1f1/3hr/tas/gn/v20190829/",
+                "xml_path": "/p/user_pub/e3sm/vo13/xclim/CMIP6/CMIP/historical/atmos/3hr/tas/CMIP6.CMIP.historical.MRI.MRI-ESM2-0.r1i1p1f1.3hr.tas.gn.v20190829.0000000.0.xml",
+            },
+            "22_gb": {
+                "var_key": "ta",
+                "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r5i1p1f3/day/ta/gn/v20191115/",
+                "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.MOHC.UKESM1-0-LL.r5i1p1f3.day.ta.atmos.glb-p8-gn.v20191115.0000000.0.xml",
+            },
+            "50_gb": {
+                "var_key": "ta",
+                "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/NCAR/CESM2/historical/r1i1p1f1/day/ta/gn/v20190308/",
+                "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.NCAR.CESM2.r1i1p1f1.day.ta.atmos.glb-p8-gn.v20190308.0000000.0.xml",
+            },
+            "105_gb": {
+                "var_key": "ta",
+                "dir_path": "/p/css03/esgf_publish/CMIP6/CMIP/MOHC/HadGEM3-GC31-MM/historical/r2i1p1f3/day/ta/gn/v20191218",
+                "xml_path": "/p/user_pub/xclim/CMIP6/CMIP/historical/atmos/day/ta/CMIP6.CMIP.historical.MOHC.HadGEM3-GC31-MM.r2i1p1f3.day.ta.atmos.glb-p8-gn.v20191218.0000000.0.xml",
+            },
+        }
+    return {
+        "7_gb": {
+            "var_key": "tas",
+            "dir_path": "./scripts/performance-benchmarks/input-datasets/7gb/",
+            "xml_path": "/scripts/performance-benchmarks/input-datasets/7gb/7.xml",
+        },
+        "12_gb": {
+            "var_key": "tas",
+            "dir_path": "./scripts/performance-benchmarks/input-datasets/12gb/",
+            "xml_path": "/scripts/performance-benchmarks/input-datasets/12gb/12gb.xml",
+        },
+        "22_gb": {
+            "var_key": "ta",
+            "dir_path": "./scripts/performance-benchmarks/input-datasets/22gb/",
+            "xml_path": "/scripts/performance-benchmarks/input-datasets/22gb/22gb.xml",
+        },
+        "50_gb": {
+            "var_key": "ta",
+            "dir_path": "./scripts/performance-benchmarks/input-datasets/50gb",
+            "xml_path": "/scripts/performance-benchmarks/input-datasets/50gb/50gb.xml",
+        },
+        "105_gb": {
+            "var_key": "ta",
+            "dir_path": "./scripts/performance-benchmarks/input-datasets/105gb",
+            "xml_path": "/scripts/performance-benchmarks/input-datasets/105gb/105gb.xml",
+        },
+    }
+
+
+FILES_DICT = _get_input_dataset_dict()
+
+# TODO: Currently, only global spatial averaging has been benchmarked.
+# Need to benchmark the other APIs.
 APIS_TO_BENCHMARK = [
     "spatial_avg",
     # "temporal_avg",
