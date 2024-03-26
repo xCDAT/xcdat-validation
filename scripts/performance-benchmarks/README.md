@@ -49,14 +49,14 @@ runtimes for global spatial averaging.**
 4. Run the performance benchmarking script.
 
    ```bash
-    python scripts/performance-benchmarks/1_perf_benchmark.py
+    python scripts/performance-benchmarks/3_perf_benchmark.py
    ```
 
 5. Run the plotting scripts. Make sure to update the `ROOT_DIR` directory to
    the directory storing the output CSV files with the runtimes.
 
    ```bash
-    python scripts/performance-benchmarks/2_plot_perf_benchmark.py
+    python scripts/performance-benchmarks/4_plot_perf_benchmark.py
    ```
 
 ### Misc. Info
