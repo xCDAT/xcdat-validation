@@ -108,7 +108,7 @@ runtimes for global spatial averaging.**
 
 #### How xCDAT is configured for parallelism
 
-- Uses Dask Distributed local sechduler with multiprocessing
+- Uses Dask Distributed local scheduler with multiprocessing
   - Docs: https://docs.dask.org/en/stable/scheduling.html#dask-distributed-local
   - Number of workers based on logical cores (num_workers=None), no memory limit
 - Datasets are chunked on the "time" axis using Dask's auto chunking option.
