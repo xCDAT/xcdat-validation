@@ -1,0 +1,27 @@
+{
+  "folders": [
+    {
+      "path": ".."
+    }
+  ],
+  "settings": {},
+  // =====================================
+  // VS Code Python Debugger Configuration
+  // =====================================
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Python: Current File",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${file}",
+        "console": "integratedTerminal",
+        "justMyCode": false,
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}"
+        }
+      }
+    ]
+  }
+}
