@@ -17,6 +17,10 @@ dependencies:
     # =========================================
     - matplotlib-base >=3.7.0
     - nc-time-axis=1.4.1
+    # Both of these should be required dependencies in uxarray
+    # https://github.com/UXARRAY/uxarray/issues/757
+    - spatialpandas
+    - antimeridian
     # Additional
     # ==================
     - jupyterlab
