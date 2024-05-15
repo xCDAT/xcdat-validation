@@ -13,8 +13,9 @@ runtimes for global spatial averaging.**
 
 ## Prerequisites
 
-1. `conda`/`mamba` to create the test environment that includes xCDAT and CDAT.
-2. To get the input datasets, either:
+1. Use a `linux-64` or `osx-64` based machine (CDAT does not support `osx-arm64` or `win-64`).
+2. `conda`/`mamba` to create the test environment that includes xCDAT and CDAT.
+3. To get the input datasets, either:
 
    1. Be an internal user at LLNL to access the LLNL Climate Program filesystem
       with direct access to the LLNL ESGF node
