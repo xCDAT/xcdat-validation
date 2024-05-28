@@ -19,8 +19,8 @@ runtimes for global spatial averaging.**
 > - Memory: 1,000 GiB
 > - CPU: Intel(R) Xeon(r) CPU E7-8890v4 @ 2.20GHz
 >
-> **If your machine does not have the same amount memory or more, the benchmark might not
-> complete successfully. This is because the serial runs loads the datasets into memory.**
+> **If your machine does not have the same amount of memory or more, the benchmark might
+> crash at some point. This is because the serial runs load the data into memory.**
 
 ## Prerequisites
 
