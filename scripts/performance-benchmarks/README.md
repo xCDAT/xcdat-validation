@@ -11,6 +11,17 @@ recorded. Runtimes only include computation, excluding I/O. xCDAT can operate in
 or parallel, while CDAT can only operate in serial. **Currently, it only compares the
 runtimes for global spatial averaging.**
 
+> **NOTE**
+> The validation benchmark was originally performed on a machine with the following
+> specifications (Dec/2023).
+>
+> - OS: RHEL 7
+> - Memory: 1,000 GiB
+> - CPU: Intel(R) Xeon(r) CPU E7-8890v4 @ 2.20GHz
+>
+> **If your machine does not have the same amount memory or more, the benchmark might not
+> complete successfully. This is because the serial runs loads the datasets into memory.**
+
 ## Prerequisites
 
 1. Use a `linux-64` or `osx-64` based machine (CDAT does not support `osx-arm64` or `win-64`).
@@ -100,12 +111,6 @@ runtimes for global spatial averaging.**
 - Globus: https://app.globus.org/file-manager?origin_id=1889ea03-25ad-4f9f-8110-1ce8833a9d7e&origin_path=%2Fcss03_data%2FCMIP6%2FCMIP%2FMOHC%2FHadGEM3-GC31-MM%2Fhistorical%2Fr2i1p1f3%2Fday%2Fta%2Fgn%2Fv20191218%2F
 
 ### Misc. Info
-
-#### Specifications for original machine for performance benchmarks for JOSS paper (Dec/2023)
-
-- OS: RHEL 7
-- Memory: 1,000 GiB
-- CPU: Intel(R) Xeon(r) CPU E7-8890v4 @ 2.20GHz
 
 #### How xCDAT is configured for parallelism
 
