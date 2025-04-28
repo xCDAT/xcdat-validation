@@ -14,7 +14,7 @@ This repository is dedicated to xCDAT feature prototyping and validation. It is 
 1. Clone this repo
 
    ```bash
-   git clone https://github.com/xCDAT/xcdat_test
+   git clone https://github.com/xCDAT/xcdat-validation.git
    ```
 
 2. Create and activate a conda environment that includes `xcdat`, `cdms2`, `cdutil`, and `genutil`.
