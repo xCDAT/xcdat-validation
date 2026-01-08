@@ -1,0 +1,30 @@
+# Conda environment for testing a stable build of xCDAT.
+name: xcdat_test_stable_min
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+    # Base
+    # ==================
+    - python >=3.11
+    - numpy >=2.0.0,<3.0.0
+    - pandas
+    - xarray >=2024.03.0
+    - xcdat >=0.11.1
+    # Optional - enables additional features.
+    # =========================================
+    - cartopy
+    - matplotlib-base >=3.8.4
+    - nc-time-axis=1.4.1
+    - fsspec
+    - kerchunk
+    - zarr
+    - orjson
+    - tqdm
+    # Additional
+    # ==================
+    - wget
+    - ipykernel
+    - jupyterlab
+    - jupyter-server-proxy
+prefix: /opt/miniconda3/envs/xcdat_test_stable_min
