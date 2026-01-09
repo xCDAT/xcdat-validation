@@ -1,25 +1,20 @@
 # %%
 import glob
 import os
-import warnings
 
-from tqdm import tqdm
 import xarray as xr
-import xcdat as xc
 
-from riotai.tests.io.utils import load_or_build_mappings
-import time
+from riotai.benchmark import benchmark_frequency
+from riotai.utils import load_or_build_mappings
 
+# %%
 # ----------------------------------------------------------
 # Paths and constants
 # ----------------------------------------------------------
 # Root directory containing kerchunk reference JSON files for testing.
 ROOT_DIR = "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk"
 # Absolute paths to all kerchunk JSON reference files.
-JSON_PATHS = glob.glob(os.path.join(ROOT_DIR, "*.json"))
-
-# %%
-
+JSON_PATHS = glob.glob(os.path.join(ROOT_DIR, "**", "*.json"), recursive=True)
 # Path to store JSON→NetCDF mapping files.
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "json_to_netcdf_maps")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -30,107 +25,37 @@ ERROR_PATH = os.path.join(OUTPUT_DIR, "json_to_netcdf_errors.json")
 
 # ----------------------------------------------------------
 # Prerequisite Mapping -- Load or build JSON → NetCDF mappings
-#   Frequency keys available: ['Amon', 'day', 'ImonAnt', 'AERhr', 'CFsubhr', 'ImonGre']
+# Frequencies: ['Amon', 'day', 'ImonAnt', 'AERhr', 'CFsubhr', 'ImonGre']
 # ----------------------------------------------------------
 freq_to_json_to_netcdf, errors = load_or_build_mappings(
     MAPPING_PATH, ERROR_PATH, JSON_PATHS
 )
 
-
 # %%
-def compare_io_speed(json_path: str, netcdf_paths: list[str]):
-    """
-    Compare I/O speed between kerchunk (open_dataset) and NetCDF (open_mfdataset).
-    Prints the time taken to open each dataset.
-    """
-    # Time kerchunk open
-    print(f"Kerchunk JSON path: {json_path}")
-    print(f"NetCDF file paths: {netcdf_paths}")
-    t0 = time.perf_counter()
-    _ = xc.open_dataset(json_path, engine="kerchunk")
-    t1 = time.perf_counter()
-    kc_time = t1 - t0
-
-    # Time NetCDF open
-    t0 = time.perf_counter()
-    _ = xc.open_mfdataset(netcdf_paths, chunks={})
-    t1 = time.perf_counter()
-    nc_time = t1 - t0
-
-    print(f"Kerchunk open_dataset time: {kc_time:.4f} seconds")
-    print(f"NetCDF open_mfdataset time: {nc_time:.4f} seconds")
-
-
-# %%
-# Example usage with specific frequencies:
-# Get the first JSON file for specific frequencies as examples
-# first_amon = list(freq_to_json_to_netcdf["Amon"].keys())[0]
-# first_day = list(freq_to_json_to_netcdf["day"].keys())[0]
-
-# for freq, json_file in [("Amon", first_amon), ("day", first_day)]:
-#     netcdf_files = freq_to_json_to_netcdf[freq][json_file]
-#     print(f"\n--- Comparing I/O speed for frequency: {freq} ---")
-#     compare_io_speed(json_file, netcdf_files)
-
 # ----------------------------------------------------------
 # Calculate average I/O speed per frequency
+# Notes:
+#   - For frequencies where the available number of datasets was smaller than
+#     the target sample size, all datasets were benchmarked.
 # ----------------------------------------------------------
-# %%
+frequencies = freq_to_json_to_netcdf.keys()
+
 freq_avg_speed = {}
 
-freq = "Amon"
-json_to_netcdf = freq_to_json_to_netcdf.get(freq, {})
-kc_times = []
-nc_times = []
+for freq in frequencies:
+    result = benchmark_frequency(freq, freq_to_json_to_netcdf)
 
-# %%
-for json_file, netcdf_files in tqdm(json_to_netcdf.items(), desc="Comparing I/O speed"):
-    # Time kerchunk open
-    t0_kc = time.perf_counter()
-    _ = xc.open_dataset(json_file, engine="kerchunk")
-    t1_kc = time.perf_counter()
+    if result is None:
+        print(f"  * No datasets found for {freq}, skipping.")
+        continue
 
-    # Time NetCDF open. If there are any issues, catch and report them.
-    # Do not record time if an error occurs (e.g., variable conflicts).
-    # MergeError: conflicting values for variable 'lat_bnds' on objects to be
-    # combined. You can skip this check by specifying compat='override'.
-    try:
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore", category=UserWarning, message="SerializationWarning: variable"
-            )
-            t0_nc = time.perf_counter()
-            _ = xc.open_mfdataset(netcdf_files, chunks={})
-            t1_nc = time.perf_counter()
-    except Exception as e:
-        print(f"* Error opening NetCDF files (skipping): {e}")
-        print("  * JSON file:", json_file)
-        print("  * NetCDF files:", netcdf_files)
-    else:
-        kc_times.append(t1_kc - t0_kc)
-        nc_times.append(t1_nc - t0_nc)
+    freq_avg_speed[freq] = result
+    print(
+        f"{freq} (n={result['n']}): "
+        f"kerchunk={result['kerchunk_median']:.4f}s, "
+        f"netcdf={result['netcdf_median']:.4f}s"
+    )
 
-
-avg_kc = sum(kc_times) / len(kc_times) if kc_times else None
-avg_nc = sum(nc_times) / len(nc_times) if nc_times else None
-freq_avg_speed[freq] = {"kerchunk": avg_kc, "netcdf": avg_nc}
-
-print("\n=== Average I/O speed for Amon ===")
-print(
-    f"Amon: kerchunk={freq_avg_speed['Amon']['kerchunk']:.4f}s, netcdf={freq_avg_speed['Amon']['netcdf']:.4f}s"
-)
-
-# ----------------------------------------------------------
-# %%
-# 1. Test with a single mapping.
-# ------------------------------------------
-first_json = list(json_to_netcdf.keys())[0]
-first_ncs = json_to_netcdf[first_json]
-
-# Do not specify chunks with kerchunk, let Xarray default to Zarr chunking
-# which matches the underlying kerchunk references exactly.
-ds_kc = xc.open_dataset(first_json, engine="zarr")
-ds_nc = xc.open_mfdataset(first_ncs, chunks={})
 
 # %%
 # First, check the metadata (dims, coords, atrs, variables)

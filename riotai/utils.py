@@ -74,6 +74,10 @@ def load_or_build_mappings(
     print(
         f"* Frequencies ({len(freq_to_json_to_netcdf)}): {list(freq_to_json_to_netcdf.keys())}"
     )
+    for freq, json_to_netcdf in freq_to_json_to_netcdf.items():
+        json_count = len(json_to_netcdf)
+        netcdf_count = sum(len(nc_files) for nc_files in json_to_netcdf.values())
+        print(f"  - {freq}: {json_count} JSON files, {netcdf_count} NetCDF files")
     print(f"* JSON files with errors:     {len(errors)}")
 
     return freq_to_json_to_netcdf, errors
