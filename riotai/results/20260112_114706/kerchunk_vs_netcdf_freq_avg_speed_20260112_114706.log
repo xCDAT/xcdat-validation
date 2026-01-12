@@ -1,0 +1,213 @@
+Loaded cached JSON→NetCDF mappings from disk.
+  * Mappings: /global/homes/v/vo13/xCDAT/xcdat-validation/riotai/json_to_netcdf_maps/json_to_netcdf.json
+  * Errors:   /global/homes/v/vo13/xCDAT/xcdat-validation/riotai/json_to_netcdf_maps/json_to_netcdf_errors.json
+
+=== Summary ===
+* Total JSON files processed: 3748
+* Total NetCDF files found:   117760
+* Frequencies (6): ['CFsubhr', 'Amon', 'day', 'ImonAnt', 'AERhr', 'ImonGre']
+  - CFsubhr: 6 JSON files, 11 NetCDF files
+  - Amon: 3321 JSON files, 100995 NetCDF files
+  - day: 392 JSON files, 16437 NetCDF files
+  - ImonAnt: 10 JSON files, 10 NetCDF files
+  - AERhr: 9 JSON files, 297 NetCDF files
+  - ImonGre: 10 JSON files, 10 NetCDF files
+* JSON files with errors:     0
+
+=== Benchmarking CFsubhr ===
+  * Performing warm-up open...
+Comparing I/O speed:  50%|█████     | 3/6 [05:32<05:31, 110.45s/it]/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py:47: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  return xr.open_zarr(
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py:47: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  return xr.open_zarr(
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py:47: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  return xr.open_zarr(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+Comparing I/O speed:  67%|██████▋   | 4/6 [12:04<07:23, 221.71s/it]
+  * Skipping NetCDF error in CFsubhr: Cannot combine along dimension 'time' with mixed types. Found: Timestamp, DatetimeGregorian. If importing data directly from a file then setting `use_cftime=True` may fix this issue.
+Comparing I/O speed: 100%|██████████| 6/6 [15:11<00:00, 151.86s/it]
+CFsubhr (n=5): kerchunk=73.1462s, netcdf=41.2880s
+
+=== Benchmarking Amon ===
+  * Performing warm-up open...
+Comparing I/O speed:  25%|██▌       | 10/40 [00:20<01:08,  2.28s/it]/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: FutureWarning: In a future version of xarray the default value for join will change from join='outer' to join='exact'. This change will result in the following ValueError: cannot be aligned with join='exact' because index/labels/sizes are not equal along these coordinates (dimensions): 'time' ('time',) The recommendation is to set join explicitly for this case.
+  with xc.open_mfdataset(
+Comparing I/O speed:  42%|████▎     | 17/40 [00:35<00:51,  2.24s/it]
+  * Skipping NetCDF error in Amon: Resulting object does not have monotonic global indexes along dimension lat
+Comparing I/O speed:  57%|█████▊    | 23/40 [00:41<00:29,  1.71s/it]/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/coding/times.py:215: SerializationWarning: Ambiguous reference date string: 101-01-01. The first value is assumed to be the year hence will be padded with zeros to remove the ambiguity (the padded reference date string is: 0101-01-01). To remove this message, remove the ambiguity by padding your reference date strings with zeros.
+  ref_date = _ensure_padded_year(ref_date)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py:47: SerializationWarning: Unable to decode time axis into full numpy.datetime64 objects, continuing using cftime.datetime objects instead, reason: dates prior reform date (1582-10-15). To silence this warning specify 'use_cftime=True'.
+  return xr.open_zarr(
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/coding/times.py:215: SerializationWarning: Ambiguous reference date string: 101-01-01. The first value is assumed to be the year hence will be padded with zeros to remove the ambiguity (the padded reference date string is: 0101-01-01). To remove this message, remove the ambiguity by padding your reference date strings with zeros.
+  ref_date = _ensure_padded_year(ref_date)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py:47: SerializationWarning: Unable to decode time axis into full numpy.datetime64 objects, continuing using cftime.datetime objects instead, reason: dates prior reform date (1582-10-15). To silence this warning specify 'use_cftime=True'.
+  return xr.open_zarr(
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/coding/times.py:215: SerializationWarning: Ambiguous reference date string: 101-01-01. The first value is assumed to be the year hence will be padded with zeros to remove the ambiguity (the padded reference date string is: 0101-01-01). To remove this message, remove the ambiguity by padding your reference date strings with zeros.
+  ref_date = _ensure_padded_year(ref_date)
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64 objects, continuing using cftime.datetime objects instead, reason: dates prior reform date (1582-10-15). To silence this warning specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/coding/times.py:215: SerializationWarning: Ambiguous reference date string: 101-01-01. The first value is assumed to be the year hence will be padded with zeros to remove the ambiguity (the padded reference date string is: 0101-01-01). To remove this message, remove the ambiguity by padding your reference date strings with zeros.
+  ref_date = _ensure_padded_year(ref_date)
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64 objects, continuing using cftime.datetime objects instead, reason: dates prior reform date (1582-10-15). To silence this warning specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/coding/times.py:215: SerializationWarning: Ambiguous reference date string: 101-01-01. The first value is assumed to be the year hence will be padded with zeros to remove the ambiguity (the padded reference date string is: 0101-01-01). To remove this message, remove the ambiguity by padding your reference date strings with zeros.
+  ref_date = _ensure_padded_year(ref_date)
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64 objects, continuing using cftime.datetime objects instead, reason: dates prior reform date (1582-10-15). To silence this warning specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/coding/times.py:215: SerializationWarning: Ambiguous reference date string: 101-01-01. The first value is assumed to be the year hence will be padded with zeros to remove the ambiguity (the padded reference date string is: 0101-01-01). To remove this message, remove the ambiguity by padding your reference date strings with zeros.
+  ref_date = _ensure_padded_year(ref_date)
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64 objects, continuing using cftime.datetime objects instead, reason: dates prior reform date (1582-10-15). To silence this warning specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/coding/times.py:215: SerializationWarning: Ambiguous reference date string: 101-01-01. The first value is assumed to be the year hence will be padded with zeros to remove the ambiguity (the padded reference date string is: 0101-01-01). To remove this message, remove the ambiguity by padding your reference date strings with zeros.
+  ref_date = _ensure_padded_year(ref_date)
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64 objects, continuing using cftime.datetime objects instead, reason: dates prior reform date (1582-10-15). To silence this warning specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/coding/times.py:215: SerializationWarning: Ambiguous reference date string: 101-01-01. The first value is assumed to be the year hence will be padded with zeros to remove the ambiguity (the padded reference date string is: 0101-01-01). To remove this message, remove the ambiguity by padding your reference date strings with zeros.
+  ref_date = _ensure_padded_year(ref_date)
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64 objects, continuing using cftime.datetime objects instead, reason: dates prior reform date (1582-10-15). To silence this warning specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py:47: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  return xr.open_zarr(
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py:47: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  return xr.open_zarr(
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py:47: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  return xr.open_zarr(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+...
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/benchmark.py:90: SerializationWarning: Unable to decode time axis into full numpy.datetime64[ns] objects, continuing using cftime.datetime objects instead, reason: dates out of range. To silence this warning use a coarser resolution 'time_unit' or specify 'use_cftime=True'.
+  with xc.open_mfdataset(
+Comparing I/O speed:  70%|███████   | 28/40 [01:51<01:08,  5.71s/it]
+Output is truncated. View as a scrollable element or open in a text editor. Adjust cell output settings...
+  * Skipping NetCDF error in Amon: Cannot combine along dimension 'time' with mixed types. Found: Timestamp, DatetimeProlepticGregorian. If importing data directly from a file then setting `use_cftime=True` may fix this issue.
+Comparing I/O speed:  85%|████████▌ | 34/40 [02:21<00:33,  5.65s/it]/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'ta' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'ta' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'ta' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'ta' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'ta' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+Comparing I/O speed: 100%|██████████| 40/40 [02:34<00:00,  3.85s/it]
+Amon (n=38): kerchunk=0.2308s, netcdf=0.3140s
+
+=== Benchmarking day ===
+  * Performing warm-up open...
+Comparing I/O speed:  88%|████████▊ | 35/40 [04:57<00:42,  8.41s/it]/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/conventions.py:204: SerializationWarning: variable 'tas' has multiple fill values {np.float32(1e+20), np.float64(1e+20)} defined, decoding all values to NaN.
+  var = coder.decode(var, name=name)
+Comparing I/O speed: 100%|██████████| 40/40 [05:31<00:00,  8.28s/it]
+day (n=40): kerchunk=0.6089s, netcdf=5.5468s
+
+=== Benchmarking ImonAnt ===
+  * Performing warm-up open...
+Comparing I/O speed: 100%|██████████| 10/10 [00:02<00:00,  4.02it/s]
+ImonAnt (n=10): kerchunk=0.1930s, netcdf=0.0743s
+
+=== Benchmarking AERhr ===
+  * Performing warm-up open...
+Comparing I/O speed: 100%|██████████| 9/9 [32:58<00:00, 219.87s/it]
+AERhr (n=9): kerchunk=18.3663s, netcdf=209.6717s
+
+=== Benchmarking ImonGre ===
+  * Performing warm-up open...
+Comparing I/O speed: 100%|██████████| 10/10 [00:02<00:00,  3.90it/s]
+ImonGre (n=10): kerchunk=0.1836s, netcdf=0.0819s
+Saved frequency average speeds to /global/homes/v/vo13/xCDAT/xcdat-validation/riotai/json_to_netcdf_maps/kerchunk_vs_netcdf_freq_avg_speed_20260112_114706.json
