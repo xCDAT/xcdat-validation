@@ -6,6 +6,8 @@ import xarray as xr
 
 from riotai.benchmark import benchmark_frequency
 from riotai.utils import load_or_build_mappings
+import json
+import datetime
 
 # %%
 # ----------------------------------------------------------
@@ -16,7 +18,8 @@ ROOT_DIR = "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk"
 # Absolute paths to all kerchunk JSON reference files.
 JSON_PATHS = glob.glob(os.path.join(ROOT_DIR, "**", "*.json"), recursive=True)
 # Path to store JSON→NetCDF mapping files.
-OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "json_to_netcdf_maps")
+TIMESTAMP = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+OUTPUT_DIR = os.path.join(os.path.dirname(__file__), f"results/{TIMESTAMP}")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Path to the mapping and error files.
@@ -56,6 +59,14 @@ for freq in frequencies:
         f"netcdf={result['netcdf_median']:.4f}s"
     )
 
+ = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+freq_avg_speed_path = os.path.join(
+    OUTPUT_DIR, f"kerchunk_vs_netcdf_freq_avg_speed_{TIMESTAMP}.json"
+)
+with open(freq_avg_speed_path, "w") as f:
+    json.dump(freq_avg_speed, f, indent=2)
+
+print(f"Saved frequency average speeds to {freq_avg_speed_path}")
 
 # %%
 # First, check the metadata (dims, coords, atrs, variables)
