@@ -9,14 +9,31 @@ Designed for climate / CMIP / E3SM-style datasets on HPC or cloud storage.
 
 from __future__ import annotations
 
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import random
 import time
 import warnings
-from typing import Callable, Iterable, Mapping, Optional
+from typing import Callable, Mapping, TypedDict
 
 import numpy as np
 from tqdm import tqdm
-import xarray as xc
+import xarray as xr
+import xcdat as xc
+import pandas as pd
+
+# Number of parallel worker processes to use per frequency.
+# Tuned to limit filesystem metadata pressure for file-heavy datasets
+# (e.g., daily or sub-daily data) while allowing more parallelism for monthly
+# data.
+WORKERS_BY_FREQUENCY = {
+    "Amon": 4,
+    "Imon": 4,
+    "ImonAnt": 4,
+    "ImonGre": 4,
+    "day": 1,
+    "AERhr": 1,
+    "CFsubhr": 1,
+}
 
 
 JsonPath = str
@@ -24,35 +41,250 @@ NetCDFFileList = list[str]
 DatasetMapping = Mapping[JsonPath, NetCDFFileList]
 
 
-def compare_io_speed(json_path: str, netcdf_paths: list[str]):
-    """
-    Compare I/O speed between kerchunk (open_dataset) and NetCDF (open_mfdataset).
-    Prints the time taken to open each dataset.
-    """
-    # Time kerchunk open
-    print(f"Kerchunk JSON path: {json_path}")
-    print(f"NetCDF file paths: {netcdf_paths}")
-    t0 = time.perf_counter()
-    _ = xc.open_dataset(json_path, engine="kerchunk")
-    t1 = time.perf_counter()
-    kc_time = t1 - t0
+class RawMetric(TypedDict):
+    frequency: str
+    json: str
+    num_netcdf_files: int
+    timesteps: int
+    dims: dict[str, int]
+    kerchunk_time: float
+    netcdf_time: float
 
-    # Time NetCDF open
-    t0 = time.perf_counter()
-    _ = xc.open_mfdataset(netcdf_paths, chunks={})
-    t1 = time.perf_counter()
-    nc_time = t1 - t0
 
-    print(f"Kerchunk open_dataset time: {kc_time:.4f} seconds")
-    print(f"NetCDF open_mfdataset time: {nc_time:.4f} seconds")
+class AggMetric(TypedDict):
+    freq: str
+    n: int
+    sample_size_target: int
+    coverage: float
+    sampling: str
+    mean_netcdf_files: int
+    median_netcdf_files: int
+    kerchunk_median: float
+    netcdf_median: float
+    kerchunk_mean: float
+    netcdf_mean: float
+
+
+def benchmark_all_frequencies(
+    freq_json_netcdf_map: Mapping[str, DatasetMapping],
+    sample_size: int = 40,
+    warmup: bool = True,
+    rng: random.Random | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Benchmark all frequencies in the provided mapping.
+
+    Parameters
+    ----------
+    freq_json_netcdf_map : Mapping[str, DatasetMapping]
+        Mapping from frequency (str) to a mapping of Kerchunk JSON file paths (str)
+        to lists of NetCDF file paths (list of str).
+    sample_size : int, optional
+        Number of samples to benchmark per frequency (default is 40).
+    warmup : bool, optional
+        Whether to perform a warm-up open before benchmarking (default is True).
+    rng : random.Random or None, optional
+        Random number generator for reproducible sampling (default is None).
+
+    Returns
+    -------
+    tuple of pd.DataFrame
+        DataFrames containing raw and aggregate benchmark metrics.
+    """
+    raw_metrics: list[RawMetric] = []
+    agg_metrics: list[AggMetric] = []
+
+    for freq in freq_json_netcdf_map:
+        json_to_netcdf = freq_json_netcdf_map.get(freq)
+        if not json_to_netcdf:
+            continue
+
+        sampled_items = _sample_items(json_to_netcdf, sample_size, rng)
+        if not sampled_items:
+            continue
+
+        freq_raw_metrics, sampled_items = _benchmark_frequency(
+            freq, sampled_items, warmup
+        )
+
+        if not freq_raw_metrics:
+            continue
+
+        raw_metrics.extend(freq_raw_metrics)
+
+        agg_metric = _get_agg_metrics(
+            freq_raw_metrics,
+            freq,
+            sample_size,
+            sampled_items,
+        )
+        if agg_metric is not None:
+            agg_metrics.append(agg_metric)
+
+    df_raw_combined = pd.DataFrame(raw_metrics)
+    df_agg_combined = pd.DataFrame(agg_metrics)
+
+    return df_raw_combined, df_agg_combined
 
 
 # -----------------------------------------------------------------------------
-# Dataset open helpers
+# Benchmark core
 # -----------------------------------------------------------------------------
+def _benchmark_frequency(
+    freq: str,
+    sampled_items: list[tuple[str, list[str]]],
+    warmup: bool = True,
+) -> tuple[list[RawMetric], list[tuple[str, list[str]]]]:
+    """
+    Benchmark Kerchunk vs NetCDF open performance for a single frequency.
+
+    Parameters
+    ----------
+    freq : str
+        Frequency name (e.g., "Amon", "day", "AERhr").
+    sampled_items : list of (str, list of str)
+        Sampled (json_file, netcdf_files) pairs to benchmark.
+    warmup : bool, default=True
+        Whether to perform an unrecorded warm-up open.
+
+    Returns
+    -------
+    tuple
+        (raw_metrics, sampled_items)
+    """
+    print(f"\n=== Benchmarking {freq} ===")
+
+    # Warm-up to avoid cache effects, remains serial.
+    if warmup and sampled_items:
+        _run_warmup(sampled_items, freq)
+
+    raw_metrics: list[RawMetric] = []
+    max_workers = WORKERS_BY_FREQUENCY[freq]
+
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = [
+            executor.submit(
+                _benchmark_single_item,
+                freq,
+                json_file,
+                netcdf_files,
+            )
+            for json_file, netcdf_files in sampled_items
+        ]
+
+        for future in tqdm(
+            as_completed(futures),
+            total=len(futures),
+            desc="Comparing I/O speed",
+            mininterval=5,
+        ):
+            result = future.result()
+            if result is not None:
+                raw_metrics.append(result)
+
+    return raw_metrics, sampled_items
 
 
-def open_kerchunk(json_file: str) -> None:
+def _benchmark_single_item(
+    freq: str,
+    json_file: str,
+    netcdf_files: list[str],
+) -> RawMetric | None:
+    try:
+        kc_time = _time_call(_open_kerchunk, json_file)
+    except Exception:
+        return None
+
+    try:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=UserWarning)
+            nc_time = _time_call(_open_netcdf, netcdf_files)
+    except Exception:
+        return None
+
+    dims, timesteps = _get_dims_and_timesteps(json_file)
+
+    return {
+        "frequency": freq,
+        "json": json_file,
+        "num_netcdf_files": len(netcdf_files),
+        "timesteps": timesteps,
+        "dims": dims,
+        "kerchunk_time": kc_time,
+        "netcdf_time": nc_time,
+    }
+
+
+def _sample_items(
+    mapping: DatasetMapping,
+    sample_size: int,
+    rng: random.Random | None = None,
+) -> list[tuple[str, list[str]]]:
+    """
+    Randomly sample dataset entries from a JSON → NetCDF mapping.
+    """
+    if rng is None:
+        rng = random.Random(42)
+
+    items = sorted(mapping.items())
+
+    return rng.sample(items, min(sample_size, len(items)))
+
+
+def _run_warmup(sampled_items: list[tuple[str, list[str]]], freq: str) -> None:
+    print("  * Performing warm-up open...")
+    json_file, netcdf_files = sampled_items[0]
+
+    try:
+        _open_kerchunk(json_file)
+        _open_netcdf(netcdf_files)
+    except Exception as e:
+        print(f"  * Warm-up failed for {freq}: {e}")
+
+
+def _get_dims_and_timesteps(json_file: str) -> tuple[dict[str, int], int]:
+    """
+    Get the dimension names and number of time steps in an xarray Dataset.
+
+    Parameters
+    ----------
+    json_file : str
+        Path to the Kerchunk JSON reference file.
+
+    Returns
+    -------
+    tuple
+        (dimension sizes, number of time steps)
+    """
+    with xr.open_dataset(json_file, engine="kerchunk") as ds:
+        time_dim = xc.get_dim_coords(ds, "T")
+        timesteps = len(time_dim) if time_dim is not None else 0
+
+        return dict(ds.sizes), timesteps
+
+
+def _time_call(fn: Callable[..., None], *args) -> float:
+    """
+    Measure wall-clock execution time of a callable.
+
+    Parameters
+    ----------
+    fn : callable
+        Function to execute.
+    *args
+        Positional arguments passed to the function.
+
+    Returns
+    -------
+    float
+        Elapsed time in seconds.
+    """
+    t0 = time.perf_counter()
+    fn(*args)
+    return time.perf_counter() - t0
+
+
+def _open_kerchunk(json_file: str) -> None:
     """
     Open a Kerchunk JSON reference file using xarray.
 
@@ -71,7 +303,7 @@ def open_kerchunk(json_file: str) -> None:
         pass
 
 
-def open_netcdf(netcdf_files: list[str]) -> None:
+def _open_netcdf(netcdf_files: list[str]) -> None:
     """
     Open a collection of NetCDF files using xarray.open_mfdataset.
 
@@ -99,210 +331,56 @@ def open_netcdf(netcdf_files: list[str]) -> None:
         pass
 
 
-# -----------------------------------------------------------------------------
-# Timing utilities
-# -----------------------------------------------------------------------------
-
-
-def time_call(fn: Callable[..., None], *args) -> float:
-    """
-    Measure wall-clock execution time of a callable.
-
-    Parameters
-    ----------
-    fn : callable
-        Function to execute.
-    *args
-        Positional arguments passed to the function.
-
-    Returns
-    -------
-    float
-        Elapsed time in seconds.
-    """
-    t0 = time.perf_counter()
-    fn(*args)
-    return time.perf_counter() - t0
-
-
-# -----------------------------------------------------------------------------
-# Sampling utilities
-# -----------------------------------------------------------------------------
-
-
-def sample_items(
-    mapping: DatasetMapping,
-    sample_size: int,
-    rng: Optional[random.Random] = None,
-) -> list[tuple[str, list[str]]]:
-    """
-    Randomly sample dataset entries from a JSON → NetCDF mapping.
-
-    Parameters
-    ----------
-    mapping : mapping
-        Mapping from Kerchunk JSON path to list of NetCDF files.
-    sample_size : int
-        Maximum number of items to sample.
-    rng : random.Random, optional
-        Random number generator instance for reproducibility.
-
-    Returns
-    -------
-    list of (str, list of str)
-        Sampled (json_file, netcdf_files) pairs.
-    """
-    rng = rng or random
-    items = list(mapping.items())
-    return rng.sample(items, min(sample_size, len(items)))
-
-
-# -----------------------------------------------------------------------------
-# Benchmark core
-# -----------------------------------------------------------------------------
-
-
-def benchmark_frequency(
+def _get_agg_metrics(
+    raw_metrics: list[RawMetric],
     freq: str,
-    freq_to_json_to_netcdf: Mapping[str, DatasetMapping],
-    sample_size: int = 40,
-    warmup: bool = True,
-    rng: Optional[random.Random] = None,
-) -> Optional[dict[str, float]]:
+    sample_size: int,
+    sampled_items: list[tuple[str, list[str]]],
+) -> AggMetric | None:
     """
-    Benchmark Kerchunk vs NetCDF open performance for a single frequency.
+    Compute aggregate metrics from raw timing data.
 
     Parameters
     ----------
+    raw_metrics : list of dict
+        List of raw benchmark metrics.
     freq : str
-        Frequency name (e.g., "Amon", "day", "AERhr").
-    freq_to_json_to_netcdf : mapping
-        Mapping from frequency → (JSON → NetCDF file list).
-    sample_size : int, default=40
-        Number of datasets to sample.
-    warmup : bool, default=True
-        Whether to perform an unrecorded warm-up open.
-    rng : random.Random, optional
-        Random number generator for reproducible sampling.
+        Frequency name.
+    sample_size : int
+        Target sample size.
+    sampled_items : list
+        Actual sampled (json, netcdf_files) pairs.
 
     Returns
     -------
     dict or None
-        Dictionary with timing statistics, or None if benchmarking failed.
-
-        Keys:
-        - "kerchunk_mean"
-        - "kerchunk_median"
-        - "netcdf_mean"
-        - "netcdf_median"
-        - "n"
-    Notes:
-    -----
-    Warm-up: exclude the first open to avoid one-time initialization and
-    filesystem cache effects that would otherwise bias timing results.
+        Aggregate metrics including mean and median times.
     """
-    print(f"\n=== Benchmarking {freq} ===")
-
-    json_to_netcdf = freq_to_json_to_netcdf.get(freq)
-    if not json_to_netcdf:
-        return None
-
-    sampled_items = sample_items(json_to_netcdf, sample_size, rng)
-
-    kc_times: list[float] = []
-    nc_times: list[float] = []
-
-    if warmup:
-        print("  * Performing warm-up open...")
-        json_file, netcdf_files = sampled_items[0]
-
-        try:
-            open_kerchunk(json_file)
-            open_netcdf(netcdf_files)
-        except Exception as e:
-            print(f"  * Warm-up failed for {freq}: {e}")
-
-            return None
-
-    for json_file, netcdf_files in tqdm(
-        sampled_items, desc="Comparing I/O speed", mininterval=5
-    ):
-        kc_times.append(time_call(open_kerchunk, json_file))
-
-        try:
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=UserWarning)
-                nc_times.append(time_call(open_netcdf, netcdf_files))
-        except Exception as e:
-            print(f"  * Skipping NetCDF error in {freq}: {e}")
-
-            continue
+    kc_times = [m["kerchunk_time"] for m in raw_metrics]
+    nc_times = [m["netcdf_time"] for m in raw_metrics]
 
     if not kc_times or not nc_times:
         return None
 
-    return {
-        # --- Performance results ---
-        "kerchunk_mean": float(np.mean(kc_times)),
-        "kerchunk_median": float(np.median(kc_times)),
-        "netcdf_mean": float(np.mean(nc_times)),
-        "netcdf_median": float(np.median(nc_times)),
+    agg_metrics = {
         # --- Sample size / statistical context ---
-        "n": min(len(kc_times), len(nc_times)),
+        "freq": freq,
+        "n": len(kc_times),
         "sample_size_target": sample_size,
         "coverage": float(min(1.0, len(sampled_items) / sample_size)),
         "sampling": "exhaustive" if len(sampled_items) < sample_size else "random",
         # --- Workload characterization ---
+        "mean_netcdf_files": (
+            int(np.mean([len(nc) for _, nc in sampled_items])) if sampled_items else 0
+        ),
         "median_netcdf_files": (
             int(np.median([len(nc) for _, nc in sampled_items])) if sampled_items else 0
         ),
+        # --- Metrics ---
+        "kerchunk_median": float(np.median(kc_times)),
+        "netcdf_median": float(np.median(nc_times)),
+        "kerchunk_mean": float(np.mean(kc_times)),
+        "netcdf_mean": float(np.mean(nc_times)),
     }
 
-
-# -----------------------------------------------------------------------------
-# Convenience helpers
-# -----------------------------------------------------------------------------
-
-
-def benchmark_all_frequencies(
-    frequencies: Iterable[str],
-    freq_to_json_to_netcdf: Mapping[str, DatasetMapping],
-    sample_size: int = 40,
-    warmup: bool = True,
-    rng: Optional[random.Random] = None,
-) -> dict[str, dict[str, float]]:
-    """
-    Benchmark all specified frequencies.
-
-    Parameters
-    ----------
-    frequencies : iterable of str
-        Frequency names to benchmark.
-    freq_to_json_to_netcdf : mapping
-        Mapping from frequency → (JSON → NetCDF file list).
-    sample_size : int, default=40
-        Number of datasets sampled per frequency.
-    warmup : bool, default=True
-        Whether to perform warm-up opens.
-    rng : random.Random, optional
-        Random number generator for reproducibility.
-
-    Returns
-    -------
-    dict
-        Mapping from frequency name to benchmark result dictionary.
-    """
-    results: dict[str, dict[str, float]] = {}
-
-    for freq in frequencies:
-        result = benchmark_frequency(
-            freq=freq,
-            freq_to_json_to_netcdf=freq_to_json_to_netcdf,
-            sample_size=sample_size,
-            warmup=warmup,
-            rng=rng,
-        )
-        if result is not None:
-            results[freq] = result
-
-    return results
+    return agg_metrics

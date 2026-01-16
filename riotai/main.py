@@ -1,38 +1,54 @@
-# %%
-import glob
-import os
+"""
+Benchmark Kerchunk vs NetCDF dataset open performance.
 
-import xarray as xr
+This script measures xarray dataset open times using Kerchunk JSON references
+versus raw NetCDF file collections for CMIP / E3SM-style datasets.
 
-from riotai.benchmark import benchmark_frequency
-from riotai.utils import load_or_build_mappings
-import json
+Datasets are deterministically sampled per frequency and benchmarked in
+parallel using multiprocessing.
+
+Parallelism
+-----------
+* Multiprocessing via ``ProcessPoolExecutor`` with the ``spawn`` start method
+* For each frequency, up to 4 datasets are benchmarked concurrently;
+    frequencies are handled one after another serially.
+* Serial warm-up performed in the parent process
+* Results aggregated in the parent process
+* Parallelism controlled by ``max_workers`` (by defualt 4)
+
+All execution and file I/O are guarded by ``if __name__ == "__main__"`` to
+ensure correctness under multiprocessing.
+"""
+
 import datetime
+import glob
+import multiprocessing as mp
+import os
+import random
+
+from riotai.benchmark import benchmark_all_frequencies
+from riotai.utils import load_or_build_mappings
 
 # %%
 # ----------------------------------------------------------
-# Paths and constants
+# Data paths
 # ----------------------------------------------------------
 # Root directory containing kerchunk reference JSON files for testing.
-ROOT_DIR = "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk"
-# Absolute paths to all kerchunk JSON reference files.
-JSON_PATHS = glob.glob(os.path.join(ROOT_DIR, "**", "*.json"), recursive=True)
+ROOT_DATA_DIR = "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk"
+JSON_PATHS = glob.glob(os.path.join(ROOT_DATA_DIR, "**", "*.json"), recursive=True)
+
+# ----------------------------------------------------------
+# Mapping paths
+# ----------------------------------------------------------
 # Path to store JSON→NetCDF mapping files.
 TIMESTAMP = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), f"results/{TIMESTAMP}")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Path to the mapping and error files.
-MAPPING_PATH = os.path.join(OUTPUT_DIR, "json_to_netcdf.json")
-ERROR_PATH = os.path.join(OUTPUT_DIR, "json_to_netcdf_errors.json")
-
-# ----------------------------------------------------------
-# Prerequisite Mapping -- Load or build JSON → NetCDF mappings
-# Frequencies: ['Amon', 'day', 'ImonAnt', 'AERhr', 'CFsubhr', 'ImonGre']
-# ----------------------------------------------------------
-freq_to_json_to_netcdf, errors = load_or_build_mappings(
-    MAPPING_PATH, ERROR_PATH, JSON_PATHS
-)
+MAPPING_OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "json_to_netcdf_maps")
+MAPPING_PATH = os.path.join(MAPPING_OUTPUT_DIR, "json_to_netcdf.json")
+ERROR_PATH = os.path.join(MAPPING_OUTPUT_DIR, "json_to_netcdf_errors.json")
 
 # %%
 # ----------------------------------------------------------
@@ -41,162 +57,28 @@ freq_to_json_to_netcdf, errors = load_or_build_mappings(
 #   - For frequencies where the available number of datasets was smaller than
 #     the target sample size, all datasets were benchmarked.
 # ----------------------------------------------------------
-frequencies = freq_to_json_to_netcdf.keys()
 
-freq_avg_speed = {}
+# NOTE: Comment out temporarily to only benchmark "Amon" for testing.
+# for freq in frequencies:
 
-for freq in frequencies:
-    result = benchmark_frequency(freq, freq_to_json_to_netcdf)
-
-    if result is None:
-        print(f"  * No datasets found for {freq}, skipping.")
-        continue
-
-    freq_avg_speed[freq] = result
-    print(
-        f"{freq} (n={result['n']}): "
-        f"kerchunk={result['kerchunk_median']:.4f}s, "
-        f"netcdf={result['netcdf_median']:.4f}s"
+# %%
+if __name__ == "__main__":
+    mp.set_start_method("spawn", force=True)
+    freq_json_netcdf_map, errors_map = load_or_build_mappings(
+        MAPPING_PATH, ERROR_PATH, JSON_PATHS
     )
 
- = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-freq_avg_speed_path = os.path.join(
-    OUTPUT_DIR, f"kerchunk_vs_netcdf_freq_avg_speed_{TIMESTAMP}.json"
-)
-with open(freq_avg_speed_path, "w") as f:
-    json.dump(freq_avg_speed, f, indent=2)
-
-print(f"Saved frequency average speeds to {freq_avg_speed_path}")
-
-# %%
-# First, check the metadata (dims, coords, atrs, variables)
-print("\n=== Metadata comparison ===")
-
-sizes_identical = ds_kc.sizes == ds_nc.sizes
-print(f"Dimensions identical: {sizes_identical}")
-if not sizes_identical:
-    print("  Kerchunk sizes:", ds_kc.sizes)
-    print("  NetCDF  sizes:", ds_nc.sizes)
-
-vars_identical = set(ds_kc.data_vars) == set(ds_nc.data_vars)
-print(f"Data variables identical: {vars_identical}")
-if not vars_identical:
-    print("  Only in kerchunk:", set(ds_kc.data_vars) - set(ds_nc.data_vars))
-    print("  Only in netcdf :", set(ds_nc.data_vars) - set(ds_kc.data_vars))
-
-coords_identical = set(ds_kc.coords.keys()) == set(ds_nc.coords.keys())
-print(f"Coordinates identical: {coords_identical}")
-if not coords_identical:
-    print("  Only in kerchunk:", set(ds_kc.coords.keys()) - set(ds_nc.coords.keys()))
-    print("  Only in netcdf :", set(ds_nc.coords.keys()) - set(ds_kc.coords.keys()))
-
-if sizes_identical and vars_identical and coords_identical:
-    print("=> RESULT: Metadata is IDENTICAL.\n")
-else:
-    print("=> RESULT: Metadata is NOT IDENTICAL.\n")
-
-# %%
-# Note: Attributes often differ (Kerchunk strips some file-level metadata),
-# so compare cautiously.
-# Optional: check variable attrs
-print("\n=== Attributes comparison ===")
-
-any_attr_diffs = False
-
-for v in ds_kc.data_vars:
-    kc_attrs = ds_kc[v].attrs
-    nc_attrs = ds_nc[v].attrs
-
-    if kc_attrs == nc_attrs:
-        continue
-
-    any_attr_diffs = True
-    print(f"\n--- Variable attrs differ for {v!r} ---")
-    kc_keys = set(kc_attrs.keys())
-    nc_keys = set(nc_attrs.keys())
-
-    only_kc = kc_keys - nc_keys
-    only_nc = nc_keys - kc_keys
-    both = kc_keys & nc_keys
-
-    if only_kc:
-        print("  Only in kerchunk:")
-        for k in sorted(only_kc):
-            print(f"    {k!r}: {kc_attrs[k]!r}")
-
-    if only_nc:
-        print("  Only in netcdf:")
-        for k in sorted(only_nc):
-            print(f"    {k!r}: {nc_attrs[k]!r}")
-
-    diffs = []
-    for k in sorted(both):
-        if kc_attrs[k] != nc_attrs[k]:
-            diffs.append(k)
-
-    if diffs:
-        print("  Different values:")
-        for k in diffs:
-            print(f"    {k!r}: kerchunk={kc_attrs[k]!r}, netcdf={nc_attrs[k]!r}")
-
-if not any_attr_diffs:
-    print("=> RESULT: All variable attributes are IDENTICAL.\n")
-else:
-    print(
-        "\n=> RESULT: Variable attributes are NOT IDENTICAL (see differences above).\n"
+    df_raw, df_agg = benchmark_all_frequencies(
+        freq_json_netcdf_map,
+        sample_size=5,
+        warmup=True,
+        rng=random.Random(42),
     )
 
-# %%
-print("\n=== Chunk size comparison ===")
-
-
-def summarize_chunks(ds):
-    summary = {}
-    for name, var in ds.data_vars.items():
-        if hasattr(var.data, "chunks") and var.data.chunks is not None:
-            # Dask-backed: chunks is a tuple of tuples
-            summary[name] = tuple(tuple(c) for c in var.data.chunks)
-        else:
-            summary[name] = None
-    return summary
-
-
-kc_chunks = summarize_chunks(ds_kc)
-nc_chunks = summarize_chunks(ds_nc)
-
-all_vars = sorted(set(kc_chunks) | set(nc_chunks))
-
-for v in all_vars:
-    kc = kc_chunks.get(v)
-    nc = nc_chunks.get(v)
-    print(f"\nVariable: {v}")
-    print(f"  kerchunk chunks: {kc}")
-    print(f"  netcdf  chunks: {nc}")
-    if kc == nc:
-        print("  -> Chunking identical")
-    else:
-        print("  -> Chunking differs")
-
-# %% Compare variable values (does not load everything into memory)
-for v in ds_kc.data_vars:
-    xr.testing.assert_allclose(ds_kc[v], ds_nc[v])
-
-# %%
-# results = {"identical": [], "not_identical": []}
-
-# for json_file, netcdf_files in json_to_netcdf.items():
-#     print(f"Kerchunk JSON: {json_file}")
-#     ds_json = xc.open_dataset(json_file, engine="kerchunk")
-#     ds_nc = xc.open_mfdataset(netcdf_files)
-
-#     try:
-#         xr.testing.assert_identical(ds_json, ds_nc)
-#     except AssertionError as e:
-#         print(f"Datasets not identical for {json_file}: {e}")
-#         results["not_identical"].append(json_file)
-#     else:
-#         print(f"Datasets identical for {json_file}")
-#         results["identical"].append(json_file)
-
+    # freq_avg_speed_path = os.path.join(
+    #     OUTPUT_DIR, f"kerchunk_vs_netcdf_freq_avg_speed_{TIMESTAMP}.json"
+    # )
+    # with open(freq_avg_speed_path, "w") as f:
+    #     json.dump(df_agg.to_dict(orient="records"), f, indent=2)
 
 # %%
