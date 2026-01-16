@@ -86,7 +86,7 @@ def load_or_build_mappings(
 def _group_json_files_by_frequency(json_paths: list[str]) -> dict[str, list[str]]:
     """Group kerchunk JSON files by frequency based on filename pattern.
 
-    For example: tas_CMCC-ESM2_piControl_r1i1p1f1_Amon.json --> freq is 'Amon'.
+    For example: CMIP6.ScenarioMIP.EC-Earth-Consortium.EC-Earth3.ssp119.r150i1p1f1.Amon.tas.gr.v20200412.kerchunk.json --> freq is 'Amon'.
 
     Parameters
     ----------
@@ -99,10 +99,13 @@ def _group_json_files_by_frequency(json_paths: list[str]) -> dict[str, list[str]
         Mapping from frequency to list of JSON file paths.
     """
     freq_to_jsons = defaultdict(list)
+    # Pattern: ...<.><FREQ>.<VAR>.<GRID>.<VERSION>.kerchunk.json
+    # Example: ...Amon.tas.gr.v20200412.kerchunk.json
+    freq_pattern = re.compile(r"\.(\w+)\.[^.]+\.gr\.v\d+\.kerchunk\.json$")
 
     for path in json_paths:
         fname = os.path.basename(path)
-        m = FREQ_PATTERN.search(fname)
+        m = freq_pattern.search(fname)
 
         if m:
             freq = m.group(1)

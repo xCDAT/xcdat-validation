@@ -1,0 +1,13 @@
+{
+  "Amon": {
+    "kerchunk_mean": 0.18690096377395093,
+    "kerchunk_median": 0.18690096377395093,
+    "netcdf_mean": 27.877542425878346,
+    "netcdf_median": 27.877542425878346,
+    "n": 2,
+    "sample_size_target": 2,
+    "coverage": 1.0,
+    "sampling": "random",
+    "median_netcdf_files": 293
+  }
+}
