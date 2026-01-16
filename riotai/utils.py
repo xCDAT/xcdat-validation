@@ -1,4 +1,5 @@
 # %%
+import logging
 import os
 
 import orjson
@@ -6,12 +7,14 @@ from tqdm import tqdm
 import re
 from collections import defaultdict
 
+logger = logging.getLogger(__name__)
 
 # Build a mapping from frequency (FREQ) to list of JSON paths.
 # Assumes filenames end with _<FREQ>.json (e.g., foo_day.json, bar_mon.json)
 FREQ_PATTERN = re.compile(r"_([a-zA-Z]+)\.json$")
 
 
+# ...existing code...
 # %%
 def load_or_build_mappings(
     mapping_path: str, error_path: str, json_paths: list[str]
@@ -45,7 +48,7 @@ def load_or_build_mappings(
         freq_to_json_to_netcdf = {freq: {} for freq in freq_to_jsons}
 
         for index, (freq, jsons) in enumerate(freq_to_jsons.items()):
-            print(
+            logger.info(
                 f"{index+1}/{len(freq_to_jsons)} -- Processing frequency '{freq}' with {len(jsons)} JSON files..."
             )
             freq_to_json_to_netcdf[freq], errors = _get_netcdf_paths_by_json(jsons)
@@ -54,7 +57,7 @@ def load_or_build_mappings(
             freq_to_json_to_netcdf, errors, mapping_path, error_path
         )
     else:
-        print(
+        logger.info(
             "Loaded cached JSON→NetCDF mappings from disk.\n"
             f"  * Mappings: {mapping_path}\n"
             f"  * Errors:   {error_path}"
@@ -68,17 +71,17 @@ def load_or_build_mappings(
         for json_to_netcdf in freq_to_json_to_netcdf.values()
         for nc_files in json_to_netcdf.values()
     )
-    print("\n=== Summary ===")
-    print(f"* Total JSON files processed: {total_json_files}")
-    print(f"* Total NetCDF files found:   {total_netcdf_files}")
-    print(
+    logger.info("\n=== Summary ===")
+    logger.info(f"* Total JSON files processed: {total_json_files}")
+    logger.info(f"* Total NetCDF files found:   {total_netcdf_files}")
+    logger.info(
         f"* Frequencies ({len(freq_to_json_to_netcdf)}): {list(freq_to_json_to_netcdf.keys())}"
     )
     for freq, json_to_netcdf in freq_to_json_to_netcdf.items():
         json_count = len(json_to_netcdf)
         netcdf_count = sum(len(nc_files) for nc_files in json_to_netcdf.values())
-        print(f"  - {freq}: {json_count} JSON files, {netcdf_count} NetCDF files")
-    print(f"* JSON files with errors:     {len(errors)}")
+        logger.info(f"  - {freq}: {json_count} JSON files, {netcdf_count} NetCDF files")
+    logger.info(f"* JSON files with errors:     {len(errors)}")
 
     return freq_to_json_to_netcdf, errors
 

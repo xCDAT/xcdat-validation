@@ -10,6 +10,7 @@ Designed for climate / CMIP / E3SM-style datasets on HPC or cloud storage.
 from __future__ import annotations
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
+import logging
 import random
 import time
 import warnings
@@ -20,6 +21,8 @@ from tqdm import tqdm
 import xarray as xr
 import xcdat as xc
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 # Number of parallel worker processes to use per frequency.
 # Tuned to limit filesystem metadata pressure for file-heavy datasets
@@ -33,6 +36,8 @@ WORKERS_BY_FREQUENCY = {
     "day": 1,
     "AERhr": 1,
     "CFsubhr": 1,
+    "3hr": 1,
+    "E1hr": 1,
 }
 
 
@@ -91,40 +96,33 @@ def benchmark_all_frequencies(
     tuple of pd.DataFrame
         DataFrames containing raw and aggregate benchmark metrics.
     """
-    raw_metrics: list[RawMetric] = []
-    agg_metrics: list[AggMetric] = []
+    all_raw_metrics: list[RawMetric] = []
+    all_agg_metrics: list[AggMetric] = []
 
-    for freq in freq_json_netcdf_map:
-        json_to_netcdf = freq_json_netcdf_map.get(freq)
-        if not json_to_netcdf:
+    for frequency, dataset_mapping in freq_json_netcdf_map.items():
+        if frequency != "Amon":
             continue
 
-        sampled_items = _sample_items(json_to_netcdf, sample_size, rng)
-        if not sampled_items:
-            continue
-
-        freq_raw_metrics, sampled_items = _benchmark_frequency(
-            freq, sampled_items, warmup
+        sampled_dataset_items = _sample_items(dataset_mapping, sample_size, rng)
+        raw_metrics, sampled_dataset_items = _benchmark_frequency(
+            frequency, sampled_dataset_items, warmup
         )
 
-        if not freq_raw_metrics:
-            continue
+        all_raw_metrics.extend(raw_metrics)
 
-        raw_metrics.extend(freq_raw_metrics)
-
-        agg_metric = _get_agg_metrics(
-            freq_raw_metrics,
-            freq,
+        agg_metrics = _get_agg_metrics(
+            raw_metrics,
+            frequency,
             sample_size,
-            sampled_items,
+            sampled_dataset_items,
         )
-        if agg_metric is not None:
-            agg_metrics.append(agg_metric)
 
-    df_raw_combined = pd.DataFrame(raw_metrics)
-    df_agg_combined = pd.DataFrame(agg_metrics)
+        all_agg_metrics.append(agg_metrics)
 
-    return df_raw_combined, df_agg_combined
+    df_raw_metrics = pd.DataFrame(all_raw_metrics)
+    df_agg_metrics = pd.DataFrame(all_agg_metrics)
+
+    return df_raw_metrics, df_agg_metrics
 
 
 # -----------------------------------------------------------------------------
@@ -152,7 +150,7 @@ def _benchmark_frequency(
     tuple
         (raw_metrics, sampled_items)
     """
-    print(f"\n=== Benchmarking {freq} ===")
+    logger.info(f"\n=== Benchmarking {freq} ===")
 
     # Warm-up to avoid cache effects, remains serial.
     if warmup and sampled_items:
@@ -223,6 +221,7 @@ def _sample_items(
     """
     Randomly sample dataset entries from a JSON → NetCDF mapping.
     """
+    # A new random.Random instance seeded with 42 is used for reproducibility.
     if rng is None:
         rng = random.Random(42)
 
@@ -232,14 +231,14 @@ def _sample_items(
 
 
 def _run_warmup(sampled_items: list[tuple[str, list[str]]], freq: str) -> None:
-    print("  * Performing warm-up open...")
+    logger.info("  * Performing warm-up open...")
     json_file, netcdf_files = sampled_items[0]
 
     try:
         _open_kerchunk(json_file)
         _open_netcdf(netcdf_files)
     except Exception as e:
-        print(f"  * Warm-up failed for {freq}: {e}")
+        logger.info(f"  * Warm-up failed for {freq}: {e}")
 
 
 def _get_dims_and_timesteps(json_file: str) -> tuple[dict[str, int], int]:

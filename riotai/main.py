@@ -18,28 +18,30 @@ Parallelism
 
 All execution and file I/O are guarded by ``if __name__ == "__main__"`` to
 ensure correctness under multiprocessing.
+
+NERSC Compute Node
+--------------------
+Request a compute node with the following command:
+
+```bash
+salloc --nodes 1 --qos interactive --time 01:00:00 --constraint cpu --account=e3sm
+```
 """
 
 import datetime
 import glob
+import logging
 import multiprocessing as mp
 import os
-import random
+import sys
 
 from riotai.benchmark import benchmark_all_frequencies
 from riotai.utils import load_or_build_mappings
 
-# %%
-# ----------------------------------------------------------
-# Data paths
-# ----------------------------------------------------------
 # Root directory containing kerchunk reference JSON files for testing.
 ROOT_DATA_DIR = "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk"
 JSON_PATHS = glob.glob(os.path.join(ROOT_DATA_DIR, "**", "*.json"), recursive=True)
 
-# ----------------------------------------------------------
-# Mapping paths
-# ----------------------------------------------------------
 # Path to store JSON→NetCDF mapping files.
 TIMESTAMP = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), f"results/{TIMESTAMP}")
@@ -50,35 +52,35 @@ MAPPING_OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "json_to_netcdf_map
 MAPPING_PATH = os.path.join(MAPPING_OUTPUT_DIR, "json_to_netcdf.json")
 ERROR_PATH = os.path.join(MAPPING_OUTPUT_DIR, "json_to_netcdf_errors.json")
 
-# %%
-# ----------------------------------------------------------
-# Calculate average I/O speed per frequency
-# Notes:
-#   - For frequencies where the available number of datasets was smaller than
-#     the target sample size, all datasets were benchmarked.
-# ----------------------------------------------------------
 
-# NOTE: Comment out temporarily to only benchmark "Amon" for testing.
-# for freq in frequencies:
-
-# %%
 if __name__ == "__main__":
+    log_path = os.path.join(OUTPUT_DIR, f"console_log_{TIMESTAMP}.txt")
+
+    # Remove all handlers associated with the root logger
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s: %(message)s",
+        handlers=[logging.FileHandler(log_path), logging.StreamHandler(sys.stdout)],
+    )
+    logger = logging.getLogger()
+
     mp.set_start_method("spawn", force=True)
     freq_json_netcdf_map, errors_map = load_or_build_mappings(
         MAPPING_PATH, ERROR_PATH, JSON_PATHS
     )
 
     df_raw, df_agg = benchmark_all_frequencies(
-        freq_json_netcdf_map,
-        sample_size=5,
-        warmup=True,
-        rng=random.Random(42),
+        freq_json_netcdf_map, sample_size=1, warmup=True
     )
 
-    # freq_avg_speed_path = os.path.join(
-    #     OUTPUT_DIR, f"kerchunk_vs_netcdf_freq_avg_speed_{TIMESTAMP}.json"
-    # )
-    # with open(freq_avg_speed_path, "w") as f:
-    #     json.dump(df_agg.to_dict(orient="records"), f, indent=2)
-
-# %%
+    df_raw.to_csv(
+        os.path.join(OUTPUT_DIR, f"kerchunk_vs_netcdf_raw_{TIMESTAMP}.csv"), index=False
+    )
+    df_agg.to_csv(
+        os.path.join(OUTPUT_DIR, f"kerchunk_vs_netcdf_agg_{TIMESTAMP}.csv"), index=False
+    )
+    logger.info("\nBenchmarking complete.")
+    logger.info(f"Detailed results have been saved in:\n  {OUTPUT_DIR}\n")
