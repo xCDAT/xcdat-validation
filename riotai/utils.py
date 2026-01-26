@@ -10,12 +10,11 @@ from collections import defaultdict
 logger = logging.getLogger(__name__)
 
 # Build a mapping from frequency (FREQ) to list of JSON paths.
-# Assumes filenames end with _<FREQ>.json (e.g., foo_day.json, bar_mon.json)
-FREQ_PATTERN = re.compile(r"_([a-zA-Z]+)\.json$")
+# Pattern: ...<.><FREQ>.<VAR>.<GRID>.<VERSION>.kerchunk.json
+# Example: ...Amon.tas.gr.v20200412.kerchunk.json
+FREQ_PATTERN = re.compile(r"\.(\w+)\.[^.]+\.gr\.v\d+\.kerchunk\.json$")
 
 
-# ...existing code...
-# %%
 def load_or_build_mappings(
     mapping_path: str, error_path: str, json_paths: list[str]
 ) -> tuple[dict[str, list[str]], dict[str, str]]:
@@ -102,13 +101,10 @@ def _group_json_files_by_frequency(json_paths: list[str]) -> dict[str, list[str]
         Mapping from frequency to list of JSON file paths.
     """
     freq_to_jsons = defaultdict(list)
-    # Pattern: ...<.><FREQ>.<VAR>.<GRID>.<VERSION>.kerchunk.json
-    # Example: ...Amon.tas.gr.v20200412.kerchunk.json
-    freq_pattern = re.compile(r"\.(\w+)\.[^.]+\.gr\.v\d+\.kerchunk\.json$")
 
     for path in json_paths:
         fname = os.path.basename(path)
-        m = freq_pattern.search(fname)
+        m = FREQ_PATTERN.search(fname)
 
         if m:
             freq = m.group(1)
