@@ -73,7 +73,7 @@ if __name__ == "__main__":
     )
 
     df_raw, df_agg = benchmark_all_frequencies(
-        freq_json_netcdf_map, sample_size=1, warmup=True
+        freq_json_netcdf_map, sample_size=40, warmup=True
     )
 
     df_raw.to_csv(

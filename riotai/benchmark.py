@@ -100,8 +100,6 @@ def benchmark_all_frequencies(
     all_agg_metrics: list[AggMetric] = []
 
     for frequency, dataset_mapping in freq_json_netcdf_map.items():
-        if frequency != "Amon":
-            continue
 
         sampled_dataset_items = _sample_items(dataset_mapping, sample_size, rng)
         raw_metrics, sampled_dataset_items = _benchmark_frequency(
