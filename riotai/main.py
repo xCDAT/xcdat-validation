@@ -36,7 +36,7 @@ import os
 import sys
 
 from riotai.benchmark import benchmark_all_frequencies
-from riotai.utils import load_or_build_mappings
+from riotai.mapping import load_or_build_mappings
 
 # Root directory containing kerchunk reference JSON files for testing.
 ROOT_DATA_DIR = "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk"
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     )
 
     df_raw, df_agg = benchmark_all_frequencies(
-        freq_json_netcdf_map, sample_size=40, warmup=True
+        freq_json_netcdf_map, sample_size=40, warmup=True, freqs=["Amon"]
     )
 
     df_raw.to_csv(

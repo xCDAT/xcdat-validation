@@ -75,6 +75,7 @@ def benchmark_all_frequencies(
     sample_size: int = 40,
     warmup: bool = True,
     rng: random.Random | None = None,
+    freqs: list[str] | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Benchmark all frequencies in the provided mapping.
@@ -100,6 +101,8 @@ def benchmark_all_frequencies(
     all_agg_metrics: list[AggMetric] = []
 
     for frequency, dataset_mapping in freq_json_netcdf_map.items():
+        if frequency is not None and frequency not in freqs:
+            continue
 
         sampled_dataset_items = _sample_items(dataset_mapping, sample_size, rng)
         raw_metrics, sampled_dataset_items = _benchmark_frequency(
