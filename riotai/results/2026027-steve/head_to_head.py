@@ -123,7 +123,7 @@ logging.getLogger("fsspec").setLevel(logging.ERROR)
 
 def main() -> None:
     frequencies = ["day", "mon"]
-    all_results = []
+    all_results: list[dict] = []
 
     for freq in frequencies:
         freq_dir = os.path.join(KERCHUNK_DIRECTORY, freq)
@@ -145,28 +145,29 @@ def main() -> None:
         else:
             indices = np.linspace(0, len(all_files) - 1, NFILES, dtype=int)
             kerchunk_files = [all_files[i] for i in indices]
-        # -----------------------------------------------------
 
-        items = []
+        items: list[tuple[str, list[str], str]] = []
         for fn in kerchunk_files:
             refs = _load_kerchunk_refs(fn)
             netcdf_files = _extract_netcdf_files(refs)
             if not netcdf_files:
                 continue
             var_id = _infer_var_id(fn)
-            items.append((fn, refs, netcdf_files, var_id))
+            items.append((fn, netcdf_files, var_id))
 
         results = Parallel(n_jobs=1)(
-            delayed(run_benchmark)(fn, refs, netcdf_files, var_id, NTESTS)
-            for fn, refs, netcdf_files, var_id in tqdm.tqdm(items)
+            delayed(run_benchmark)(fn, netcdf_files, var_id, NTESTS)
+            for fn, netcdf_files, var_id in tqdm.tqdm(items)
         )
 
         if not results:
             logger.warning(f"No benchmark results for frequency: {freq}")
             continue
 
+        for r in results:
+            r["frequency"] = freq
+
         df = pd.DataFrame(results)
-        df["frequency"] = freq
 
         _plot_results(df, freq)
         _log_median_ratios(df, freq)
@@ -178,7 +179,6 @@ def main() -> None:
 
 def run_benchmark(
     kerchunk_fn: str,
-    refs: dict,
     netcdf_files: list[str],
     var_id: str,
     ntests: int,
@@ -190,12 +190,15 @@ def run_benchmark(
     }
 
     results.update(_collect_backend_metadata(kerchunk_fn, netcdf_files, var_id))
+
     logger.info(
         f"{os.path.basename(kerchunk_fn)} | "
         f"files={results.get('netcdf_file_count')} | "
-        f"time_len={results.get('time_len')} | "
-        f"time_chunks={results.get('time_chunk_count')} | "
-        f"size_gb={results.get('size_gb_physical'):.2f}"
+        f"time_len(k/n)={results.get('kerchunk_time_len')}/{results.get('netcdf_time_len')} | "
+        f"time_chunks(k/n)={results.get('kerchunk_time_chunk_count')}/{results.get('netcdf_time_chunk_count')} | "
+        f"post_slice_time_chunks(k/n)={results.get('kerchunk_post_slice_time_chunk_count')}/"
+        f"{results.get('netcdf_post_slice_time_chunk_count')} | "
+        f"size_gb={results.get('size_gb_physical', float('nan')):.2f}"
     )
 
     metrics = {
@@ -203,37 +206,42 @@ def run_benchmark(
         "load": {},
         "temporal_build": {},
         "temporal_compute": {},
+        "temporal_graph": {},
         "spatial_build": {},
         "spatial_compute": {},
     }
 
     for tool in ["kerchunk", "netcdf"]:
-        open_times = []
-        load_times = []
-        temporal_build_times = []
-        temporal_compute_times = []
-        spatial_build_times = []
-        spatial_compute_times = []
+        open_times: list[float] = []
+        load_times: list[float] = []
+        temporal_build_times: list[float] = []
+        temporal_compute_times: list[float] = []
+        temporal_graph_counts: list[int | None] = []
+        spatial_build_times: list[float] = []
+        spatial_compute_times: list[float] = []
 
         for _ in range(ntests):
             open_times.append(_time_open(kerchunk_fn, netcdf_files, tool))
             load_times.append(_time_load(kerchunk_fn, netcdf_files, var_id, tool))
 
-            tb, tc = _time_temporal(kerchunk_fn, netcdf_files, var_id, tool)
+            tb, tc, tg = _time_temporal(kerchunk_fn, netcdf_files, var_id, tool)
             sb, sc = _time_spatial(kerchunk_fn, netcdf_files, var_id, tool)
 
             temporal_build_times.append(tb)
             temporal_compute_times.append(tc)
+            temporal_graph_counts.append(tg)
             spatial_build_times.append(sb)
             spatial_compute_times.append(sc)
 
             gc.collect()
 
+        # discard warmup
         if ntests > 1:
             open_times = open_times[1:]
             load_times = load_times[1:]
             temporal_build_times = temporal_build_times[1:]
             temporal_compute_times = temporal_compute_times[1:]
+            temporal_graph_counts = temporal_graph_counts[1:]
             spatial_build_times = spatial_build_times[1:]
             spatial_compute_times = spatial_compute_times[1:]
 
@@ -243,6 +251,10 @@ def run_benchmark(
         metrics["temporal_compute"][tool] = float(np.nanmedian(temporal_compute_times))
         metrics["spatial_build"][tool] = float(np.nanmedian(spatial_build_times))
         metrics["spatial_compute"][tool] = float(np.nanmedian(spatial_compute_times))
+
+        # median graph task count (ignore None)
+        tg_vals = [v for v in temporal_graph_counts if v is not None]
+        metrics["temporal_graph"][tool] = int(np.median(tg_vals)) if tg_vals else None
 
     results.update(
         {
@@ -254,6 +266,8 @@ def run_benchmark(
             "temporal_build_netcdf": metrics["temporal_build"]["netcdf"],
             "temporal_compute_kerchunk": metrics["temporal_compute"]["kerchunk"],
             "temporal_compute_netcdf": metrics["temporal_compute"]["netcdf"],
+            "temporal_graph_tasks_kerchunk": metrics["temporal_graph"]["kerchunk"],
+            "temporal_graph_tasks_netcdf": metrics["temporal_graph"]["netcdf"],
             "spatial_build_kerchunk": metrics["spatial_build"]["kerchunk"],
             "spatial_build_netcdf": metrics["spatial_build"]["netcdf"],
             "spatial_compute_kerchunk": metrics["spatial_compute"]["kerchunk"],
@@ -265,10 +279,10 @@ def run_benchmark(
         f"{os.path.basename(kerchunk_fn)} | "
         f"open: {results['open_kerchunk']:.2f}/{results['open_netcdf']:.2f} | "
         f"load: {results['load_kerchunk']:.2f}/{results['load_netcdf']:.2f} | "
-        f"temporal: {results['temporal_compute_kerchunk']:.2f}/"
-        f"{results['temporal_compute_netcdf']:.2f} | "
-        f"spatial: {results['spatial_compute_kerchunk']:.2f}/"
-        f"{results['spatial_compute_netcdf']:.2f}"
+        f"temporal: {results['temporal_compute_kerchunk']:.2f}/{results['temporal_compute_netcdf']:.2f} | "
+        f"spatial: {results['spatial_compute_kerchunk']:.2f}/{results['spatial_compute_netcdf']:.2f} | "
+        f"temporal_graph_tasks: {results['temporal_graph_tasks_kerchunk']}/"
+        f"{results['temporal_graph_tasks_netcdf']}"
     )
     return results
 
@@ -280,7 +294,6 @@ def run_benchmark(
 
 def _compute_physical_size_gb(netcdf_files: list[str]) -> float:
     total_bytes = sum(os.path.getsize(f) for f in netcdf_files if os.path.exists(f))
-
     return total_bytes / (1024**3)
 
 
@@ -289,7 +302,6 @@ def _compute_slice_size_gb(da) -> float | None:
         if "time" in da.dims:
             n = min(FIXED_TIMESTEPS, da.sizes["time"])
             da = da.isel(time=slice(0, n))
-
         return da.nbytes / (1024**3)
     except Exception:
         return None
@@ -298,38 +310,75 @@ def _compute_slice_size_gb(da) -> float | None:
 def _collect_backend_metadata(
     kerchunk_fn: str, netcdf_files: list[str], var_id: str
 ) -> dict:
-    ds = xc.open_dataset(kerchunk_fn, engine="kerchunk", chunks={})
+
+    results = {
+        "netcdf_file_count": len(netcdf_files),
+        "size_gb_physical": _compute_physical_size_gb(netcdf_files),
+    }
+
+    # Kerchunk
+    ds_k = xc.open_dataset(kerchunk_fn, engine="kerchunk", chunks={})
+    try:
+        results.update(_extract_backend_metadata(ds_k, var_id, "kerchunk"))
+    finally:
+        ds_k.close()
+
+    # NetCDF
+    ds_n = xc.open_mfdataset(netcdf_files, chunks={}, combine="by_coords")
+    try:
+        results.update(_extract_backend_metadata(ds_n, var_id, "netcdf"))
+    finally:
+        ds_n.close()
+
+    return results
+
+
+def _extract_backend_metadata(ds, var_id: str, backend: str) -> dict:
+    da = ds[var_id]
+    time_len = int(da.sizes.get("time", -1))
+
+    # Full-dataset time chunk stats
+    time_chunk_min = None
+    time_chunk_count = None
+    if hasattr(da, "chunks") and da.chunks is not None and "time" in da.dims:
+        axis = da.get_axis_num("time")
+        chunks = np.asarray(da.chunks[axis], dtype=int)
+        time_chunk_min = int(chunks.min())
+        time_chunk_count = int(len(chunks))
 
     try:
-        da = ds[var_id]
+        full_task_count = len(da.data.__dask_graph__())
+    except Exception:
+        full_task_count = None
 
-        # Time chunk summary
-        time_chunk_min = None
-        time_chunk_count = None
-        if hasattr(da, "chunks") and da.chunks is not None and "time" in da.dims:
-            axis = da.get_axis_num("time")
-            chunks = np.asarray(da.chunks[axis], dtype=int)
-            time_chunk_min = int(chunks.min())
-            time_chunk_count = int(len(chunks))
+    # Post-slice stats (slice is what load/reductions operate on)
+    post_slice_time_chunk_count = None
+    post_slice_task_count = None
+    if "time" in da.dims:
+        n = min(FIXED_TIMESTEPS, da.sizes["time"])
+        da_slice = da.isel(time=slice(0, n))
 
-        # Dask task count
+        if hasattr(da_slice, "chunks") and da_slice.chunks is not None:
+            axis = da_slice.get_axis_num("time")
+            chunks = np.asarray(da_slice.chunks[axis], dtype=int)
+            post_slice_time_chunk_count = int(len(chunks))
+
         try:
-            dask_task_count = len(da.data.__dask_graph__())
+            post_slice_task_count = len(da_slice.data.__dask_graph__())
         except Exception:
-            dask_task_count = None
+            post_slice_task_count = None
 
-        return {
-            "time_len": int(da.sizes.get("time", -1)),
-            "netcdf_file_count": len(netcdf_files),
-            "size_gb_physical": _compute_physical_size_gb(netcdf_files),
-            "size_gb_slice": _compute_slice_size_gb(da),
-            "time_chunk_min": time_chunk_min,
-            "time_chunk_count": time_chunk_count,
-            "dask_task_count": dask_task_count,
-        }
+    size_gb_slice = _compute_slice_size_gb(da)
 
-    finally:
-        ds.close()
+    return {
+        f"{backend}_time_len": time_len,
+        f"{backend}_time_chunk_min": time_chunk_min,
+        f"{backend}_time_chunk_count": time_chunk_count,
+        f"{backend}_dask_task_count": full_task_count,
+        f"{backend}_post_slice_time_chunk_count": post_slice_time_chunk_count,
+        f"{backend}_post_slice_dask_task_count": post_slice_task_count,
+        f"{backend}_size_gb_slice": size_gb_slice,
+    }
 
 
 def _load_kerchunk_refs(fn: str) -> dict:
@@ -350,23 +399,19 @@ def _extract_netcdf_files(refs: dict) -> list[str]:
 def _infer_var_id(kerchunk_fn: str) -> str:
     base = os.path.basename(kerchunk_fn)
     parts = base.split(".")
-
     return parts[7] if len(parts) > 7 else "ta"
 
 
 def _open_dataset(kerchunk_fn: str, netcdf_files: list[str], tool: str):
     if tool == "kerchunk":
         return xc.open_dataset(kerchunk_fn, engine="kerchunk", chunks={})
-
     return xc.open_mfdataset(netcdf_files, chunks={}, combine="by_coords")
 
 
 def _apply_fixed_time_slice(ds, var_id: str):
     if "time" in ds[var_id].dims:
         n = min(FIXED_TIMESTEPS, ds[var_id].sizes["time"])
-
         return ds.isel(time=slice(0, n))
-
     return ds
 
 
@@ -374,9 +419,7 @@ def _time_open(kerchunk_fn: str, netcdf_files: list[str], tool: str) -> float:
     s = time.perf_counter()
     ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
     e = time.perf_counter()
-
     ds.close()
-
     return e - s
 
 
@@ -391,13 +434,12 @@ def _time_load(
     e = time.perf_counter()
 
     ds.close()
-
     return e - s
 
 
 def _time_temporal(
     kerchunk_fn: str, netcdf_files: list[str], var_id: str, tool: str
-) -> tuple[float, float]:
+) -> tuple[float, float, int | None]:
     ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
     ds = _apply_fixed_time_slice(ds, var_id)
 
@@ -406,13 +448,17 @@ def _time_temporal(
     expr = ds.temporal.group_average(var_id, freq="year")
     e_build = time.perf_counter()
 
+    try:
+        graph_task_count = len(expr.data.__dask_graph__())
+    except Exception:
+        graph_task_count = None
+
     s_compute = time.perf_counter()
     expr.compute()
     e_compute = time.perf_counter()
 
     ds.close()
-
-    return e_build - s_build, e_compute - s_compute
+    return e_build - s_build, e_compute - s_compute, graph_task_count
 
 
 def _time_spatial(
@@ -431,14 +477,12 @@ def _time_spatial(
     e_compute = time.perf_counter()
 
     ds.close()
-
     return e_build - s_build, e_compute - s_compute
 
 
 def _plot_results(df: pd.DataFrame, freq: str) -> None:
     if df.empty:
         logger.warning(f"Empty DataFrame for frequency: {freq}, skipping plot.")
-
         return
 
     df["temporal_total_kerchunk"] = (
@@ -468,7 +512,6 @@ def _plot_results(df: pd.DataFrame, freq: str) -> None:
         x = df[kcol]
         y = df[ncol]
 
-        # Protect against zero values.
         mv = max(float(np.nanmax(x)), float(np.nanmax(y)))
         if not np.isfinite(mv) or mv <= 0:
             mv = 1.0
@@ -490,11 +533,9 @@ def _plot_results(df: pd.DataFrame, freq: str) -> None:
 def _log_median_ratios(df: pd.DataFrame, freq: str) -> None:
     df["open_ratio"] = df["open_kerchunk"] / df["open_netcdf"]
     df["load_ratio"] = df["load_kerchunk"] / df["load_netcdf"]
-
     df["temporal_ratio"] = (
         df["temporal_compute_kerchunk"] / df["temporal_compute_netcdf"]
     )
-
     df["spatial_ratio"] = df["spatial_compute_kerchunk"] / df["spatial_compute_netcdf"]
 
     logger.info(
