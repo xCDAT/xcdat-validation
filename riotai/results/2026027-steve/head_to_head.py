@@ -20,6 +20,9 @@ Workload Design
     • Default: 240 timesteps.
     • mon ≈ 20 years; day ≈ 8 months.
     • Slice is positional and may not align with chunk boundaries.
+    • Partial chunks may therefore be read in full; both backends
+      preserve identical on-disk chunking, so any chunk-level
+      amplification affects them symmetrically.
 • Measures four phases independently:
     1. Open (metadata parsing + Dask graph construction)
     2. Load (materialization of fixed slice)
