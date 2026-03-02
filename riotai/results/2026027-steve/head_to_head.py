@@ -6,33 +6,31 @@ and native NetCDF datasets under realistic xCDAT diagnostic workflows.
 
 Execution Model
 ---------------
-• Uses Dask threaded scheduler with a fixed number of workers to simulate
-  typical xarray/xCDAT user workflows (no distributed cluster).
-• BLAS/OpenMP threading is disabled (OMP/MKL/OPENBLAS set to 1) to prevent
-  oversubscription and reduce timing noise.
+• Uses Dask threaded scheduler with a fixed number of workers (no distributed cluster).
+• BLAS/OpenMP threading disabled (OMP/MKL/OPENBLAS=1) to reduce oversubscription noise.
 • Execution is sequential across datasets for reproducibility.
+• Each phase timed multiple times; first run discarded, median reported.
 
 Workload Design
 ---------------
 • Preserves on-disk chunking (`chunks={}`); no rechunking performed.
 • Uses identical NetCDF file lists derived from kerchunk references.
-• Applies a fixed timestep slice (`FIXED_TIMESTEPS`) for controlled workload.
+• Deterministic stratified file selection within each frequency.
+• Applies a fixed leading timestep slice (`FIXED_TIMESTEPS`).
     • Default: 240 timesteps.
     • mon ≈ 20 years; day ≈ 8 months.
+    • Slice is positional and may not align with chunk boundaries.
 • Measures four phases independently:
-    1. Open (metadata graph construction)
+    1. Open (metadata parsing + Dask graph construction)
     2. Load (materialization of fixed slice)
-    3. Temporal reduction (annual mean)
-    4. Spatial reduction (area average)
-• Temporal and spatial phases separate Dask graph-build and compute time.
+    3. Temporal reduction (annual mean; build and compute timed separately)
+    4. Spatial reduction (area average; build and compute timed separately)
 
 Stratified Design
 -----------------
 • Benchmarks executed separately for `mon` and `day`.
 • `hr-misc` excluded due to heterogeneous cadence.
-• File selection within each frequency is deterministic and stratified
-  (evenly spaced across sorted file list) for structural coverage.
-• Results are interpreted within-frequency; cross-frequency runtime
+• Results interpreted within-frequency; cross-frequency runtime
   comparisons are not meaningful.
 
 Diagnostics and Reporting
@@ -41,19 +39,15 @@ Per dataset:
 • NetCDF file count
 • Time dimension length
 • Time chunk minimum and count
-• Dask task count
+• Dask task count (pre-compute graph size)
 • Physical dataset size (GB)
-• Slice workload size (GB)
-• Phase timings (kerchunk vs NetCDF)
-
-Per frequency:
-• Median kerchunk/netCDF timing ratios (open, load, temporal, spatial)
+• Slice logical size (GB)
+• Median phase timings (kerchunk vs NetCDF)
 
 Purpose
 -------
-Provide a storage-layout–faithful, reproducible backend comparison
-with sufficient structural metadata to explain performance differences.
-Not intended as a throughput scaling benchmark.
+Provide a storage-layout–faithful, reproducible backend comparison.
+Not intended as a throughput scaling or distributed performance benchmark.
 
 Usage
 -----
@@ -143,7 +137,6 @@ def main() -> None:
             logger.warning(f"No files found for frequency: {freq}")
             continue
 
-        # -------- Deterministic Stratified Selection --------
         if len(all_files) <= NFILES:
             kerchunk_files = all_files
         else:
@@ -157,12 +150,12 @@ def main() -> None:
             netcdf_files = _extract_netcdf_files(refs)
             if not netcdf_files:
                 continue
-            vid = _infer_vid(fn)
-            items.append((fn, refs, netcdf_files, vid))
+            var_id = _infer_var_id(fn)
+            items.append((fn, refs, netcdf_files, var_id))
 
         results = Parallel(n_jobs=1)(
-            delayed(run_benchmark)(fn, refs, netcdf_files, vid, NTESTS)
-            for fn, refs, netcdf_files, vid in tqdm.tqdm(items)
+            delayed(run_benchmark)(fn, refs, netcdf_files, var_id, NTESTS)
+            for fn, refs, netcdf_files, var_id in tqdm.tqdm(items)
         )
 
         if not results:
@@ -173,25 +166,7 @@ def main() -> None:
         df["frequency"] = freq
 
         _plot_results(df, freq)
-
-        df["open_ratio"] = df["open_kerchunk"] / df["open_netcdf"]
-        df["load_ratio"] = df["load_kerchunk"] / df["load_netcdf"]
-
-        df["temporal_ratio"] = (
-            df["temporal_compute_kerchunk"] / df["temporal_compute_netcdf"]
-        )
-
-        df["spatial_ratio"] = (
-            df["spatial_compute_kerchunk"] / df["spatial_compute_netcdf"]
-        )
-
-        logger.info(
-            f"{freq} median ratios | "
-            f"open: {df['open_ratio'].median():.2f} | "
-            f"load: {df['load_ratio'].median():.2f} | "
-            f"temporal: {df['temporal_ratio'].median():.2f} | "
-            f"spatial: {df['spatial_ratio'].median():.2f}"
-        )
+        _log_median_ratios(df, freq)
 
         all_results.extend(results)
 
@@ -202,16 +177,16 @@ def run_benchmark(
     kerchunk_fn: str,
     refs: dict,
     netcdf_files: list[str],
-    vid: str,
+    var_id: str,
     ntests: int,
 ) -> dict:
 
     results: dict = {
         "file": kerchunk_fn,
-        "variable": vid,
+        "variable": var_id,
     }
 
-    results.update(_collect_backend_metadata(kerchunk_fn, netcdf_files, vid))
+    results.update(_collect_backend_metadata(kerchunk_fn, netcdf_files, var_id))
     logger.info(
         f"{os.path.basename(kerchunk_fn)} | "
         f"files={results.get('netcdf_file_count')} | "
@@ -239,10 +214,10 @@ def run_benchmark(
 
         for _ in range(ntests):
             open_times.append(_time_open(kerchunk_fn, netcdf_files, tool))
-            load_times.append(_time_load(kerchunk_fn, netcdf_files, vid, tool))
+            load_times.append(_time_load(kerchunk_fn, netcdf_files, var_id, tool))
 
-            tb, tc = _time_temporal(kerchunk_fn, netcdf_files, vid, tool)
-            sb, sc = _time_spatial(kerchunk_fn, netcdf_files, vid, tool)
+            tb, tc = _time_temporal(kerchunk_fn, netcdf_files, var_id, tool)
+            sb, sc = _time_spatial(kerchunk_fn, netcdf_files, var_id, tool)
 
             temporal_build_times.append(tb)
             temporal_compute_times.append(tc)
@@ -318,12 +293,12 @@ def _compute_slice_size_gb(da) -> float | None:
 
 
 def _collect_backend_metadata(
-    kerchunk_fn: str, netcdf_files: list[str], vid: str
+    kerchunk_fn: str, netcdf_files: list[str], var_id: str
 ) -> dict:
-
     ds = xc.open_dataset(kerchunk_fn, engine="kerchunk", chunks={})
+
     try:
-        da = ds[vid]
+        da = ds[var_id]
 
         # Time chunk summary
         time_chunk_min = None
@@ -369,9 +344,10 @@ def _extract_netcdf_files(refs: dict) -> list[str]:
     )
 
 
-def _infer_vid(kerchunk_fn: str) -> str:
+def _infer_var_id(kerchunk_fn: str) -> str:
     base = os.path.basename(kerchunk_fn)
     parts = base.split(".")
+
     return parts[7] if len(parts) > 7 else "ta"
 
 
@@ -382,18 +358,13 @@ def _open_dataset(kerchunk_fn: str, netcdf_files: list[str], tool: str):
     return xc.open_mfdataset(netcdf_files, chunks={}, combine="by_coords")
 
 
-def _apply_fixed_time_slice(ds, vid: str):
-    if "time" in ds[vid].dims:
-        n = min(FIXED_TIMESTEPS, ds[vid].sizes["time"])
+def _apply_fixed_time_slice(ds, var_id: str):
+    if "time" in ds[var_id].dims:
+        n = min(FIXED_TIMESTEPS, ds[var_id].sizes["time"])
 
         return ds.isel(time=slice(0, n))
 
     return ds
-
-
-def _warmup_open(kerchunk_fn: str, netcdf_files: list[str], tool: str) -> None:
-    ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
-    ds.close()
 
 
 def _time_open(kerchunk_fn: str, netcdf_files: list[str], tool: str) -> float:
@@ -406,12 +377,14 @@ def _time_open(kerchunk_fn: str, netcdf_files: list[str], tool: str) -> float:
     return e - s
 
 
-def _time_load(kerchunk_fn: str, netcdf_files: list[str], vid: str, tool: str) -> float:
+def _time_load(
+    kerchunk_fn: str, netcdf_files: list[str], var_id: str, tool: str
+) -> float:
     ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
-    ds = _apply_fixed_time_slice(ds, vid)
+    ds = _apply_fixed_time_slice(ds, var_id)
 
     s = time.perf_counter()
-    ds[vid].compute()
+    ds[var_id].compute()
     e = time.perf_counter()
 
     ds.close()
@@ -420,14 +393,14 @@ def _time_load(kerchunk_fn: str, netcdf_files: list[str], vid: str, tool: str) -
 
 
 def _time_temporal(
-    kerchunk_fn: str, netcdf_files: list[str], vid: str, tool: str
+    kerchunk_fn: str, netcdf_files: list[str], var_id: str, tool: str
 ) -> tuple[float, float]:
     ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
-    ds = _apply_fixed_time_slice(ds, vid)
+    ds = _apply_fixed_time_slice(ds, var_id)
 
     s_build = time.perf_counter()
     ds = ds.bounds.add_missing_bounds()
-    expr = ds.temporal.group_average(vid, freq="year")
+    expr = ds.temporal.group_average(var_id, freq="year")
     e_build = time.perf_counter()
 
     s_compute = time.perf_counter()
@@ -440,14 +413,14 @@ def _time_temporal(
 
 
 def _time_spatial(
-    kerchunk_fn: str, netcdf_files: list[str], vid: str, tool: str
+    kerchunk_fn: str, netcdf_files: list[str], var_id: str, tool: str
 ) -> tuple[float, float]:
     ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
-    ds = _apply_fixed_time_slice(ds, vid)
+    ds = _apply_fixed_time_slice(ds, var_id)
 
     s_build = time.perf_counter()
     ds = ds.bounds.add_missing_bounds()
-    expr = ds.spatial.average(vid)
+    expr = ds.spatial.average(var_id)
     e_build = time.perf_counter()
 
     s_compute = time.perf_counter()
@@ -509,6 +482,25 @@ def _plot_results(df: pd.DataFrame, freq: str) -> None:
     plt.tight_layout()
     plt.savefig(os.path.join(ROOT_DIR, f"{_TS}_benchmark_{freq}.png"), dpi=300)
     plt.close()
+
+
+def _log_median_ratios(df: pd.DataFrame, freq: str) -> None:
+    df["open_ratio"] = df["open_kerchunk"] / df["open_netcdf"]
+    df["load_ratio"] = df["load_kerchunk"] / df["load_netcdf"]
+
+    df["temporal_ratio"] = (
+        df["temporal_compute_kerchunk"] / df["temporal_compute_netcdf"]
+    )
+
+    df["spatial_ratio"] = df["spatial_compute_kerchunk"] / df["spatial_compute_netcdf"]
+
+    logger.info(
+        f"{freq} median ratios | "
+        f"open: {df['open_ratio'].median():.2f} | "
+        f"load: {df['load_ratio'].median():.2f} | "
+        f"temporal: {df['temporal_ratio'].median():.2f} | "
+        f"spatial: {df['spatial_ratio'].median():.2f}"
+    )
 
 
 if __name__ == "__main__":
