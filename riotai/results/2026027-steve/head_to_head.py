@@ -4,48 +4,56 @@ Controlled Kerchunk vs NetCDF Benchmark (xCDAT-Based)
 Disk-chunk–preserving benchmark comparing kerchunk-backed datasets
 and native NetCDF datasets under realistic xCDAT diagnostic workflows.
 
-Characteristics
+Execution Model
 ---------------
-• Preserves on-disk chunking (`chunks={}`); no rechunking.
+• Uses Dask threaded scheduler with a fixed number of workers to simulate
+  typical xarray/xCDAT user workflows (no distributed cluster).
+• BLAS/OpenMP threading is disabled (OMP/MKL/OPENBLAS set to 1) to prevent
+  oversubscription and reduce timing noise.
+• Execution is sequential across datasets for reproducibility.
+
+Workload Design
+---------------
+• Preserves on-disk chunking (`chunks={}`); no rechunking performed.
 • Uses identical NetCDF file lists derived from kerchunk references.
 • Applies a fixed timestep slice (`FIXED_TIMESTEPS`) for controlled workload.
-    • Defaults to 240 timesteps to balance runtime and representativeness.
-    • mon: ~20 years
-    • day: ~8 months
+    • Default: 240 timesteps.
+    • mon ≈ 20 years; day ≈ 8 months.
 • Measures four phases independently:
     1. Open (metadata graph construction)
     2. Load (materialization of fixed slice)
-    3. Temporal reduction (annual mean on fixed slice)
-    4. Spatial reduction (area average on fixed slice)
+    3. Temporal reduction (annual mean)
+    4. Spatial reduction (area average)
 • Temporal and spatial phases separate Dask graph-build and compute time.
 
 Stratified Design
 -----------------
-• Benchmarks are executed separately by frequency (e.g., day, mon).
-  • hr-misc is not included because it is a heterogeneous mix of frequencies.
+• Benchmarks executed separately for `mon` and `day`.
+• `hr-misc` excluded due to heterogeneous cadence.
 • File selection within each frequency is deterministic and stratified
-  (evenly spaced across the sorted file list) to ensure structural coverage
-  while remaining reproducible.
+  (evenly spaced across sorted file list) for structural coverage.
 • Results are interpreted within-frequency; cross-frequency runtime
-  comparisons are not meaningful due to differing temporal resolution,
-  file segmentation, and graph structure.
+  comparisons are not meaningful.
 
-Diagnostics Collected
----------------------
+Diagnostics and Reporting
+-------------------------
+Per dataset:
 • NetCDF file count
 • Time dimension length
-• Time chunk statistics
-• Dask task counts
+• Time chunk minimum and count
+• Dask task count
 • Physical dataset size (GB)
 • Slice workload size (GB)
+• Phase timings (kerchunk vs NetCDF)
 
-Execution is sequential and deterministic to minimize system noise.
+Per frequency:
+• Median kerchunk/netCDF timing ratios (open, load, temporal, spatial)
 
 Purpose
 -------
-Enable storage-layout–faithful backend comparison with sufficient
-metadata to explain performance differences. Not intended as a
-throughput or scaling benchmark.
+Provide a storage-layout–faithful, reproducible backend comparison
+with sufficient structural metadata to explain performance differences.
+Not intended as a throughput scaling benchmark.
 
 Usage
 -----
@@ -74,6 +82,11 @@ from joblib import Parallel, delayed
 import xcdat as xc
 import dask
 
+# Prevent multithreading in underlying libraries to reduce noise in timing
+# measurements.
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 # ============================================================
 # Configuration
@@ -88,7 +101,9 @@ KERCHUNK_DIRECTORY: str = (
 )
 
 _TS = datetime.now().strftime("%Y%m%d_%H%M%S")
-OUT_CSV: str = f"benchmark_{_TS}.csv"
+ROOT_DIR = os.path.dirname(__file__)
+# Output CSV will be written to the same directory as this script
+OUT_CSV: str = os.path.join(ROOT_DIR, f"{_TS}_benchmark.csv")
 
 # Configure Dask to use the local threaded scheduler without creating a
 # distributed Client. This mirrors typical xarray/xCDAT user workflows,
@@ -158,6 +173,26 @@ def main() -> None:
         df["frequency"] = freq
 
         _plot_results(df, freq)
+
+        df["open_ratio"] = df["open_kerchunk"] / df["open_netcdf"]
+        df["load_ratio"] = df["load_kerchunk"] / df["load_netcdf"]
+
+        df["temporal_ratio"] = (
+            df["temporal_compute_kerchunk"] / df["temporal_compute_netcdf"]
+        )
+
+        df["spatial_ratio"] = (
+            df["spatial_compute_kerchunk"] / df["spatial_compute_netcdf"]
+        )
+
+        logger.info(
+            f"{freq} median ratios | "
+            f"open: {df['open_ratio'].median():.2f} | "
+            f"load: {df['load_ratio'].median():.2f} | "
+            f"temporal: {df['temporal_ratio'].median():.2f} | "
+            f"spatial: {df['spatial_ratio'].median():.2f}"
+        )
+
         all_results.extend(results)
 
     pd.DataFrame(all_results).to_csv(OUT_CSV, index=False)
@@ -177,6 +212,13 @@ def run_benchmark(
     }
 
     results.update(_collect_backend_metadata(kerchunk_fn, netcdf_files, vid))
+    logger.info(
+        f"{os.path.basename(kerchunk_fn)} | "
+        f"files={results.get('netcdf_file_count')} | "
+        f"time_len={results.get('time_len')} | "
+        f"time_chunks={results.get('time_chunk_count')} | "
+        f"size_gb={results.get('size_gb_physical'):.2f}"
+    )
 
     metrics = {
         "open": {},
@@ -188,9 +230,6 @@ def run_benchmark(
     }
 
     for tool in ["kerchunk", "netcdf"]:
-
-        _warmup_open(kerchunk_fn, netcdf_files, tool)
-
         open_times = []
         load_times = []
         temporal_build_times = []
@@ -244,6 +283,15 @@ def run_benchmark(
         }
     )
 
+    logger.info(
+        f"{os.path.basename(kerchunk_fn)} | "
+        f"open: {results['open_kerchunk']:.2f}/{results['open_netcdf']:.2f} | "
+        f"load: {results['load_kerchunk']:.2f}/{results['load_netcdf']:.2f} | "
+        f"temporal: {results['temporal_compute_kerchunk']:.2f}/"
+        f"{results['temporal_compute_netcdf']:.2f} | "
+        f"spatial: {results['spatial_compute_kerchunk']:.2f}/"
+        f"{results['spatial_compute_netcdf']:.2f}"
+    )
     return results
 
 
@@ -277,11 +325,31 @@ def _collect_backend_metadata(
     try:
         da = ds[vid]
 
+        # Time chunk summary
+        time_chunk_min = None
+        time_chunk_count = None
+        if hasattr(da, "chunks") and da.chunks is not None and "time" in da.dims:
+            axis = da.get_axis_num("time")
+            chunks = np.asarray(da.chunks[axis], dtype=int)
+            time_chunk_min = int(chunks.min())
+            time_chunk_count = int(len(chunks))
+
+        # Dask task count
+        try:
+            dask_task_count = len(da.data.__dask_graph__())
+        except Exception:
+            dask_task_count = None
+
         return {
             "time_len": int(da.sizes.get("time", -1)),
+            "netcdf_file_count": len(netcdf_files),
             "size_gb_physical": _compute_physical_size_gb(netcdf_files),
             "size_gb_slice": _compute_slice_size_gb(da),
+            "time_chunk_min": time_chunk_min,
+            "time_chunk_count": time_chunk_count,
+            "dask_task_count": dask_task_count,
         }
+
     finally:
         ds.close()
 
@@ -423,16 +491,23 @@ def _plot_results(df: pd.DataFrame, freq: str) -> None:
         plt.subplot(2, 2, i + 1)
         x = df[kcol]
         y = df[ncol]
-        mv = max(float(np.nanmax(x)), float(np.nanmax(y)), 1.0)
+
+        # Protect against zero values.
+        mv = max(float(np.nanmax(x)), float(np.nanmax(y)))
+        if not np.isfinite(mv) or mv <= 0:
+            mv = 1.0
+
         plt.scatter(x, y)
         plt.plot([0, mv], [0, mv], "k:")
         plt.title(title)
+        plt.xlabel("Kerchunk [s]")
+        plt.ylabel("NetCDF [s]")
         plt.xlim(0, mv)
         plt.ylim(0, mv)
 
     plt.suptitle(f"Frequency: {freq}")
     plt.tight_layout()
-    plt.savefig(f"benchmark_{freq}_{_TS}.png", dpi=300)
+    plt.savefig(os.path.join(ROOT_DIR, f"{_TS}_benchmark_{freq}.png"), dpi=300)
     plt.close()
 
 
