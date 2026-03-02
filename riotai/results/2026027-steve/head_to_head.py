@@ -1,279 +1,231 @@
 """
-Clean Kerchunk vs NetCDF Benchmark (xCDAT-Based)
+Controlled Kerchunk vs NetCDF Benchmark (xCDAT-Based)
 
-This module implements a controlled benchmarking framework to compare
-kerchunk-backed datasets and native NetCDF datasets under realistic
-xCDAT diagnostic workflows.
+Disk-chunk–preserving benchmark comparing kerchunk-backed datasets
+and native NetCDF datasets under realistic xCDAT diagnostic workflows.
 
-The benchmark measures four isolated phases:
+Characteristics
+---------------
+• Preserves on-disk chunking (`chunks={}`); no rechunking.
+• Uses identical NetCDF file lists derived from kerchunk references.
+• Applies a fixed timestep slice (`FIXED_TIMESTEPS`) for controlled workload.
+    • Defaults to 240 timesteps to balance runtime and representativeness.
+    • mon: ~20 years
+    • day: ~8 months
+• Measures four phases independently:
+    1. Open (metadata graph construction)
+    2. Load (materialization of fixed slice)
+    3. Temporal reduction (annual mean on fixed slice)
+    4. Spatial reduction (area average on fixed slice)
+• Temporal and spatial phases separate Dask graph-build and compute time.
 
-    1. Dataset open (metadata access)
-    2. Variable load (fixed timestep materialization)
-    3. Temporal reduction (annual mean)
-    4. Spatial reduction (area average)
+Stratified Design
+-----------------
+• Benchmarks are executed separately by frequency (e.g., day, mon).
+  • hr-misc is not included because it is a heterogeneous mix of frequencies.
+• File selection within each frequency is deterministic and stratified
+  (evenly spaced across the sorted file list) to ensure structural coverage
+  while remaining reproducible.
+• Results are interpreted within-frequency; cross-frequency runtime
+  comparisons are not meaningful due to differing temporal resolution,
+  file segmentation, and graph structure.
 
-Each phase is timed independently to attribute performance differences
-to specific components of the workflow.
+Diagnostics Collected
+---------------------
+• NetCDF file count
+• Time dimension length
+• Time chunk statistics
+• Dask task counts
+• Physical dataset size (GB)
+• Slice workload size (GB)
 
-Changes from Original Benchmark
--------------------------------
+Execution is sequential and deterministic to minimize system noise.
 
-Backend Fairness
-- Both backends are opened with `chunks={}` to ensure Dask-backed lazy arrays.
-- No rechunking is performed; on-disk chunk layout is preserved.
-- JSON parsing is decoupled from NetCDF opening so kerchunk reference
-  parsing does not contaminate native NetCDF open timings.
-- Open, load, temporal, and spatial phases are fully isolated.
+Purpose
+-------
+Enable storage-layout–faithful backend comparison with sufficient
+metadata to explain performance differences. Not intended as a
+throughput or scaling benchmark.
 
-Workload Control
-- A fixed number of timesteps (`FIXED_TIMESTEPS = 240`) is used for
-  load benchmarking to ensure consistent logical work across datasets.
-- 10–20 files are sampled to balance variability coverage with runtime.
-
-Timing Rigor
-- `time.perf_counter()` is used for high-resolution, monotonic timing.
-- The first run is dropped internally to reduce cold-cache and
-  initialization bias.
-- A metadata warm-up open is performed before timing loops to isolate
-  steady-state performance.
-
-System Noise Control
-- Benchmarks run sequentially (`n_jobs=1`) to avoid filesystem and
-  scheduler contention affecting measurements.
-
-Goal
-----
-Provide a clean, apples-to-apples backend comparison under realistic
-xCDAT diagnostic workflows while collecting diagnostic metadata
-(chunk structure, task counts, file counts) to explain observed
-performance differences.
-
-This module is intended for controlled backend evaluation rather than
-large-scale population throughput testing.
+Usage
+-----
+salloc --nodes 1 --qos interactive --constraint cpu --time 04:00:00 --account mXXXX
+conda activate xcdat_test_stable_min
+python riotai/results/2026027-steve/head_to_head.py
 """
 
+from __future__ import annotations
+
+from datetime import datetime
+
 import glob
-import xcdat as xc
-import numpy as np
-import time
-import os
 import json
-import pandas as pd
 import logging
+import os
+import time
 import gc
-import random
 
-from joblib import Parallel, delayed
-import tqdm
+import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+import tqdm
+from joblib import Parallel, delayed
 
+import xcdat as xc
+import dask
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    datefmt="%H:%M:%S",
-)
-
-logger = logging.getLogger("benchmark")
-
-
-logging.getLogger("fsspec").setLevel(logging.ERROR)
-logging.getLogger("kerchunk").setLevel(logging.ERROR)
-logging.getLogger("xarray").setLevel(logging.ERROR)
-logging.getLogger("xcdat").setLevel(logging.ERROR)
 
 # ============================================================
 # Configuration
 # ============================================================
 
-FIXED_TIMESTEPS = 240
+FIXED_TIMESTEPS: int = 240
+NTESTS: int = 3
+NFILES: int = 5  # number per frequency
+
+KERCHUNK_DIRECTORY: str = (
+    "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/ta/historical"
+)
+
+_TS = datetime.now().strftime("%Y%m%d_%H%M%S")
+OUT_CSV: str = f"benchmark_{_TS}.csv"
+
+# Configure Dask to use the local threaded scheduler without creating a
+# distributed Client. This mirrors typical xarray/xCDAT user workflows,
+# where Dask runs in-process with a thread pool. `num_workers` limits
+# parallel task execution to avoid oversubscription and improve
+# reproducibility of wall-clock timing.
+dask.config.set(scheduler="threads", num_workers=8)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("benchmark")
+
+# Suppress verbose fsspec logging from kerchunk.
+logging.getLogger("fsspec").setLevel(logging.ERROR)
 
 
 # ============================================================
-# Helpers
+# Public API
 # ============================================================
 
 
-def extract_netcdf_path_from_json(fn):
-    with open(fn, "r") as file:
-        refs = json.load(file)
+def main() -> None:
+    frequencies = ["day", "mon"]
+    all_results = []
 
-    for key in refs["refs"]:
-        if isinstance(refs["refs"][key], list):
-            return os.path.dirname(refs["refs"][key][0]) + "/"
+    for freq in frequencies:
+        freq_dir = os.path.join(KERCHUNK_DIRECTORY, freq)
+        if not os.path.isdir(freq_dir):
+            continue
 
-    return None
+        logger.info(f"Running frequency: {freq}")
 
+        all_files = sorted(
+            glob.glob(os.path.join(freq_dir, "**", "*.json"), recursive=True)
+        )
 
-def get_kerchunk_metadata_stats(fn):
-    with open(fn, "r") as file:
-        refs = json.load(file)
+        if not all_files:
+            logger.warning(f"No files found for frequency: {freq}")
+            continue
 
-    ref_dict = refs.get("refs", {})
-    netcdf_files = set()
+        # -------- Deterministic Stratified Selection --------
+        if len(all_files) <= NFILES:
+            kerchunk_files = all_files
+        else:
+            indices = np.linspace(0, len(all_files) - 1, NFILES, dtype=int)
+            kerchunk_files = [all_files[i] for i in indices]
+        # -----------------------------------------------------
 
-    for value in ref_dict.values():
-        if isinstance(value, list) and len(value) > 0:
-            netcdf_files.add(value[0])
+        items = []
+        for fn in kerchunk_files:
+            refs = _load_kerchunk_refs(fn)
+            netcdf_files = _extract_netcdf_files(refs)
+            if not netcdf_files:
+                continue
+            vid = _infer_vid(fn)
+            items.append((fn, refs, netcdf_files, vid))
 
-    return len(netcdf_files), len(ref_dict)
+        results = Parallel(n_jobs=1)(
+            delayed(run_benchmark)(fn, refs, netcdf_files, vid, NTESTS)
+            for fn, refs, netcdf_files, vid in tqdm.tqdm(items)
+        )
 
+        if not results:
+            logger.warning(f"No benchmark results for frequency: {freq}")
+            continue
 
-def get_variable_chunk_stats(fn, vid):
-    ds = xc.open_dataset(fn, engine="kerchunk", chunks={})
-    da = ds[vid]
+        df = pd.DataFrame(results)
+        df["frequency"] = freq
 
-    if hasattr(da.data, "chunks") and da.data.chunks is not None:
-        chunk_sizes = tuple(c[0] for c in da.data.chunks)
-        total_chunks = int(np.prod([len(c) for c in da.data.chunks]))
-        task_count = len(da.data.__dask_graph__())
-    else:
-        chunk_sizes = None
-        total_chunks = None
-        task_count = None
+        _plot_results(df, freq)
+        all_results.extend(results)
 
-    ds.close()
-    return chunk_sizes, total_chunks, task_count
-
-
-def open_dataset(kerchunk_fn, netcdf_path, tool):
-    if tool == "kerchunk":
-        return xc.open_dataset(kerchunk_fn, engine="kerchunk", chunks={})
-    elif tool == "netcdf":
-        return xc.open_mfdataset(netcdf_path, chunks={})
-
-
-# ============================================================
-# Benchmark Phases
-# ============================================================
-
-
-def time_open(kerchunk_fn, netcdf_path, tool):
-    s = time.perf_counter()
-    ds = open_dataset(kerchunk_fn, netcdf_path, tool)
-    e = time.perf_counter()
-    ds.close()
-    return e - s
+    pd.DataFrame(all_results).to_csv(OUT_CSV, index=False)
 
 
-def time_load(kerchunk_fn, netcdf_path, vid, tool):
-    ds = open_dataset(kerchunk_fn, netcdf_path, tool)
-    da = ds[vid]
+def run_benchmark(
+    kerchunk_fn: str,
+    refs: dict,
+    netcdf_files: list[str],
+    vid: str,
+    ntests: int,
+) -> dict:
 
-    if "time" in da.dims:
-        n = min(FIXED_TIMESTEPS, da.sizes["time"])
-        da = da.isel(time=slice(0, n))
-
-    s = time.perf_counter()
-    da.compute()
-    e = time.perf_counter()
-
-    ds.close()
-    return e - s
-
-
-def time_temporal(kerchunk_fn, netcdf_path, vid, tool):
-    ds = open_dataset(kerchunk_fn, netcdf_path, tool)
-    ds = ds.bounds.add_missing_bounds()
-
-    s = time.perf_counter()
-    ds.temporal.group_average(vid, freq="year").compute()
-    e = time.perf_counter()
-
-    ds.close()
-    return e - s
-
-
-def time_spatial(kerchunk_fn, netcdf_path, vid, tool):
-    ds = open_dataset(kerchunk_fn, netcdf_path, tool)
-    ds = ds.bounds.add_missing_bounds()
-
-    s = time.perf_counter()
-    ds.spatial.average(vid).compute()
-    e = time.perf_counter()
-
-    ds.close()
-    return e - s
-
-
-# ============================================================
-# Driver
-# ============================================================
-
-
-def run_benchmark(kerchunk_fn, netcdf_path, vid, ntests):
-
-    logger.info(f"Starting benchmark: {os.path.basename(kerchunk_fn)} | var={vid}")
-
-    num_netcdf_files, num_kerchunk_refs = get_kerchunk_metadata_stats(kerchunk_fn)
-    chunk_sizes, total_chunks, task_count = get_variable_chunk_stats(kerchunk_fn, vid)
-
-    results = {
+    results: dict = {
         "file": kerchunk_fn,
         "variable": vid,
-        "num_netcdf_files": num_netcdf_files,
-        "num_kerchunk_refs": num_kerchunk_refs,
-        "chunk_sizes": str(chunk_sizes),
-        "total_chunks": total_chunks,
-        "dask_task_count": task_count,
     }
 
-    metrics = {"open": {}, "load": {}, "temporal": {}, "spatial": {}}
+    results.update(_collect_backend_metadata(kerchunk_fn, netcdf_files, vid))
+
+    metrics = {
+        "open": {},
+        "load": {},
+        "temporal_build": {},
+        "temporal_compute": {},
+        "spatial_build": {},
+        "spatial_compute": {},
+    }
 
     for tool in ["kerchunk", "netcdf"]:
 
-        logger.info(f"  Backend: {tool}")
-
-        # Warm metadata (not timed)
-        try:
-            ds = open_dataset(kerchunk_fn, netcdf_path, tool)
-            ds.close()
-        except Exception as e:
-            logger.error(f"    Warm-up failed for {tool}: {e}")
-            raise
+        _warmup_open(kerchunk_fn, netcdf_files, tool)
 
         open_times = []
         load_times = []
-        temporal_times = []
-        spatial_times = []
+        temporal_build_times = []
+        temporal_compute_times = []
+        spatial_build_times = []
+        spatial_compute_times = []
 
-        for i in range(ntests):
-            logger.info(f"    Iteration {i+1}/{ntests}")
+        for _ in range(ntests):
+            open_times.append(_time_open(kerchunk_fn, netcdf_files, tool))
+            load_times.append(_time_load(kerchunk_fn, netcdf_files, vid, tool))
 
-            try:
-                open_times.append(time_open(kerchunk_fn, netcdf_path, tool))
-                load_times.append(time_load(kerchunk_fn, netcdf_path, vid, tool))
-                temporal_times.append(
-                    time_temporal(kerchunk_fn, netcdf_path, vid, tool)
-                )
-                spatial_times.append(time_spatial(kerchunk_fn, netcdf_path, vid, tool))
-            except Exception as e:
-                logger.error(f"    Failure during iteration {i+1}: {e}")
-                open_times.append(np.nan)
-                load_times.append(np.nan)
-                temporal_times.append(np.nan)
-                spatial_times.append(np.nan)
+            tb, tc = _time_temporal(kerchunk_fn, netcdf_files, vid, tool)
+            sb, sc = _time_spatial(kerchunk_fn, netcdf_files, vid, tool)
+
+            temporal_build_times.append(tb)
+            temporal_compute_times.append(tc)
+            spatial_build_times.append(sb)
+            spatial_compute_times.append(sc)
 
             gc.collect()
 
         if ntests > 1:
             open_times = open_times[1:]
             load_times = load_times[1:]
-            temporal_times = temporal_times[1:]
-            spatial_times = spatial_times[1:]
+            temporal_build_times = temporal_build_times[1:]
+            temporal_compute_times = temporal_compute_times[1:]
+            spatial_build_times = spatial_build_times[1:]
+            spatial_compute_times = spatial_compute_times[1:]
 
-        metrics["open"][tool] = np.nanmedian(open_times)
-        metrics["load"][tool] = np.nanmedian(load_times)
-        metrics["temporal"][tool] = np.nanmedian(temporal_times)
-        metrics["spatial"][tool] = np.nanmedian(spatial_times)
-
-        logger.info(
-            f"    Medians ({tool}) | "
-            f"open={metrics['open'][tool]:.3f}s | "
-            f"load={metrics['load'][tool]:.3f}s | "
-            f"temporal={metrics['temporal'][tool]:.3f}s | "
-            f"spatial={metrics['spatial'][tool]:.3f}s"
-        )
+        metrics["open"][tool] = float(np.nanmedian(open_times))
+        metrics["load"][tool] = float(np.nanmedian(load_times))
+        metrics["temporal_build"][tool] = float(np.nanmedian(temporal_build_times))
+        metrics["temporal_compute"][tool] = float(np.nanmedian(temporal_compute_times))
+        metrics["spatial_build"][tool] = float(np.nanmedian(spatial_build_times))
+        metrics["spatial_compute"][tool] = float(np.nanmedian(spatial_compute_times))
 
     results.update(
         {
@@ -281,82 +233,208 @@ def run_benchmark(kerchunk_fn, netcdf_path, vid, ntests):
             "open_netcdf": metrics["open"]["netcdf"],
             "load_kerchunk": metrics["load"]["kerchunk"],
             "load_netcdf": metrics["load"]["netcdf"],
-            "temporal_kerchunk": metrics["temporal"]["kerchunk"],
-            "temporal_netcdf": metrics["temporal"]["netcdf"],
-            "spatial_kerchunk": metrics["spatial"]["kerchunk"],
-            "spatial_netcdf": metrics["spatial"]["netcdf"],
+            "temporal_build_kerchunk": metrics["temporal_build"]["kerchunk"],
+            "temporal_build_netcdf": metrics["temporal_build"]["netcdf"],
+            "temporal_compute_kerchunk": metrics["temporal_compute"]["kerchunk"],
+            "temporal_compute_netcdf": metrics["temporal_compute"]["netcdf"],
+            "spatial_build_kerchunk": metrics["spatial_build"]["kerchunk"],
+            "spatial_build_netcdf": metrics["spatial_build"]["netcdf"],
+            "spatial_compute_kerchunk": metrics["spatial_compute"]["kerchunk"],
+            "spatial_compute_netcdf": metrics["spatial_compute"]["netcdf"],
         }
     )
-
-    logger.info(f"Finished benchmark: {os.path.basename(kerchunk_fn)}\n")
 
     return results
 
 
 # ============================================================
-# Parameters
+# Private Helpers
 # ============================================================
 
-kerchunk_directory = "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/"
-ntests = 2
-nfiles = 20
 
-kerchunk_files = glob.glob(kerchunk_directory + "ta*/historical/*/*")
+def _compute_physical_size_gb(netcdf_files: list[str]) -> float:
+    total_bytes = sum(os.path.getsize(f) for f in netcdf_files if os.path.exists(f))
 
-random.seed(42)
-kerchunk_files = random.sample(kerchunk_files, k=nfiles)
+    return total_bytes / (1024**3)
 
-file_pairs = [(fn, extract_netcdf_path_from_json(fn)) for fn in kerchunk_files]
 
-# ============================================================
-# Run
-# ============================================================
-logger.info(f"Running benchmark on {len(file_pairs)} files | ntests={ntests}")
-results = Parallel(n_jobs=1)(
-    delayed(run_benchmark)(
-        kerchunk_fn,
-        netcdf_path,
-        kerchunk_fn.split("/")[-1].split(".")[7],
-        ntests,
+def _compute_slice_size_gb(da) -> float | None:
+    try:
+        if "time" in da.dims:
+            n = min(FIXED_TIMESTEPS, da.sizes["time"])
+            da = da.isel(time=slice(0, n))
+
+        return da.nbytes / (1024**3)
+    except Exception:
+        return None
+
+
+def _collect_backend_metadata(
+    kerchunk_fn: str, netcdf_files: list[str], vid: str
+) -> dict:
+
+    ds = xc.open_dataset(kerchunk_fn, engine="kerchunk", chunks={})
+    try:
+        da = ds[vid]
+
+        return {
+            "time_len": int(da.sizes.get("time", -1)),
+            "size_gb_physical": _compute_physical_size_gb(netcdf_files),
+            "size_gb_slice": _compute_slice_size_gb(da),
+        }
+    finally:
+        ds.close()
+
+
+def _load_kerchunk_refs(fn: str) -> dict:
+    with open(fn) as f:
+        return json.load(f)
+
+
+def _extract_netcdf_files(refs: dict) -> list[str]:
+    return sorted(
+        {
+            value[0]
+            for value in refs.get("refs", {}).values()
+            if isinstance(value, list) and value
+        }
     )
-    for kerchunk_fn, netcdf_path in tqdm.tqdm(file_pairs)
-)
-logger.info("Benchmark run complete.")
-df = pd.DataFrame(results)
 
-df.to_csv(
-    os.path.join(os.path.dirname(__file__), "head_to_head_clean.csv"),
-    index=False,
-)
 
-# ============================================================
-# Plot
-# ============================================================
+def _infer_vid(kerchunk_fn: str) -> str:
+    base = os.path.basename(kerchunk_fn)
+    parts = base.split(".")
+    return parts[7] if len(parts) > 7 else "ta"
 
-plt.figure(figsize=(8, 8))
 
-for i, key in enumerate(["open", "load", "temporal", "spatial"]):
-    plt.subplot(2, 2, i + 1)
+def _open_dataset(kerchunk_fn: str, netcdf_files: list[str], tool: str):
+    if tool == "kerchunk":
+        return xc.open_dataset(kerchunk_fn, engine="kerchunk", chunks={})
 
-    x = df[f"{key}_kerchunk"]
-    y = df[f"{key}_netcdf"]
+    return xc.open_mfdataset(netcdf_files, chunks={}, combine="by_coords")
 
-    mv = max(x.max(skipna=True), y.max(skipna=True))
 
-    plt.scatter(x, y)
-    plt.plot([0, mv], [0, mv], "k:")
-    plt.xlabel("Kerchunk [s]")
-    plt.ylabel("NetCDF [s]")
-    plt.title(key.capitalize())
-    plt.xlim(0, mv)
-    plt.ylim(0, mv)
+def _apply_fixed_time_slice(ds, vid: str):
+    if "time" in ds[vid].dims:
+        n = min(FIXED_TIMESTEPS, ds[vid].sizes["time"])
 
-plt.tight_layout()
+        return ds.isel(time=slice(0, n))
 
-plt.savefig(
-    os.path.join(os.path.dirname(__file__), "head_to_head_clean.png"),
-    dpi=300,
-    bbox_inches="tight",
-)
+    return ds
 
-plt.close()
+
+def _warmup_open(kerchunk_fn: str, netcdf_files: list[str], tool: str) -> None:
+    ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
+    ds.close()
+
+
+def _time_open(kerchunk_fn: str, netcdf_files: list[str], tool: str) -> float:
+    s = time.perf_counter()
+    ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
+    e = time.perf_counter()
+
+    ds.close()
+
+    return e - s
+
+
+def _time_load(kerchunk_fn: str, netcdf_files: list[str], vid: str, tool: str) -> float:
+    ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
+    ds = _apply_fixed_time_slice(ds, vid)
+
+    s = time.perf_counter()
+    ds[vid].compute()
+    e = time.perf_counter()
+
+    ds.close()
+
+    return e - s
+
+
+def _time_temporal(
+    kerchunk_fn: str, netcdf_files: list[str], vid: str, tool: str
+) -> tuple[float, float]:
+    ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
+    ds = _apply_fixed_time_slice(ds, vid)
+
+    s_build = time.perf_counter()
+    ds = ds.bounds.add_missing_bounds()
+    expr = ds.temporal.group_average(vid, freq="year")
+    e_build = time.perf_counter()
+
+    s_compute = time.perf_counter()
+    expr.compute()
+    e_compute = time.perf_counter()
+
+    ds.close()
+
+    return e_build - s_build, e_compute - s_compute
+
+
+def _time_spatial(
+    kerchunk_fn: str, netcdf_files: list[str], vid: str, tool: str
+) -> tuple[float, float]:
+    ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
+    ds = _apply_fixed_time_slice(ds, vid)
+
+    s_build = time.perf_counter()
+    ds = ds.bounds.add_missing_bounds()
+    expr = ds.spatial.average(vid)
+    e_build = time.perf_counter()
+
+    s_compute = time.perf_counter()
+    expr.compute()
+    e_compute = time.perf_counter()
+
+    ds.close()
+
+    return e_build - s_build, e_compute - s_compute
+
+
+def _plot_results(df: pd.DataFrame, freq: str) -> None:
+    if df.empty:
+        logger.warning(f"Empty DataFrame for frequency: {freq}, skipping plot.")
+
+        return
+
+    df["temporal_total_kerchunk"] = (
+        df["temporal_build_kerchunk"] + df["temporal_compute_kerchunk"]
+    )
+    df["temporal_total_netcdf"] = (
+        df["temporal_build_netcdf"] + df["temporal_compute_netcdf"]
+    )
+    df["spatial_total_kerchunk"] = (
+        df["spatial_build_kerchunk"] + df["spatial_compute_kerchunk"]
+    )
+    df["spatial_total_netcdf"] = (
+        df["spatial_build_netcdf"] + df["spatial_compute_netcdf"]
+    )
+
+    plt.figure(figsize=(9, 9))
+
+    panels = [
+        ("Open", "open_kerchunk", "open_netcdf"),
+        ("Load", "load_kerchunk", "load_netcdf"),
+        ("Temporal", "temporal_total_kerchunk", "temporal_total_netcdf"),
+        ("Spatial", "spatial_total_kerchunk", "spatial_total_netcdf"),
+    ]
+
+    for i, (title, kcol, ncol) in enumerate(panels):
+        plt.subplot(2, 2, i + 1)
+        x = df[kcol]
+        y = df[ncol]
+        mv = max(float(np.nanmax(x)), float(np.nanmax(y)), 1.0)
+        plt.scatter(x, y)
+        plt.plot([0, mv], [0, mv], "k:")
+        plt.title(title)
+        plt.xlim(0, mv)
+        plt.ylim(0, mv)
+
+    plt.suptitle(f"Frequency: {freq}")
+    plt.tight_layout()
+    plt.savefig(f"benchmark_{freq}_{_TS}.png", dpi=300)
+    plt.close()
+
+
+if __name__ == "__main__":
+    main()
