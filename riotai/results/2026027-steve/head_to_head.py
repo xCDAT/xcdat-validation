@@ -80,7 +80,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import tqdm
-from joblib import Parallel, delayed
 
 import xcdat as xc
 import dask
@@ -142,8 +141,6 @@ def main() -> None:
             continue
 
         # Stratified sampling of kerchunk files to limit total runtime
-        # while preserving diversity. If there are fewer than NFILES, use
-        # them all; otherwise, select NFILES
         if len(all_files) <= NFILES:
             kerchunk_files = all_files
         else:
@@ -159,14 +156,11 @@ def main() -> None:
             var_id = _infer_var_id(fn)
             items.append((fn, netcdf_files, var_id))
 
-        results = [
-            r
-            for r in Parallel(n_jobs=1)(
-                delayed(run_benchmark)(fn, netcdf_files, var_id, NTESTS)
-                for fn, netcdf_files, var_id in tqdm.tqdm(items)
-            )
-            if r is not None
-        ]
+        results: list[dict] = []
+        for fn, netcdf_files, var_id in tqdm.tqdm(items):
+            r = run_benchmark(fn, netcdf_files, var_id, NTESTS)
+            if r is not None:
+                results.append(r)
 
         if not results:
             logger.warning(f"No benchmark results for frequency: {freq}")
@@ -235,7 +229,18 @@ def run_benchmark(
             load_times.append(_time_load(kerchunk_fn, netcdf_files, var_id, tool))
 
             tb, tc, tg = _time_temporal(kerchunk_fn, netcdf_files, var_id, tool)
+            if tb is None:
+                logger.warning(
+                    f"Skipping (temporal failed, tool={tool}): {os.path.basename(kerchunk_fn)}"
+                )
+                return None
+
             sb, sc = _time_spatial(kerchunk_fn, netcdf_files, var_id, tool)
+            if sb is None:
+                logger.warning(
+                    f"Skipping (spatial failed, tool={tool}): {os.path.basename(kerchunk_fn)}"
+                )
+                return None
 
             temporal_build_times.append(tb)
             temporal_compute_times.append(tc)
@@ -467,9 +472,16 @@ def _time_temporal(
     ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
     ds = _apply_fixed_time_slice(ds, var_id)
 
+    # Preprocessing (not timed)
+    try:
+        ds = ds.bounds.add_missing_bounds()
+    except Exception:
+        ds.close()
+        return None, None, None
+
+    # Build timing
     try:
         s_build = time.perf_counter()
-        ds = ds.bounds.add_missing_bounds()
         expr = ds.temporal.group_average(var_id, freq="year")
         e_build = time.perf_counter()
     except Exception:
@@ -481,9 +493,14 @@ def _time_temporal(
     except Exception:
         graph_task_count = None
 
-    s_compute = time.perf_counter()
-    expr.compute()
-    e_compute = time.perf_counter()
+    # Compute timing
+    try:
+        s_compute = time.perf_counter()
+        expr.compute()
+        e_compute = time.perf_counter()
+    except Exception:
+        ds.close()
+        return None, None, None
 
     ds.close()
     return e_build - s_build, e_compute - s_compute, graph_task_count
@@ -492,21 +509,34 @@ def _time_temporal(
 def _time_spatial(
     kerchunk_fn: str, netcdf_files: list[str], var_id: str, tool: str
 ) -> tuple[float, float] | tuple[None, None]:
+
     ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
     ds = _apply_fixed_time_slice(ds, var_id)
 
+    # Preprocessing (not timed)
     try:
-        s_build = time.perf_counter()
         ds = ds.bounds.add_missing_bounds()
-        expr = ds.spatial.average(var_id)
-        e_build = time.perf_counter()
-    except KeyError:
+    except Exception:
         ds.close()
         return None, None
 
-    s_compute = time.perf_counter()
-    expr.compute()
-    e_compute = time.perf_counter()
+    # Build timing
+    try:
+        s_build = time.perf_counter()
+        expr = ds.spatial.average(var_id)
+        e_build = time.perf_counter()
+    except Exception:
+        ds.close()
+        return None, None
+
+    # Compute timing
+    try:
+        s_compute = time.perf_counter()
+        expr.compute()
+        e_compute = time.perf_counter()
+    except Exception:
+        ds.close()
+        return None, None
 
     ds.close()
     return e_build - s_build, e_compute - s_compute
