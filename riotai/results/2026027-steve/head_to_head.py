@@ -70,6 +70,12 @@ import os
 import time
 import gc
 
+# Prevent multithreading in underlying libraries to reduce noise in timing
+# measurements.
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -79,11 +85,6 @@ from joblib import Parallel, delayed
 import xcdat as xc
 import dask
 
-# Prevent multithreading in underlying libraries to reduce noise in timing
-# measurements.
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 # ============================================================
 # Configuration
@@ -91,7 +92,7 @@ os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 FIXED_TIMESTEPS: int = 240
 NTESTS: int = 3
-NFILES: int = 5  # number per frequency
+NFILES: int = 10  # number per frequency
 
 KERCHUNK_DIRECTORY: str = (
     "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/ta/historical"
@@ -140,6 +141,9 @@ def main() -> None:
             logger.warning(f"No files found for frequency: {freq}")
             continue
 
+        # Stratified sampling of kerchunk files to limit total runtime
+        # while preserving diversity. If there are fewer than NFILES, use
+        # them all; otherwise, select NFILES
         if len(all_files) <= NFILES:
             kerchunk_files = all_files
         else:
@@ -155,10 +159,14 @@ def main() -> None:
             var_id = _infer_var_id(fn)
             items.append((fn, netcdf_files, var_id))
 
-        results = Parallel(n_jobs=1)(
-            delayed(run_benchmark)(fn, netcdf_files, var_id, NTESTS)
-            for fn, netcdf_files, var_id in tqdm.tqdm(items)
-        )
+        results = [
+            r
+            for r in Parallel(n_jobs=1)(
+                delayed(run_benchmark)(fn, netcdf_files, var_id, NTESTS)
+                for fn, netcdf_files, var_id in tqdm.tqdm(items)
+            )
+            if r is not None
+        ]
 
         if not results:
             logger.warning(f"No benchmark results for frequency: {freq}")
@@ -190,6 +198,8 @@ def run_benchmark(
     }
 
     results.update(_collect_backend_metadata(kerchunk_fn, netcdf_files, var_id))
+    if results.get("skip"):
+        return None
 
     logger.info(
         f"{os.path.basename(kerchunk_fn)} | "
@@ -323,8 +333,20 @@ def _collect_backend_metadata(
     finally:
         ds_k.close()
 
-    # NetCDF
-    ds_n = xc.open_mfdataset(netcdf_files, chunks={}, combine="by_coords")
+    # NetCDF (real-world defaults, but fail fast on coord mismatch)
+    try:
+        ds_n = xc.open_mfdataset(
+            netcdf_files,
+            chunks={},
+            join="exact",  # prevent silent coordinate union
+        )
+    except Exception as e:
+        logger.warning(
+            f"Skipping (NetCDF open failed - coord mismatch): "
+            f"{os.path.basename(kerchunk_fn)} | {e}"
+        )
+        return {"skip": True}
+
     try:
         results.update(_extract_backend_metadata(ds_n, var_id, "netcdf"))
     finally:
@@ -405,7 +427,8 @@ def _infer_var_id(kerchunk_fn: str) -> str:
 def _open_dataset(kerchunk_fn: str, netcdf_files: list[str], tool: str):
     if tool == "kerchunk":
         return xc.open_dataset(kerchunk_fn, engine="kerchunk", chunks={})
-    return xc.open_mfdataset(netcdf_files, chunks={}, combine="by_coords")
+
+    return xc.open_mfdataset(netcdf_files, chunks={}, join="exact")
 
 
 def _apply_fixed_time_slice(ds, var_id: str):
@@ -439,14 +462,19 @@ def _time_load(
 
 def _time_temporal(
     kerchunk_fn: str, netcdf_files: list[str], var_id: str, tool: str
-) -> tuple[float, float, int | None]:
+) -> tuple[float, float, int | None] | tuple[None, None, None]:
+
     ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
     ds = _apply_fixed_time_slice(ds, var_id)
 
-    s_build = time.perf_counter()
-    ds = ds.bounds.add_missing_bounds()
-    expr = ds.temporal.group_average(var_id, freq="year")
-    e_build = time.perf_counter()
+    try:
+        s_build = time.perf_counter()
+        ds = ds.bounds.add_missing_bounds()
+        expr = ds.temporal.group_average(var_id, freq="year")
+        e_build = time.perf_counter()
+    except Exception:
+        ds.close()
+        return None, None, None
 
     try:
         graph_task_count = len(expr.data.__dask_graph__())
@@ -463,14 +491,18 @@ def _time_temporal(
 
 def _time_spatial(
     kerchunk_fn: str, netcdf_files: list[str], var_id: str, tool: str
-) -> tuple[float, float]:
+) -> tuple[float, float] | tuple[None, None]:
     ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
     ds = _apply_fixed_time_slice(ds, var_id)
 
-    s_build = time.perf_counter()
-    ds = ds.bounds.add_missing_bounds()
-    expr = ds.spatial.average(var_id)
-    e_build = time.perf_counter()
+    try:
+        s_build = time.perf_counter()
+        ds = ds.bounds.add_missing_bounds()
+        expr = ds.spatial.average(var_id)
+        e_build = time.perf_counter()
+    except KeyError:
+        ds.close()
+        return None, None
 
     s_compute = time.perf_counter()
     expr.compute()
