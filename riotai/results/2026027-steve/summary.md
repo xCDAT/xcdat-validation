@@ -97,3 +97,13 @@ Source: ChatGPT 5.2
    Kerchunk’s strongest benefits appear with remote object storage (high latency, many small files). Here, data are local and low-latency, reducing kerchunk’s advantage to metadata only.
 
 Bottom line: in this HPC-local scenario, kerchunk improves open time but does not improve, and often degrades, compute-heavy workflow performance relative to native NetCDF.
+
+## Considerations / sensitivity checks
+
+These follow-on checks quantify how sensitive the head-to-head results are to slicing, file-count, and execution settings, and help distinguish backend effects from artifact-of-setup effects.
+
+- Align the time slice to chunk boundaries (or use whole time chunks); `time[:240]` may be misaligned and amplify partial-chunk reads.
+- Sweep `FIXED_TIMESTEPS` (small/medium/large) to see whether overhead amortizes.
+- Vary `NFILES` while holding total timesteps constant to isolate many-files metadata cost.
+- Repeat with `num_workers` = 1/4/8/16 to check scheduler and I/O concurrency sensitivity.
+- Optionally compare NetCDF engines (netcdf4 vs h5netcdf) and note cache state (cold vs warm).
