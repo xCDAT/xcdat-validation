@@ -90,15 +90,20 @@ Source: ChatGPT 5.2
 2. **Direct HDF5 access**
    NetCDF uses optimized POSIX/HDF5 reads on a high-performance filesystem. Kerchunk adds a reference indirection layer and fsspec overhead. On local HPC storage, this favors NetCDF.
 
-3. **Dask graph characteristics**
-   Kerchunk may produce more granular or heavier graphs. In a local threaded scheduler, task overhead becomes visible during compute-heavy reductions.
+3. **NetCDF chunking/layout quality and consistency**
+   If NetCDF chunk shapes are a poor fit for the access pattern (or differ across files), load/reduction performance can change a lot. Report time-chunk stats and flag outliers; consider a subset with uniform chunking/encoding to isolate backend effects.
 
-4. **Environment effect**
-   Kerchunk’s strongest benefits appear with remote object storage (high latency, many small files). Here, data are local and low-latency, reducing kerchunk’s advantage to metadata only.
+4. **Dask graph characteristics**
+   Kerchunk may produce more granular/heavier graphs. In a local threaded scheduler, per-task overhead shows up during compute-heavy reductions.
+
+5. **Environment effect**
+   Kerchunk’s strongest benefits appear with remote object storage (high latency, many small files). Here, data are local and low-latency, reducing kerchunk’s advantage largely to metadata.
 
 Bottom line: in this HPC-local scenario, kerchunk improves open time but does not improve, and often degrades, compute-heavy workflow performance relative to native NetCDF.
 
 ## Considerations / sensitivity checks
+
+Source: ChatGPT 5.2
 
 These follow-on checks quantify how sensitive the head-to-head results are to slicing, file-count, and execution settings, and help distinguish backend effects from artifact-of-setup effects.
 
