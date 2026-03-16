@@ -51,18 +51,24 @@ Purpose
 -------
 Provide a storage-layout-faithful, reproducible backend comparison for
 single-node xCDAT workflows. Not intended as a distributed scaling benchmark.
+
+Usage
+-----
+salloc --nodes 1 --qos interactive --constraint cpu --time 04:00:00 --account mXXXX
+conda activate xcdat_test_stable_min
+python riotai/results/20260313-steve-file-count/head_to_head.py
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime
 import gc
 import glob
 import json
 import logging
 import os
 import time
+from dataclasses import dataclass
+from datetime import datetime
 
 # Prevent multithreading in underlying libraries to reduce noise in timing
 os.environ["OMP_NUM_THREADS"] = "1"
@@ -81,28 +87,95 @@ import xcdat as xc
 FIXED_TIMESTEPS: int = 240
 NTESTS: int = 3
 
+# Detailed backend metadata requires opening all backend files once up-front.
+# Disable for faster batch timing runs.
+COLLECT_DETAILED_METADATA: bool = False
+
+# If True, abort run when manifest/data/kerchunk path validation fails.
+# If False, log validation errors and continue; missing entries are handled
+# per-dataset as skipped rows later in the run.
+STRICT_PATH_VALIDATION: bool = True
+
 KERCHUNK_ROOT = "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk"
 
-# Validated subset (existing now).
-# `nfiles` comments are from directory-level `*.nc` counts.
-DATASET_DIRS: list[str] = [
-    "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3-Veg/piControl/r1i1p1f1/Amon/tas/gr/v20210419/",  # nfiles=2000
-    "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/EC-Earth-Consortium/EC-Earth3P-HR/control-1950/r3i1p2f1/Amon/tas/gr/v20190213/",  # nfiles=1800
-    "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/EC-Earth-Consortium/EC-Earth3P/control-1950/r3i1p2f1/Amon/tas/gr/v20190215/",  # nfiles=1344
-    "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-VHR4/hist-1950/r1i1p1f1/Amon/tas/gn/v20180705/",  # nfiles=780
-    "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/piControl/r2i1p1f1/Amon/tas/gr/v20210601/",  # nfiles=604
-    "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3-CC/piControl/r1i1p1f1/Amon/tas/gr/v20210330/",  # nfiles=505
-    "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-HR4/highresSST-future/r1i1p1f1/Amon/tas/gn/v20190705/",  # nfiles=432
-    "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/ScenarioMIP/EC-Earth-Consortium/EC-Earth3-Veg/ssp585/r13i1p1f1/Amon/tas/gr/v20201020/",  # nfiles=286
-    "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/AWI/AWI-ESM-1-1-LR/1pctCO2/r1i1p1f1/Amon/tas/gn/v20200212/",  # nfiles=250
-    "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/AWI/AWI-CM-1-1-MR/abrupt-4xCO2/r1i1p1f1/Amon/tas/gn/v20191015/",  # nfiles=151
-    "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/MOHC/HadGEM3-GC31-LL/control-1950/r1i1p1f1/Amon/tas/gn/v20170927/",  # nfiles=101
-    "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/ScenarioMIP/EC-Earth-Consortium/EC-Earth3/ssp245/r124i1p1f1/Amon/tas/gr/v20210401/",  # nfiles=86
-    "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/piControl/r1i1p1f1/Amon/tas/gn/v20190710/",  # nfiles=50
-    "/global/cfs/projectdirs/m4931/gsharing/cmip5_css01_data/cmip5/output1/NOAA-GFDL/GFDL-CM2p1/historical/mon/atmos/Amon/r7i1p1/v20110601/tas/",  # nfiles=36
-    "/global/cfs/projectdirs/m4931/gsharing/cmip5_css02_data/cmip5/output1/NASA-GISS/GISS-E2-R/past1000/mon/atmos/Amon/r1i1p124/v20120516/tas/",  # nfiles=20
-    "/global/cfs/projectdirs/m4931/gsharing/user_pub_work/CMIP6/CMIP/E3SM-Project/E3SM-2-1/piControl/r1i1p1f1/Amon/tas/gr/v20240208/",  # nfiles=10
-    "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/ScenarioMIP/CCCma/CanESM5/ssp119/r3i1p2f1/Amon/tas/gn/v20190429/",  # nfiles=1
+# Consolidated dataset definitions: (data_dir, kerchunk_json_path)
+# Sorted by ascending nfiles.
+DATASET_ENTRIES: list[tuple[str, str]] = [
+    # nfiles=1
+    (
+        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/ScenarioMIP/CCCma/CanESM5/ssp119/r3i1p2f1/Amon/tas/gn/v20190429/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/ssp119/mon/CMIP6.ScenarioMIP.CCCma.CanESM5.ssp119.r3i1p2f1.Amon.tas.gn.v20190429.kerchunk.json",
+    ),
+    # nfiles=10
+    (
+        "/global/cfs/projectdirs/m4931/gsharing/user_pub_work/CMIP6/CMIP/E3SM-Project/E3SM-2-1/piControl/r1i1p1f1/Amon/tas/gr/v20240208/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/mon/CMIP6.CMIP.E3SM-Project.E3SM-2-1.piControl.r1i1p1f1.Amon.tas.gr.v20240208.kerchunk.json",
+    ),
+    # nfiles=20
+    (
+        "/global/cfs/projectdirs/m4931/gsharing/user_pub_work/CMIP6/CMIP/E3SM-Project/E3SM-1-0/piControl/r1i1p1f1/Amon/tas/gr/v20190719/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/mon/CMIP6.CMIP.E3SM-Project.E3SM-1-0.piControl.r1i1p1f1.Amon.tas.gr.v20190719.kerchunk.json",
+    ),
+    # nfiles=33
+    (
+        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/MPI-M/MPI-ESM1-2-HR/historical/r1i1p1f1/Amon/tas/gn/v20190710/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/historical/mon/CMIP6.CMIP.MPI-M.MPI-ESM1-2-HR.historical.r1i1p1f1.Amon.tas.gn.v20190710.kerchunk.json",
+    ),
+    # nfiles=45
+    (
+        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/historical/r130i1p1f1/Amon/tas/gr/v20200412/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/historical/mon/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.historical.r130i1p1f1.Amon.tas.gr.v20200412.kerchunk.json",
+    ),
+    # nfiles=50
+    (
+        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/piControl/r1i1p1f1/Amon/tas/gn/v20190710/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/mon/CMIP6.CMIP.MPI-M.MPI-ESM1-2-LR.piControl.r1i1p1f1.Amon.tas.gn.v20190710.kerchunk.json",
+    ),
+    # nfiles=86
+    (
+        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/ScenarioMIP/EC-Earth-Consortium/EC-Earth3/ssp245/r124i1p1f1/Amon/tas/gr/v20210401/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/ssp245/mon/CMIP6.ScenarioMIP.EC-Earth-Consortium.EC-Earth3.ssp245.r124i1p1f1.Amon.tas.gr.v20210401.kerchunk.json",
+    ),
+    # nfiles=165
+    (
+        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/AWI/AWI-CM-1-1-MR/historical/r1i1p1f1/Amon/tas/gn/v20200720/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/historical/mon/CMIP6.CMIP.AWI.AWI-CM-1-1-MR.historical.r1i1p1f1.Amon.tas.gn.v20200720.kerchunk.json",
+    ),
+    # nfiles=286
+    (
+        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/ScenarioMIP/EC-Earth-Consortium/EC-Earth3-Veg/ssp585/r13i1p1f1/Amon/tas/gr/v20201020/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/ssp585/mon/CMIP6.ScenarioMIP.EC-Earth-Consortium.EC-Earth3-Veg.ssp585.r13i1p1f1.Amon.tas.gr.v20201020.kerchunk.json",
+    ),
+    # nfiles=505
+    (
+        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3-CC/piControl/r1i1p1f1/Amon/tas/gr/v20210330/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/mon/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3-CC.piControl.r1i1p1f1.Amon.tas.gr.v20210330.kerchunk.json",
+    ),
+    # nfiles=604
+    (
+        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/piControl/r2i1p1f1/Amon/tas/gr/v20210601/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/mon/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.piControl.r2i1p1f1.Amon.tas.gr.v20210601.kerchunk.json",
+    ),
+    # nfiles=780
+    (
+        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/EC-Earth-Consortium/EC-Earth3P/hist-1950/r3i1p2f1/Amon/pr/gr/v20190215/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/pr/hist-1950/mon/CMIP6.HighResMIP.EC-Earth-Consortium.EC-Earth3P.hist-1950.r3i1p2f1.Amon.pr.gr.v20190215.kerchunk.json",
+    ),
+    # nfiles=1020
+    (
+        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/EC-Earth-Consortium/EC-Earth3P/highres-future/r3i1p2f1/Amon/pr/gr/v20190215/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/pr/highres-future/mon/CMIP6.HighResMIP.EC-Earth-Consortium.EC-Earth3P.highres-future.r3i1p2f1.Amon.pr.gr.v20190215.kerchunk.json",
+    ),
+    # nfiles=1344
+    (
+        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/EC-Earth-Consortium/EC-Earth3P/control-1950/r3i1p2f1/Amon/pr/gr/v20190215/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/pr/control-1950/mon/CMIP6.HighResMIP.EC-Earth-Consortium.EC-Earth3P.control-1950.r3i1p2f1.Amon.pr.gr.v20190215.kerchunk.json",
+    ),
+    # nfiles=2000
+    (
+        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3-Veg/piControl/r1i1p1f1/Amon/tas/gr/v20210419/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/mon/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3-Veg.piControl.r1i1p1f1.Amon.tas.gr.v20210419.kerchunk.json",
+    ),
 ]
 
 _TS = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -138,9 +211,21 @@ class DatasetSpec:
 
 def main() -> None:
     logger.info("Starting manifest-driven kerchunk vs netcdf benchmark")
-    logger.info(f"Configured dataset count: {len(DATASET_DIRS)}")
+    logger.info(f"Configured dataset count: {len(DATASET_ENTRIES)}")
 
-    specs = [_build_dataset_spec(d) for d in DATASET_DIRS]
+    if not _validate_manifest_paths():
+        if STRICT_PATH_VALIDATION:
+            logger.error(
+                "Path validation failed and STRICT_PATH_VALIDATION=True. "
+                "Fix missing paths and rerun."
+            )
+            return
+        logger.warning(
+            "Path validation failed, but STRICT_PATH_VALIDATION=False. "
+            "Continuing run with per-dataset skip handling."
+        )
+
+    specs = [_build_dataset_spec(entry) for entry in DATASET_ENTRIES]
     rows: list[dict] = []
 
     for i, spec in enumerate(specs, start=1):
@@ -214,7 +299,6 @@ def main() -> None:
             f"Running benchmark | files={len(netcdf_files)} | var={var_id} | "
             f"size_gb={_compute_physical_size_gb(netcdf_files):.3f}"
         )
-        logger.info(spec.kerchunk_file)
 
         try:
             result = run_benchmark(spec.kerchunk_file, netcdf_files, var_id, NTESTS)
@@ -250,133 +334,56 @@ def main() -> None:
 
 
 # ============================================================
-# Manifest / inference helpers
+# Manifest helpers
 # ============================================================
 
 
-def _build_dataset_spec(data_dir: str) -> DatasetSpec:
+def _validate_manifest_paths() -> bool:
+    missing_data_dirs: list[str] = []
+    unreadable_kerchunk_files: list[tuple[str, str | None]] = []
+
+    for data_dir, kerchunk_path in DATASET_ENTRIES:
+        clean_dir = data_dir.rstrip("/")
+        if not os.path.isdir(clean_dir):
+            missing_data_dirs.append(clean_dir)
+
+        readable, reason = _is_readable_file(kerchunk_path)
+        if not readable:
+            unreadable_kerchunk_files.append((kerchunk_path, reason))
+
+    if missing_data_dirs:
+        logger.error("Missing data directories (%d):", len(missing_data_dirs))
+        for path in missing_data_dirs:
+            logger.error("  %s", path)
+
+    if unreadable_kerchunk_files:
+        logger.error("Unreadable kerchunk files (%d):", len(unreadable_kerchunk_files))
+        for path, reason in unreadable_kerchunk_files:
+            logger.error("  %s (%s)", path, reason)
+
+    ok = not (missing_data_dirs or unreadable_kerchunk_files)
+    if ok:
+        logger.info(
+            "Path validation passed (%d consolidated entries)",
+            len(DATASET_ENTRIES),
+        )
+
+    return ok
+
+
+def _build_dataset_spec(entry: tuple[str, str]) -> DatasetSpec:
+    data_dir, kerchunk_file = entry
     clean_dir = data_dir.rstrip("/")
-    kerchunk_file, var_id, dataset_id, error = _infer_kerchunk_from_data_dir(clean_dir)
 
-    if not dataset_id:
-        dataset_id = os.path.basename(clean_dir)
-
+    dataset_id = os.path.basename(kerchunk_file).removesuffix(".kerchunk.json")
+    var_id = _infer_var_id(kerchunk_file)
     return DatasetSpec(
         data_dir=clean_dir,
         dataset_id=dataset_id,
         kerchunk_file=kerchunk_file,
         var_id=var_id,
-        inference_error=error,
+        inference_error=None,
     )
-
-
-def _infer_kerchunk_from_data_dir(
-    data_dir: str,
-) -> tuple[str | None, str | None, str | None, str | None]:
-    cmip6 = _parse_cmip6_data_dir(data_dir)
-    if cmip6 is not None:
-        fname = (
-            f"{cmip6['mip_era']}.{cmip6['activity']}.{cmip6['institution']}."
-            f"{cmip6['source']}.{cmip6['experiment']}.{cmip6['member']}."
-            f"{cmip6['freq']}.{cmip6['var_id']}.{cmip6['grid']}.{cmip6['version']}."
-            "kerchunk.json"
-        )
-        kerchunk_file = os.path.join(
-            KERCHUNK_ROOT,
-            cmip6["var_id"],
-            cmip6["experiment"],
-            "mon",
-            fname,
-        )
-        dataset_id = fname.removesuffix(".kerchunk.json")
-        return kerchunk_file, cmip6["var_id"], dataset_id, None
-
-    cmip5 = _parse_cmip5_data_dir(data_dir)
-    if cmip5 is not None:
-        fname = (
-            f"CMIP5.CMIP.{cmip5['institution']}.{cmip5['source']}."
-            f"{cmip5['experiment']}.{cmip5['member']}.{cmip5['freq']}."
-            f"{cmip5['var_id']}.unknown.{cmip5['version']}.kerchunk.json"
-        )
-        kerchunk_file = os.path.join(
-            KERCHUNK_ROOT,
-            cmip5["var_id"],
-            f"{cmip5['experiment']}-cmip5",
-            "mon",
-            fname,
-        )
-        dataset_id = fname.removesuffix(".kerchunk.json")
-        return kerchunk_file, cmip5["var_id"], dataset_id, None
-
-    return None, None, None, "unsupported_path_layout"
-
-
-def _parse_cmip6_data_dir(data_dir: str) -> dict[str, str] | None:
-    parts = data_dir.strip("/").split("/")
-
-    try:
-        idx = parts.index("CMIP6")
-    except ValueError:
-        return None
-
-    tail = parts[idx:]
-    if len(tail) < 10:
-        return None
-
-    (
-        mip_era,
-        activity,
-        institution,
-        source,
-        experiment,
-        member,
-        freq,
-        var_id,
-        grid,
-        version,
-    ) = tail[:10]
-
-    return {
-        "mip_era": mip_era,
-        "activity": activity,
-        "institution": institution,
-        "source": source,
-        "experiment": experiment,
-        "member": member,
-        "freq": freq,
-        "var_id": var_id,
-        "grid": grid,
-        "version": version,
-    }
-
-
-def _parse_cmip5_data_dir(data_dir: str) -> dict[str, str] | None:
-    parts = data_dir.strip("/").split("/")
-
-    if "cmip5" not in [p.lower() for p in parts]:
-        return None
-
-    if len(parts) < 9:
-        return None
-
-    # Expected tail: <institution>/<source>/<experiment>/mon/atmos/Amon/<member>/<version>/<var>
-    var_id = parts[-1]
-    version = parts[-2]
-    member = parts[-3]
-    freq = parts[-4]
-    experiment = parts[-7]
-    source = parts[-8]
-    institution = parts[-9]
-
-    return {
-        "institution": institution,
-        "source": source,
-        "experiment": experiment,
-        "member": member,
-        "freq": freq,
-        "var_id": var_id,
-        "version": version,
-    }
 
 
 def _is_readable_file(path: str) -> tuple[bool, str | None]:
@@ -429,11 +436,19 @@ def run_benchmark(
     results: dict = {
         "file": kerchunk_fn,
         "variable": var_id,
+        "netcdf_file_count": len(netcdf_files),
+        "size_gb_physical": _compute_physical_size_gb(netcdf_files),
     }
 
-    results.update(_collect_backend_metadata(kerchunk_fn, netcdf_files, var_id))
-    if results.get("skip"):
-        return None
+    if COLLECT_DETAILED_METADATA:
+        results.update(_collect_backend_metadata(kerchunk_fn, netcdf_files, var_id))
+        if results.get("skip"):
+            return None
+    else:
+        logger.info(
+            "Skipping detailed backend metadata collection "
+            "(COLLECT_DETAILED_METADATA=False)"
+        )
 
     logger.info(
         f"{os.path.basename(kerchunk_fn)} | "
