@@ -61,6 +61,7 @@ python riotai/results/20260313-steve-file-count/head_to_head.py
 
 from __future__ import annotations
 
+import argparse
 import gc
 import glob
 import json
@@ -70,16 +71,17 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 
-# Prevent multithreading in underlying libraries to reduce noise in timing
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
-
 import dask
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xcdat as xc
+
+# Prevent multithreading in underlying libraries to reduce noise in timing
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+
 
 # ============================================================
 # Configuration
@@ -180,9 +182,10 @@ DATASET_ENTRIES: list[tuple[str, str]] = [
 
 _TS = datetime.now().strftime("%Y%m%d_%H%M%S")
 ROOT_DIR = os.path.dirname(__file__)
-OUT_CSV: str = os.path.join(ROOT_DIR, f"{_TS}_kerchunk_vs_netcdf_batch.csv")
-OUT_PLOT_TIMING: str = os.path.join(ROOT_DIR, f"{_TS}_timing_vs_nfiles.png")
-OUT_PLOT_RATIO: str = os.path.join(ROOT_DIR, f"{_TS}_ratio_vs_nfiles.png")
+DEFAULT_OUT_CSV: str = os.path.join(ROOT_DIR, f"{_TS}_kerchunk_vs_netcdf_batch.csv")
+DEFAULT_OUT_PLOT_TIMING: str = os.path.join(ROOT_DIR, f"{_TS}_timing_vs_nfiles.png")
+DEFAULT_OUT_PLOT_RATIO: str = os.path.join(ROOT_DIR, f"{_TS}_ratio_vs_nfiles.png")
+
 
 # Configure Dask to use local threaded scheduler (no distributed client)
 dask.config.set(scheduler="threads", num_workers=8)
@@ -204,16 +207,118 @@ class DatasetSpec:
     inference_error: str | None
 
 
+@dataclass(frozen=True)
+class RunConfig:
+    ntests: int
+    min_files: int | None
+    max_files: int | None
+    out_csv: str
+    resume_csv: str | None
+    skip_plot: bool
+    plot_timing: str
+
+
+def _parse_args() -> RunConfig:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Controlled kerchunk vs netcdf benchmark with dataset sharding, "
+            "resume, and checkpointing"
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=(
+            "Examples:\n"
+            "  # Shard A (<= 1020 files)\n"
+            "  python head_to_head.py --max-files 1020 --out-csv shard_le_1020.csv "
+            "--resume-csv shard_le_1020.csv --skip-plot\n\n"
+            "  # Shard B (>= 1021 files)\n"
+            "  python head_to_head.py --min-files 1021 --out-csv shard_gt_1020.csv "
+            "--resume-csv shard_gt_1020.csv --skip-plot"
+        ),
+    )
+    parser.add_argument(
+        "--min-files",
+        type=int,
+        default=None,
+        help="Only benchmark datasets with resolved netcdf_file_count >= this value",
+    )
+    parser.add_argument(
+        "--max-files",
+        type=int,
+        default=None,
+        help="Only benchmark datasets with resolved netcdf_file_count <= this value",
+    )
+    parser.add_argument(
+        "--out-csv",
+        type=str,
+        default=DEFAULT_OUT_CSV,
+        help="Output CSV path (checkpointed after each dataset)",
+    )
+    parser.add_argument(
+        "--resume-csv",
+        type=str,
+        default=None,
+        help="Existing CSV to resume from (skips already-present dataset_id rows)",
+    )
+    parser.add_argument(
+        "--skip-plot",
+        action="store_true",
+        help="Skip timing plot generation during benchmark run",
+    )
+    parser.add_argument(
+        "--plot-timing",
+        type=str,
+        default=DEFAULT_OUT_PLOT_TIMING,
+        help="Timing plot output path (ignored with --skip-plot)",
+    )
+    parser.add_argument(
+        "--ntests",
+        type=int,
+        default=NTESTS,
+        help=(
+            "Iterations per backend. Default is 3 so warmup is discarded and median "
+            "is computed over remaining runs."
+        ),
+    )
+
+    args = parser.parse_args()
+
+    if args.ntests < 1:
+        parser.error("--ntests must be >= 1")
+
+    if args.min_files is not None and args.max_files is not None:
+        if args.min_files > args.max_files:
+            parser.error("--min-files cannot be greater than --max-files")
+
+    return RunConfig(
+        ntests=args.ntests,
+        min_files=args.min_files,
+        max_files=args.max_files,
+        out_csv=args.out_csv,
+        resume_csv=args.resume_csv,
+        skip_plot=args.skip_plot,
+        plot_timing=args.plot_timing,
+    )
+
+
 # ============================================================
 # Public API
 # ============================================================
 
 
 def main() -> None:
+    config = _parse_args()
+
     logger.info("Starting manifest-driven kerchunk vs netcdf benchmark")
     logger.info(f"Configured dataset count: {len(DATASET_ENTRIES)}")
+    logger.info(
+        "Run config | ntests=%d | min_files=%s | max_files=%s | out_csv=%s",
+        config.ntests,
+        config.min_files,
+        config.max_files,
+        config.out_csv,
+    )
 
-    if not _validate_manifest_paths():
+    if not _validate_manifest_paths(DATASET_ENTRIES):
         if STRICT_PATH_VALIDATION:
             logger.error(
                 "Path validation failed and STRICT_PATH_VALIDATION=True. "
@@ -225,10 +330,23 @@ def main() -> None:
             "Continuing run with per-dataset skip handling."
         )
 
+    rows_by_dataset_id = _load_resume_rows(config.resume_csv)
+    if rows_by_dataset_id:
+        logger.info(
+            "Loaded %d rows from resume CSV: %s",
+            len(rows_by_dataset_id),
+            config.resume_csv,
+        )
+
     specs = [_build_dataset_spec(entry) for entry in DATASET_ENTRIES]
-    rows: list[dict] = []
 
     for i, spec in enumerate(specs, start=1):
+        if spec.dataset_id in rows_by_dataset_id:
+            logger.info(
+                f"[{i}/{len(specs)}] dataset={spec.dataset_id} | already present in resume CSV"
+            )
+            continue
+
         logger.info(f"[{i}/{len(specs)}] dataset={spec.dataset_id}")
 
         row: dict = {
@@ -236,6 +354,7 @@ def main() -> None:
             "data_dir": spec.data_dir,
             "kerchunk_file": spec.kerchunk_file,
             "variable": spec.var_id,
+            "kerchunk_exists": None,
             "status": "pending",
             "skip_reason": None,
             "error": None,
@@ -244,29 +363,44 @@ def main() -> None:
         if not os.path.isdir(spec.data_dir):
             row["status"] = "skipped"
             row["skip_reason"] = "missing_data_dir"
-            rows.append(row)
+            rows_by_dataset_id[spec.dataset_id] = row
+            _save_checkpoint(rows_by_dataset_id, config.out_csv)
             logger.warning(f"Skipping missing data directory: {spec.data_dir}")
             continue
 
         if spec.inference_error is not None:
             row["status"] = "skipped"
             row["skip_reason"] = spec.inference_error
-            rows.append(row)
+            rows_by_dataset_id[spec.dataset_id] = row
+            _save_checkpoint(rows_by_dataset_id, config.out_csv)
             logger.warning(f"Skipping {spec.dataset_id}: {spec.inference_error}")
             continue
 
         if not spec.kerchunk_file:
             row["status"] = "skipped"
             row["skip_reason"] = "kerchunk_inference_failed"
-            rows.append(row)
+            rows_by_dataset_id[spec.dataset_id] = row
+            _save_checkpoint(rows_by_dataset_id, config.out_csv)
             logger.warning(f"Skipping {spec.dataset_id}: kerchunk path not inferred")
+            continue
+
+        row["kerchunk_exists"] = os.path.exists(spec.kerchunk_file)
+        if not row["kerchunk_exists"]:
+            row["status"] = "skipped"
+            row["skip_reason"] = "kerchunk_not_found"
+            rows_by_dataset_id[spec.dataset_id] = row
+            _save_checkpoint(rows_by_dataset_id, config.out_csv)
+            logger.warning(
+                f"Skipping {spec.dataset_id}: kerchunk file does not exist ({spec.kerchunk_file})"
+            )
             continue
 
         readable, read_reason = _is_readable_file(spec.kerchunk_file)
         if not readable:
             row["status"] = "skipped"
             row["skip_reason"] = read_reason
-            rows.append(row)
+            rows_by_dataset_id[spec.dataset_id] = row
+            _save_checkpoint(rows_by_dataset_id, config.out_csv)
             logger.warning(
                 f"Skipping {spec.dataset_id}: kerchunk file unavailable ({read_reason})"
             )
@@ -278,7 +412,8 @@ def main() -> None:
             row["status"] = "skipped"
             row["skip_reason"] = f"kerchunk_read_error:{type(e).__name__}"
             row["error"] = str(e)
-            rows.append(row)
+            rows_by_dataset_id[spec.dataset_id] = row
+            _save_checkpoint(rows_by_dataset_id, config.out_csv)
             logger.warning(
                 f"Skipping {spec.dataset_id}: could not parse kerchunk refs ({e})"
             )
@@ -288,49 +423,82 @@ def main() -> None:
         if not netcdf_files:
             row["status"] = "skipped"
             row["skip_reason"] = "no_netcdf_files"
-            rows.append(row)
+            rows_by_dataset_id[spec.dataset_id] = row
+            _save_checkpoint(rows_by_dataset_id, config.out_csv)
             logger.warning(f"Skipping {spec.dataset_id}: no NetCDF files found")
+            continue
+
+        nfiles = len(netcdf_files)
+        if config.min_files is not None and nfiles < config.min_files:
+            logger.info(
+                "Skipping %s due to --min-files=%d (nfiles=%d)",
+                spec.dataset_id,
+                config.min_files,
+                nfiles,
+            )
+            continue
+        if config.max_files is not None and nfiles > config.max_files:
+            logger.info(
+                "Skipping %s due to --max-files=%d (nfiles=%d)",
+                spec.dataset_id,
+                config.max_files,
+                nfiles,
+            )
             continue
 
         var_id = spec.var_id or _infer_var_id(spec.kerchunk_file)
         row["variable"] = var_id
 
         logger.info(
-            f"Running benchmark | files={len(netcdf_files)} | var={var_id} | "
+            f"Running benchmark | files={nfiles} | var={var_id} | "
             f"size_gb={_compute_physical_size_gb(netcdf_files):.3f}"
         )
 
         try:
-            result = run_benchmark(spec.kerchunk_file, netcdf_files, var_id, NTESTS)
+            result = run_benchmark(
+                spec.kerchunk_file,
+                netcdf_files,
+                var_id,
+                config.ntests,
+            )
         except Exception as e:
             row["status"] = "failed"
             row["error"] = f"{type(e).__name__}: {e}"
-            rows.append(row)
+            rows_by_dataset_id[spec.dataset_id] = row
+            _save_checkpoint(rows_by_dataset_id, config.out_csv)
             logger.exception(f"Failed dataset {spec.dataset_id}: {e}")
             continue
 
         if result is None:
             row["status"] = "skipped"
             row["skip_reason"] = "benchmark_returned_none"
-            rows.append(row)
+            rows_by_dataset_id[spec.dataset_id] = row
+            _save_checkpoint(rows_by_dataset_id, config.out_csv)
             logger.warning(f"Skipping {spec.dataset_id}: benchmark returned None")
             continue
 
         row.update(result)
         row["status"] = "ok"
         row.update(_compute_ratio_fields(row))
-        rows.append(row)
+        rows_by_dataset_id[spec.dataset_id] = row
+        _save_checkpoint(rows_by_dataset_id, config.out_csv)
 
         gc.collect()
 
-    df = pd.DataFrame(rows)
+    df = pd.DataFrame(rows_by_dataset_id.values())
     _ensure_schema_columns(df)
-    df.to_csv(OUT_CSV, index=False)
+    if not df.empty and {"netcdf_file_count", "dataset_id"}.issubset(df.columns):
+        df = df.sort_values(["netcdf_file_count", "dataset_id"], na_position="last")
 
-    logger.info(f"Results written to {OUT_CSV}")
-    logger.info(f"Status counts:\n{df['status'].value_counts(dropna=False)}")
+    df.to_csv(config.out_csv, index=False)
+    logger.info(f"Results written to {config.out_csv}")
+    if not df.empty:
+        logger.info(f"Status counts:\n{df['status'].value_counts(dropna=False)}")
 
-    _plot_results_batch(df)
+    if config.skip_plot:
+        logger.info("Skipping timing plot generation (--skip-plot)")
+    else:
+        _plot_results_batch(df, config.plot_timing)
 
 
 # ============================================================
@@ -338,11 +506,11 @@ def main() -> None:
 # ============================================================
 
 
-def _validate_manifest_paths() -> bool:
+def _validate_manifest_paths(entries: list[tuple[str, str]]) -> bool:
     missing_data_dirs: list[str] = []
     unreadable_kerchunk_files: list[tuple[str, str | None]] = []
 
-    for data_dir, kerchunk_path in DATASET_ENTRIES:
+    for data_dir, kerchunk_path in entries:
         clean_dir = data_dir.rstrip("/")
         if not os.path.isdir(clean_dir):
             missing_data_dirs.append(clean_dir)
@@ -365,7 +533,7 @@ def _validate_manifest_paths() -> bool:
     if ok:
         logger.info(
             "Path validation passed (%d consolidated entries)",
-            len(DATASET_ENTRIES),
+            len(entries),
         )
 
     return ok
@@ -419,6 +587,42 @@ def _resolve_netcdf_files(data_dir: str, refs: dict) -> list[str]:
         )
 
     return sorted(glob.glob(os.path.join(data_dir, "*.nc")))
+
+
+def _load_resume_rows(path: str | None) -> dict[str, dict]:
+    if path is None:
+        return {}
+
+    if not os.path.exists(path):
+        logger.warning("Resume CSV does not exist: %s", path)
+        return {}
+
+    try:
+        df = pd.read_csv(path)
+    except Exception as e:
+        logger.warning("Failed to read resume CSV %s: %s", path, e)
+        return {}
+
+    if "dataset_id" not in df.columns:
+        logger.warning("Resume CSV missing dataset_id column: %s", path)
+        return {}
+
+    rows_by_dataset_id: dict[str, dict] = {}
+    for _, series in df.iterrows():
+        dataset_id = series.get("dataset_id")
+        if pd.isna(dataset_id):
+            continue
+        rows_by_dataset_id[str(dataset_id)] = series.to_dict()
+
+    return rows_by_dataset_id
+
+
+def _save_checkpoint(rows_by_dataset_id: dict[str, dict], out_csv: str) -> None:
+    df = pd.DataFrame(rows_by_dataset_id.values())
+    _ensure_schema_columns(df)
+    if not df.empty and {"netcdf_file_count", "dataset_id"}.issubset(df.columns):
+        df = df.sort_values(["netcdf_file_count", "dataset_id"], na_position="last")
+    df.to_csv(out_csv, index=False)
 
 
 # ============================================================
@@ -838,6 +1042,7 @@ def _ensure_schema_columns(df: pd.DataFrame) -> None:
         "data_dir",
         "kerchunk_file",
         "status",
+        "kerchunk_exists",
         "skip_reason",
         "error",
         "variable",
@@ -861,7 +1066,7 @@ def _fmt_nfiles_label(n: float | int) -> str:
     return str(n_int)
 
 
-def _plot_results_batch(df: pd.DataFrame) -> None:
+def _plot_results_batch(df: pd.DataFrame, out_plot_timing: str) -> None:
     ok_df = df[df["status"] == "ok"].copy()
     if ok_df.empty:
         logger.warning("No successful rows. Skipping plots.")
@@ -920,9 +1125,9 @@ def _plot_results_batch(df: pd.DataFrame) -> None:
 
     plt.suptitle("Frequency: Amon")
     plt.tight_layout()
-    plt.savefig(OUT_PLOT_TIMING, dpi=300)
+    plt.savefig(out_plot_timing, dpi=300)
     plt.close()
-    logger.info(f"Timing plot saved to {OUT_PLOT_TIMING}")
+    logger.info(f"Timing plot saved to {out_plot_timing}")
 
 
 if __name__ == "__main__":
