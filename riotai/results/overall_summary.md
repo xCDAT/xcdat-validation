@@ -15,7 +15,7 @@ All benchmarks below use **CMIP archive data on NERSC near-compute storage** rat
 - **Benchmark 3:** `20260227-steve` workflow-faithful xCDAT runs with **preserved on-disk chunking**, a fixed `time[:240]` slice, and separate timing for `open`, `load`, temporal, and spatial phases.
 - **Benchmark 4:** `20260313-steve-file-count` Amon file-count sweep from `1` to `2000` files.
 
-## **Early read/load studies**
+## Benchmark 1 - **Early read/load studies**
 
 - **Scope:** Earlier aggregate runs (`20260108_172139`, `20260126_130127`) were dominated by open plus end-to-end read/load behavior.
 - **Result:** In those studies, `kerchunk` usually beat `NetCDF`, often by large margins as file counts increased.
@@ -27,7 +27,7 @@ All benchmarks below use **CMIP archive data on NERSC near-compute storage** rat
 
 This plot captures the early aggregate read/load behavior, where `kerchunk` often won strongly.
 
-## **Workflow-faithful xCDAT runs**
+## Benchmark 2 - **Workflow-faithful xCDAT runs**
 
 - **Open:** In the later workflow benchmark (`20260227-steve`), `kerchunk` consistently won `open`.
 - **Load:** `NetCDF` usually won `load`.
@@ -43,7 +43,7 @@ This plot captures the early aggregate read/load behavior, where `kerchunk` ofte
 
 These are the most representative plots for realistic local xCDAT workflows on near-compute source-layout data.
 
-## **Very high file counts**
+## Benchmark 3 - **Very high file counts**
 
 - **Crossover:** The file-count sweep (`20260313-steve-file-count`) shows that the compute story is not simply "NetCDF always wins."
 - **Observed pattern:** `open` favored `kerchunk` in 14/14 successful datasets, while `load` favored `NetCDF` in most cases.
