@@ -67,6 +67,23 @@ Key artifacts:
 - For load, NetCDF remains competitive and often faster across much of the range.
 - For temporal/spatial reductions, this run shows a file-count-dependent crossover: lower file-count datasets mostly favor NetCDF, while very high file-count datasets favor kerchunk strongly.
 
+## xsearch file-count distribution
+
+Follow-up work using the xsearch database shows that the archive is heavily concentrated in low-file-count datasets:
+
+| nfiles_bucket | path_count | path_pct | total_nfiles | total_nfiles_pct |
+|---------------|-----------:|---------:|-------------:|-----------------:|
+| 0-49 | 1098125 | 94.82 | 4545050 | 38.66 |
+| 50-99 | 42659 | 3.68 | 3358691 | 28.57 |
+| 100-199 | 14153 | 1.22 | 2160707 | 18.38 |
+| 200-499 | 1457 | 0.13 | 417244 | 3.55 |
+| 500-999 | 1442 | 0.12 | 866977 | 7.37 |
+| 1000+ | 315 | 0.03 | 407667 | 3.47 |
+
+This suggests that NetCDF should likely remain the default overall for near-compute analysis without rechunking, with kerchunk used as a targeted optimization for highly fragmented datasets.
+
+At the same time, archive prevalence is not the same as workload importance. A relatively small number of high-file-count datasets may still account for a disproportionate share of user pain, metadata overhead, or total files touched. That is visible in the table above: the `0-49` bucket contains 94.82% of paths but only 38.66% of total files.
+
 ## Caveats
 
 - This is not a pure "nfiles-only" control experiment: datasets also differ by model, variable (`tas`/`pr`), grid, and physical size.
