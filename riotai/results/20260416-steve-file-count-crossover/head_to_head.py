@@ -58,8 +58,22 @@ Usage
 conda env create -f riotai/test_stable_min.yml
 salloc --nodes 1 --qos interactive --constraint cpu --time 04:00:00 --account mXXXX
 conda activate xcdat_test_stable_min
-python riotai/results/20260416-steve-file-count-crossover/head_to_head.py \
-  --bins 25-49,50-99,150-199 --datasets-per-bin 3
+
+# nfiles 25-299
+ python riotai/results/20260416-steve-file-count-crossover/head_to_head.py \
+    --bins 25-49,50-99,100-149,150-199,200-299 \
+    --datasets-per-bin 3 \
+    --out-csv run_small.csv \
+    --resume-csv run_small.csv \
+    --skip-plot
+# nfiles >=300
+  python riotai/results/20260416-steve-file-count-crossover/head_to_head.py \
+    --bins 300-499,500+ \
+    --datasets-per-bin 3 \
+    --out-csv run_large.csv \
+    --resume-csv run_large.csv \
+    --skip-plot
+
 """
 
 from __future__ import annotations
@@ -113,21 +127,6 @@ SUPPORTED_NFILES_BIN_LABELS: tuple[str, ...] = tuple(label for label, _, _ in NF
 # Hardcoded benchmark input universe: (data_dir, kerchunk_json_path)
 # Bin membership is resolved dynamically from source NetCDF file counts.
 DATASET_ENTRIES: list[tuple[str, str]] = [
-    # nfiles=1
-    (
-        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/ScenarioMIP/CCCma/CanESM5/ssp119/r3i1p2f1/Amon/tas/gn/v20190429/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/ssp119/mon/CMIP6.ScenarioMIP.CCCma.CanESM5.ssp119.r3i1p2f1.Amon.tas.gn.v20190429.kerchunk.json",
-    ),
-    # nfiles=10
-    (
-        "/global/cfs/projectdirs/m4931/gsharing/user_pub_work/CMIP6/CMIP/E3SM-Project/E3SM-2-1/piControl/r1i1p1f1/Amon/tas/gr/v20240208/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/mon/CMIP6.CMIP.E3SM-Project.E3SM-2-1.piControl.r1i1p1f1.Amon.tas.gr.v20240208.kerchunk.json",
-    ),
-    # nfiles=20
-    (
-        "/global/cfs/projectdirs/m4931/gsharing/user_pub_work/CMIP6/CMIP/E3SM-Project/E3SM-1-0/piControl/r1i1p1f1/Amon/tas/gr/v20190719/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/mon/CMIP6.CMIP.E3SM-Project.E3SM-1-0.piControl.r1i1p1f1.Amon.tas.gr.v20190719.kerchunk.json",
-    ),
     # nfiles=25
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3-Veg/historical/r4i1p1f1/day/tas/gr/v20190728/",
@@ -205,18 +204,18 @@ DATASET_ENTRIES: list[tuple[str, str]] = [
     ),
     # nfiles=432
     (
-        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-VHR4/highres-future/r1i1p1f1/Amon/hus/gn/v20190509/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/hus/highres-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.hus.gn.v20190509.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-VHR4/highres-future/r1i1p1f1/Amon/pr/gn/v20190509/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/pr/highres-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.pr.gn.v20190509.kerchunk.json",
     ),
     # nfiles=432
     (
-        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-VHR4/highres-future/r1i1p1f1/Amon/va/gn/v20190509/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/va/highres-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.va.gn.v20190509.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-VHR4/highresSST-future/r1i1p1f1/Amon/pr/gn/v20190725/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/pr/highresSST-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highresSST-future.r1i1p1f1.Amon.pr.gn.v20190725.kerchunk.json",
     ),
     # nfiles=432
     (
-        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-VHR4/highres-future/r1i1p1f1/Amon/ua/gn/v20190509/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/ua/highres-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.ua.gn.v20190509.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-HR4/highres-future/r1i1p1f1/Amon/pr/gn/v20190509/",
+        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/pr/highres-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highres-future.r1i1p1f1.Amon.pr.gn.v20190509.kerchunk.json",
     ),
     # nfiles=505
     (
@@ -232,21 +231,6 @@ DATASET_ENTRIES: list[tuple[str, str]] = [
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/EC-Earth-Consortium/EC-Earth3P/hist-1950/r3i1p2f1/Amon/pr/gr/v20190215/",
         "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/pr/hist-1950/mon/CMIP6.HighResMIP.EC-Earth-Consortium.EC-Earth3P.hist-1950.r3i1p2f1.Amon.pr.gr.v20190215.kerchunk.json",
-    ),
-    # nfiles=1020
-    (
-        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/EC-Earth-Consortium/EC-Earth3P/highres-future/r3i1p2f1/Amon/pr/gr/v20190215/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/pr/highres-future/mon/CMIP6.HighResMIP.EC-Earth-Consortium.EC-Earth3P.highres-future.r3i1p2f1.Amon.pr.gr.v20190215.kerchunk.json",
-    ),
-    # nfiles=1344
-    (
-        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/EC-Earth-Consortium/EC-Earth3P/control-1950/r3i1p2f1/Amon/pr/gr/v20190215/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/pr/control-1950/mon/CMIP6.HighResMIP.EC-Earth-Consortium.EC-Earth3P.control-1950.r3i1p2f1.Amon.pr.gr.v20190215.kerchunk.json",
-    ),
-    # nfiles=2000
-    (
-        "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3-Veg/piControl/r1i1p1f1/Amon/tas/gr/v20210419/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/mon/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3-Veg.piControl.r1i1p1f1.Amon.tas.gr.v20210419.kerchunk.json",
     ),
 ]
 
