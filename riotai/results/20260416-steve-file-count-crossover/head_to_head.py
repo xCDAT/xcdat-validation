@@ -60,20 +60,19 @@ salloc --nodes 1 --qos interactive --constraint cpu --time 04:00:00 --account mX
 conda activate xcdat_test_stable_min
 
 # nfiles 25-299
- python riotai/results/20260416-steve-file-count-crossover/head_to_head.py \
-    --bins 25-49,50-99,100-149,150-199,200-299 \
-    --datasets-per-bin 3 \
-    --out-csv run_small.csv \
-    --resume-csv run_small.csv \
-    --skip-plot
+python riotai/results/20260416-steve-file-count-crossover/head_to_head.py \
+--bins 25-49,50-99,100-149,150-199,200-299 \
+--datasets-per-bin 3 \
+--out-csv run_small.csv \
+--resume-csv run_small.csv \
+--skip-plot
 # nfiles >=300
-  python riotai/results/20260416-steve-file-count-crossover/head_to_head.py \
-    --bins 300-499,500+ \
-    --datasets-per-bin 3 \
-    --out-csv run_large.csv \
-    --resume-csv run_large.csv \
-    --skip-plot
-
+python riotai/results/20260416-steve-file-count-crossover/head_to_head.py \
+--bins 300-499,500+ \
+--datasets-per-bin 3 \
+--out-csv run_large.csv \
+--resume-csv run_large.csv \
+--skip-plot
 """
 
 from __future__ import annotations
