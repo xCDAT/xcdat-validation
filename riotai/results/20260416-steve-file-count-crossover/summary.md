@@ -100,15 +100,6 @@ High-signal examples:
   - local threaded scheduler
   - no rechunking
 
-## Practical Read
-
-For teammate use, cleanest takeaway is:
-
-- kerchunk very strong for metadata/open
-- kerchunk looks promising for reduction-heavy workflows once file counts get into mid/high bins
-- NetCDF still often better for plain load/materialization
-- use dataset plot for truth, bin plot for summary
-
 ## xsearch File-Count Distribution
 
 Archive is still heavily concentrated in low-file-count datasets:
