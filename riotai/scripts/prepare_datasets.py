@@ -14,9 +14,9 @@ import json
 import logging
 import os
 from pathlib import Path
+import sys
 
 import pandas as pd
-import xcdat as xc
 
 JSON_TO_NETCDF_MAPS_DIR: Path = (
     Path(__file__).resolve().parents[1] / "json_to_netcdf_maps"
@@ -261,6 +261,8 @@ def load_prepared_datasets_csv(path: str) -> list[PreparedDataset]:
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
+    stream=sys.stdout,
+    force=True,
 )
 logger = logging.getLogger("prepare_datasets")
 
@@ -332,18 +334,10 @@ def _select_rows_with_pandas(
         selected_rows = candidate_rows.iloc[0:0].copy()
         selected_rows["bin_candidate_rank"] = pd.Series(dtype=int)
 
-    selected_rows["bin_candidate_rank"] = selected_rows["bin_candidate_rank"].astype(int)
+    selected_rows["bin_candidate_rank"] = selected_rows["bin_candidate_rank"].astype(
+        int
+    )
     return candidate_rows, selected_rows
-
-
-def _can_open_with_xcdat(netcdf_files: tuple[str, ...]) -> tuple[bool, str | None]:
-    try:
-        ds = xc.open_mfdataset(list(netcdf_files), chunks={}, join="exact")
-    except Exception as exc:
-        return False, f"{type(exc).__name__}: {exc}"
-
-    ds.close()
-    return True, None
 
 
 def _validate_selected_rows(
@@ -351,12 +345,31 @@ def _validate_selected_rows(
     datasets_per_bin: int | None,
 ) -> list[PreparedDataset]:
     selected_datasets: list[PreparedDataset] = []
-    selected_counts: dict[str, int] = {label: 0 for label in SUPPORTED_NFILES_BIN_LABELS}
+    selected_counts: dict[str, int] = {
+        label: 0 for label in SUPPORTED_NFILES_BIN_LABELS
+    }
+    candidate_counts: dict[str, int] = {
+        label: int((selected_rows["nfiles_bin"] == label).sum())
+        for label in SUPPORTED_NFILES_BIN_LABELS
+    }
+    current_bin: str | None = None
+
+    logger.info("Starting validation of %d candidate datasets", len(selected_rows))
 
     for _, row in selected_rows.iterrows():
         spec, netcdf_files_from_table, nfiles = _build_dataset_spec_from_row(row)
         nfiles_bin = str(row["nfiles_bin"])
         target_count = _datasets_per_bin_for_label(nfiles_bin, datasets_per_bin)
+
+        if nfiles_bin != current_bin:
+            current_bin = nfiles_bin
+            logger.info(
+                "Validating bin=%s | candidates=%d | target=%d",
+                nfiles_bin,
+                candidate_counts[nfiles_bin],
+                target_count,
+            )
+
         if selected_counts[nfiles_bin] >= target_count:
             continue
 
@@ -401,17 +414,16 @@ def _validate_selected_rows(
             logger.warning("Skipping %s: no NetCDF files found", spec.dataset_id)
             continue
 
-        loadable, load_reason = _can_open_with_xcdat(netcdf_files)
-        if not loadable:
-            logger.warning(
-                "Skipping %s: xcdat.open_mfdataset failed (%s)",
-                spec.dataset_id,
-                load_reason,
-            )
-            continue
-
         selected_counts[nfiles_bin] += 1
         bin_selected_rank = selected_counts[nfiles_bin]
+        logger.info(
+            "Selected dataset %s | bin=%s | rank=%d/%d | nfiles=%d",
+            spec.dataset_id,
+            nfiles_bin,
+            bin_selected_rank,
+            target_count,
+            nfiles,
+        )
         selected_datasets.append(
             PreparedDataset(
                 spec=spec,
@@ -542,6 +554,14 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = _parse_args()
+    logger.info(
+        "Preparing datasets | frequency=%s | bins=%s | datasets_per_bin=%s | input=%s | output=%s",
+        args.target_frequency,
+        ",".join(args.bins),
+        args.datasets_per_bin,
+        args.dataset_table_csv,
+        args.out_csv,
+    )
     candidate_rows, selected_rows = _select_rows_with_pandas(
         dataset_table_csv=args.dataset_table_csv,
         target_frequency=args.target_frequency,
@@ -550,6 +570,11 @@ def main() -> None:
         random_seed=args.random_seed,
         min_files=args.min_files,
         max_files=args.max_files,
+    )
+    logger.info(
+        "Candidate selection complete | filtered_rows=%d | validation_queue=%d",
+        len(candidate_rows),
+        len(selected_rows),
     )
     selected_datasets = _validate_selected_rows(
         selected_rows,

@@ -145,5 +145,5 @@ input/
 *.xml
 *.sh.status
 
-riotai/json_to_netcdf_maps/json_to_netcdf.json
-riotai/json_to_netcdf_maps/json_to_netcdf_table.csv
+riotai/json_to_netcdf_maps/*.json
+riotai/json_to_netcdf_maps/*.csv
