@@ -17,8 +17,12 @@ from pathlib import Path
 
 import pandas as pd
 
-JSON_TO_NETCDF_MAPS_DIR: Path = Path(__file__).resolve().parents[1] / "json_to_netcdf_maps"
-DEFAULT_DATASET_TABLE_CSV: str = str(JSON_TO_NETCDF_MAPS_DIR / "json_to_netcdf_table.csv")
+JSON_TO_NETCDF_MAPS_DIR: Path = (
+    Path(__file__).resolve().parents[1] / "json_to_netcdf_maps"
+)
+DEFAULT_DATASET_TABLE_CSV: str = str(
+    JSON_TO_NETCDF_MAPS_DIR / "json_to_netcdf_table.csv"
+)
 DEFAULT_TARGET_FREQUENCY: str = "Amon"
 
 NFILES_BINS: list[tuple[str, int, int | None]] = [
@@ -28,19 +32,21 @@ NFILES_BINS: list[tuple[str, int, int | None]] = [
     ("150-199", 150, 199),
     ("200-299", 200, 299),
     ("300-499", 300, 499),
-    ("500+", 500, None),
+    ("500-749", 500, 749),
+    ("750-1000", 750, 1000),
 ]
 SUPPORTED_NFILES_BIN_LABELS: tuple[str, ...] = tuple(
     label for label, _, _ in NFILES_BINS
 )
 DEFAULT_DATASETS_PER_BIN_BY_LABEL: dict[str, int] = {
-    "25-49": 20,
-    "50-99": 20,
-    "100-149": 20,
+    "25-49": 10,
+    "50-99": 10,
+    "100-149": 10,
     "150-199": 10,
     "200-299": 10,
     "300-499": 10,
-    "500+": 10,
+    "500-749": 10,
+    "750-1000": 10,
 }
 
 
@@ -62,7 +68,9 @@ class PreparedDataset:
     bin_selected_rank: int
 
 
-def _prepared_datasets_csv_path(target_frequency: str = DEFAULT_TARGET_FREQUENCY) -> str:
+def _prepared_datasets_csv_path(
+    target_frequency: str = DEFAULT_TARGET_FREQUENCY,
+) -> str:
     return str(JSON_TO_NETCDF_MAPS_DIR / f"prepared_datasets_{target_frequency}.csv")
 
 
@@ -416,7 +424,9 @@ def _parse_args() -> argparse.Namespace:
         if args.min_files > args.max_files:
             parser.error("--min-files cannot be greater than --max-files")
 
-    bins = tuple(dict.fromkeys(part.strip() for part in args.bins.split(",") if part.strip()))
+    bins = tuple(
+        dict.fromkeys(part.strip() for part in args.bins.split(",") if part.strip())
+    )
     if not bins:
         parser.error("--bins must include at least one supported bin label")
 
