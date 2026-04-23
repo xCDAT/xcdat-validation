@@ -16,6 +16,7 @@ import os
 from pathlib import Path
 
 import pandas as pd
+import xcdat as xc
 
 JSON_TO_NETCDF_MAPS_DIR: Path = (
     Path(__file__).resolve().parents[1] / "json_to_netcdf_maps"
@@ -210,6 +211,53 @@ def write_prepared_datasets_csv(
     df.to_csv(out_csv, index=False)
 
 
+def load_prepared_datasets_csv(path: str) -> list[PreparedDataset]:
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Prepared datasets CSV does not exist: {path}")
+
+    df = pd.read_csv(path)
+    required_columns = {
+        "dataset_id",
+        "kerchunk_file",
+        "variable",
+        "netcdf_file_count",
+        "nfiles_bin",
+        "bin_selected_rank",
+        "filepaths",
+    }
+    missing_columns = sorted(required_columns - set(df.columns))
+    if missing_columns:
+        raise ValueError(
+            "Prepared datasets CSV is missing required columns: "
+            + ", ".join(missing_columns)
+        )
+
+    datasets: list[PreparedDataset] = []
+    for _, row in df.iterrows():
+        netcdf_files = _parse_csv_filepaths(row["filepaths"])
+        data_dir = row.get("data_dir")
+        if pd.isna(data_dir) or not str(data_dir):
+            data_dir = _infer_data_dir_from_filepaths(netcdf_files)
+
+        datasets.append(
+            PreparedDataset(
+                spec=DatasetSpec(
+                    data_dir=str(data_dir),
+                    dataset_id=str(row["dataset_id"]),
+                    kerchunk_file=str(row["kerchunk_file"]),
+                    var_id=str(row["variable"]),
+                    inference_error=None,
+                ),
+                netcdf_files=netcdf_files,
+                nfiles=int(row["netcdf_file_count"]),
+                nfiles_bin=str(row["nfiles_bin"]),
+                bin_selected_rank=int(row["bin_selected_rank"]),
+            )
+        )
+
+    return datasets
+
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
@@ -269,36 +317,48 @@ def _select_rows_with_pandas(
         if bin_df.empty:
             continue
 
-        sample_size = min(
-            _datasets_per_bin_for_label(label, datasets_per_bin),
-            len(bin_df),
-        )
         sampled = bin_df.sample(
-            n=sample_size,
+            n=len(bin_df),
             random_state=random_seed + offset,
             replace=False,
         ).copy()
         sampled = sampled.sort_values(["num_files", "__row_order"], kind="stable")
-        sampled["bin_selected_rank"] = range(1, len(sampled) + 1)
+        sampled["bin_candidate_rank"] = range(1, len(sampled) + 1)
         selected_frames.append(sampled)
 
     if selected_frames:
         selected_rows = pd.concat(selected_frames, ignore_index=True)
     else:
         selected_rows = candidate_rows.iloc[0:0].copy()
-        selected_rows["bin_selected_rank"] = pd.Series(dtype=int)
+        selected_rows["bin_candidate_rank"] = pd.Series(dtype=int)
 
-    selected_rows["bin_selected_rank"] = selected_rows["bin_selected_rank"].astype(int)
+    selected_rows["bin_candidate_rank"] = selected_rows["bin_candidate_rank"].astype(int)
     return candidate_rows, selected_rows
 
 
-def _validate_selected_rows(selected_rows: pd.DataFrame) -> list[PreparedDataset]:
+def _can_open_with_xcdat(netcdf_files: tuple[str, ...]) -> tuple[bool, str | None]:
+    try:
+        ds = xc.open_mfdataset(list(netcdf_files), chunks={}, join="exact")
+    except Exception as exc:
+        return False, f"{type(exc).__name__}: {exc}"
+
+    ds.close()
+    return True, None
+
+
+def _validate_selected_rows(
+    selected_rows: pd.DataFrame,
+    datasets_per_bin: int | None,
+) -> list[PreparedDataset]:
     selected_datasets: list[PreparedDataset] = []
+    selected_counts: dict[str, int] = {label: 0 for label in SUPPORTED_NFILES_BIN_LABELS}
 
     for _, row in selected_rows.iterrows():
         spec, netcdf_files_from_table, nfiles = _build_dataset_spec_from_row(row)
         nfiles_bin = str(row["nfiles_bin"])
-        bin_selected_rank = int(row["bin_selected_rank"])
+        target_count = _datasets_per_bin_for_label(nfiles_bin, datasets_per_bin)
+        if selected_counts[nfiles_bin] >= target_count:
+            continue
 
         if spec.inference_error is not None:
             logger.warning("Skipping %s: %s", spec.dataset_id, spec.inference_error)
@@ -341,6 +401,17 @@ def _validate_selected_rows(selected_rows: pd.DataFrame) -> list[PreparedDataset
             logger.warning("Skipping %s: no NetCDF files found", spec.dataset_id)
             continue
 
+        loadable, load_reason = _can_open_with_xcdat(netcdf_files)
+        if not loadable:
+            logger.warning(
+                "Skipping %s: xcdat.open_mfdataset failed (%s)",
+                spec.dataset_id,
+                load_reason,
+            )
+            continue
+
+        selected_counts[nfiles_bin] += 1
+        bin_selected_rank = selected_counts[nfiles_bin]
         selected_datasets.append(
             PreparedDataset(
                 spec=spec,
@@ -404,6 +475,16 @@ def _parse_args() -> argparse.Namespace:
         help="Comma-separated bins to prepare",
     )
     parser.add_argument(
+        "--replace-bin",
+        type=str,
+        action="append",
+        default=None,
+        help=(
+            "Refresh only the given bin in an existing prepared CSV. "
+            "May be passed multiple times."
+        ),
+    )
+    parser.add_argument(
         "--min-files",
         type=int,
         default=None,
@@ -440,6 +521,20 @@ def _parse_args() -> argparse.Namespace:
         )
 
     args.bins = bins
+    replace_bins = tuple(dict.fromkeys(args.replace_bin or []))
+    invalid_replace_bins = [
+        label for label in replace_bins if label not in SUPPORTED_NFILES_BIN_LABELS
+    ]
+    if invalid_replace_bins:
+        parser.error(
+            "Unsupported --replace-bin value(s): "
+            + ", ".join(invalid_replace_bins)
+            + ". Supported: "
+            + ", ".join(SUPPORTED_NFILES_BIN_LABELS)
+        )
+    if replace_bins:
+        args.bins = replace_bins
+    args.replace_bin = replace_bins
     if args.out_csv is None:
         args.out_csv = _prepared_datasets_csv_path(args.target_frequency)
     return args
@@ -456,7 +551,25 @@ def main() -> None:
         min_files=args.min_files,
         max_files=args.max_files,
     )
-    selected_datasets = _validate_selected_rows(selected_rows)
+    selected_datasets = _validate_selected_rows(
+        selected_rows,
+        datasets_per_bin=args.datasets_per_bin,
+    )
+
+    if args.replace_bin:
+        existing_datasets = load_prepared_datasets_csv(args.out_csv)
+        kept_datasets = [
+            dataset
+            for dataset in existing_datasets
+            if dataset.nfiles_bin not in args.replace_bin
+        ]
+        selected_datasets = kept_datasets + selected_datasets
+        logger.info(
+            "Replace-bin mode: refreshed bins=%s | kept existing datasets=%d",
+            ",".join(args.replace_bin),
+            len(kept_datasets),
+        )
+
     write_prepared_datasets_csv(selected_datasets, args.out_csv)
 
     logger.info("Prepared dataset CSV written to %s", args.out_csv)
@@ -474,11 +587,12 @@ def main() -> None:
         if label not in args.bins:
             continue
         logger.info(
-            "bin=%s | discovered=%d | preselected=%d | validated=%d",
+            "bin=%s | discovered=%d | candidate_pool=%d | validated=%d | target=%d",
             label,
             int((candidate_rows["nfiles_bin"] == label).sum()),
             int((selected_rows["nfiles_bin"] == label).sum()),
             sum(dataset.nfiles_bin == label for dataset in selected_datasets),
+            _datasets_per_bin_for_label(label, args.datasets_per_bin),
         )
 
 

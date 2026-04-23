@@ -56,17 +56,17 @@ single-node xCDAT workflows. Not intended as a distributed scaling benchmark.
 Usage
 -----
 conda env create -f riotai/test_stable_min.yml
-salloc --nodes 1 --qos interactive --constraint cpu --time 04:00:00 --account m4581
 conda activate xcdat_test_stable_min
 python riotai/scripts/json_to_netcdf_table.py
 
-# Recommended: combine the smaller bins, then keep larger bins separate.
+# Recommended: use 5 shard jobs for balance of efficiency and timeout safety.
 # Prepare datasets once by frequency. Output goes to riotai/json_to_netcdf_maps.
 # Resume by rerunning the same command with the same shard CSV.
 python riotai/scripts/prepare_datasets.py \
 --target-frequency Amon
 
 # nfiles 25-149
+salloc --nodes 1 --qos interactive --constraint cpu --time 02:00:00 --account m4581
 python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py \
 --target-frequency Amon \
 --bins 25-49,50-99,100-149 \
@@ -74,23 +74,17 @@ python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.p
 --resume-csv run_25_149.csv \
 --skip-plot
 
-# nfiles 150-199
+# nfiles 150-299
+salloc --nodes 1 --qos interactive --constraint cpu --time 03:00:00 --account m4581
 python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py \
 --target-frequency Amon \
---bins 150-199 \
---out-csv run_150_199.csv \
---resume-csv run_150_199.csv \
---skip-plot
-
-# nfiles 200-299
-python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py \
---target-frequency Amon \
---bins 200-299 \
---out-csv run_200_299.csv \
---resume-csv run_200_299.csv \
+--bins 150-199,200-299 \
+--out-csv run_150_299.csv \
+--resume-csv run_150_299.csv \
 --skip-plot
 
 # nfiles 300-499
+salloc --nodes 1 --qos interactive --constraint cpu --time 04:00:00 --account m4581
 python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py \
 --target-frequency Amon \
 --bins 300-499 \
@@ -98,12 +92,22 @@ python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.p
 --resume-csv run_300_499.csv \
 --skip-plot
 
-# nfiles 500+
+# nfiles 500-749
+salloc --nodes 1 --qos interactive --constraint cpu --time 04:00:00 --account m4581
 python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py \
 --target-frequency Amon \
---bins 500+ \
---out-csv run_500_plus.csv \
---resume-csv run_500_plus.csv \
+--bins 500-749 \
+--out-csv run_500_749.csv \
+--resume-csv run_500_749.csv \
+--skip-plot
+
+# nfiles 750-1000
+salloc --nodes 1 --qos interactive --constraint cpu --time 05:00:00 --account m4581
+python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py \
+--target-frequency Amon \
+--bins 750-1000 \
+--out-csv run_750_1000.csv \
+--resume-csv run_750_1000.csv \
 --skip-plot
 """
 
@@ -149,26 +153,42 @@ NFILES_BINS: list[tuple[str, int, int | None]] = [
     ("150-199", 150, 199),
     ("200-299", 200, 299),
     ("300-499", 300, 499),
-    ("500+", 500, None),
+    ("500-749", 500, 749),
+    ("750-1000", 750, 1000),
 ]
 SUPPORTED_NFILES_BIN_LABELS: tuple[str, ...] = tuple(
     label for label, _, _ in NFILES_BINS
 )
 
 _TS = datetime.now().strftime("%Y%m%d_%H%M%S")
-ROOT_DIR = os.path.dirname(__file__)
-DEFAULT_OUT_CSV: str = os.path.join(ROOT_DIR, f"{_TS}_kerchunk_vs_netcdf_batch.csv")
-DEFAULT_OUT_PLOT_TIMING: str = os.path.join(ROOT_DIR, f"{_TS}_timing_vs_nfiles.png")
-DEFAULT_OUT_PLOT_RATIO: str = os.path.join(ROOT_DIR, f"{_TS}_ratio_vs_nfiles.png")
-JSON_TO_NETCDF_MAPS_DIR: Path = Path(__file__).resolve().parents[2] / "json_to_netcdf_maps"
+ROOT_DIR = Path(__file__).resolve().parent
+DEFAULT_OUT_CSV: str = str(ROOT_DIR / f"{_TS}_kerchunk_vs_netcdf_batch.csv")
+DEFAULT_OUT_PLOT_TIMING: str = str(ROOT_DIR / f"{_TS}_timing_vs_nfiles.png")
+DEFAULT_OUT_PLOT_RATIO: str = str(ROOT_DIR / f"{_TS}_ratio_vs_nfiles.png")
+JSON_TO_NETCDF_MAPS_DIR: Path = (
+    Path(__file__).resolve().parents[2] / "json_to_netcdf_maps"
+)
 DEFAULT_DATASET_TABLE_CSV: str = str(
     JSON_TO_NETCDF_MAPS_DIR / "json_to_netcdf_table.csv"
 )
 DEFAULT_TARGET_FREQUENCY: str = "Amon"
 
 
-def _prepared_datasets_csv_path(target_frequency: str = DEFAULT_TARGET_FREQUENCY) -> str:
+def _prepared_datasets_csv_path(
+    target_frequency: str = DEFAULT_TARGET_FREQUENCY,
+) -> str:
     return str(JSON_TO_NETCDF_MAPS_DIR / f"prepared_datasets_{target_frequency}.csv")
+
+
+def _resolve_script_relative_path(path: str | None) -> str | None:
+    if path is None:
+        return None
+
+    resolved = Path(path).expanduser()
+    if not resolved.is_absolute():
+        resolved = ROOT_DIR / resolved
+
+    return str(resolved)
 
 
 # Configure Dask to use local threaded scheduler (no distributed client)
@@ -223,8 +243,8 @@ def _parse_args() -> RunConfig:
         ),
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=(
-            "Recommended sharding: combine smaller bins, keep larger bins separate, "
-            "and rerun the same command to resume.\n\n"
+            "Recommended sharding: 5 jobs total. Combine smaller bins, isolate "
+            "large-file bins, and rerun same command to resume.\n\n"
             "Examples:\n"
             "  python riotai/scripts/prepare_datasets.py "
             "--target-frequency Amon\n\n"
@@ -232,11 +252,17 @@ def _parse_args() -> RunConfig:
             "--target-frequency Amon --bins 25-49,50-99,100-149 --out-csv run_25_149.csv "
             "--resume-csv run_25_149.csv --skip-plot\n\n"
             "  python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py "
+            "--target-frequency Amon --bins 150-199,200-299 --out-csv run_150_299.csv "
+            "--resume-csv run_150_299.csv --skip-plot\n\n"
+            "  python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py "
             "--target-frequency Amon --bins 300-499 --out-csv run_300_499.csv "
             "--resume-csv run_300_499.csv --skip-plot\n\n"
             "  python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py "
-            "--target-frequency Amon --bins 500+ --out-csv run_500_plus.csv "
-            "--resume-csv run_500_plus.csv --skip-plot"
+            "--target-frequency Amon --bins 500-749 --out-csv run_500_749.csv "
+            "--resume-csv run_500_749.csv --skip-plot\n\n"
+            "  python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py "
+            "--target-frequency Amon --bins 750-1000 --out-csv run_750_1000.csv "
+            "--resume-csv run_750_1000.csv --skip-plot"
         ),
     )
     parser.add_argument(
@@ -288,13 +314,19 @@ def _parse_args() -> RunConfig:
         "--out-csv",
         type=str,
         default=DEFAULT_OUT_CSV,
-        help="Output CSV path (checkpointed after each dataset)",
+        help=(
+            "Output CSV path (checkpointed after each dataset). Relative paths "
+            "are resolved against this script directory."
+        ),
     )
     parser.add_argument(
         "--resume-csv",
         type=str,
         default=None,
-        help="Existing CSV to resume from (skips already-present dataset_id rows)",
+        help=(
+            "Existing CSV to resume from (skips already-present dataset_id rows). "
+            "Relative paths are resolved against this script directory."
+        ),
     )
     parser.add_argument(
         "--skip-plot",
@@ -305,7 +337,10 @@ def _parse_args() -> RunConfig:
         "--plot-timing",
         type=str,
         default=DEFAULT_OUT_PLOT_TIMING,
-        help="Timing plot output path (ignored with --skip-plot)",
+        help=(
+            "Timing plot output path (ignored with --skip-plot). Relative paths "
+            "are resolved against this script directory."
+        ),
     )
     parser.add_argument(
         "--ntests",
@@ -352,10 +387,10 @@ def _parse_args() -> RunConfig:
         bins=bins,
         min_files=args.min_files,
         max_files=args.max_files,
-        out_csv=args.out_csv,
-        resume_csv=args.resume_csv,
+        out_csv=_resolve_script_relative_path(args.out_csv),
+        resume_csv=_resolve_script_relative_path(args.resume_csv),
         skip_plot=args.skip_plot,
-        plot_timing=args.plot_timing,
+        plot_timing=_resolve_script_relative_path(args.plot_timing),
     )
 
 

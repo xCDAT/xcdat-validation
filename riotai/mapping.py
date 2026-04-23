@@ -9,10 +9,7 @@ from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
-# Build a mapping from frequency (FREQ) to list of JSON paths.
-# Pattern: ...<.><FREQ>.<VAR>.<GRID>.<VERSION>.kerchunk.json
-# Example: ...Amon.tas.gr.v20200412.kerchunk.json
-FREQ_PATTERN = re.compile(r"\.(\w+)\.[^.]+\.gr\.v\d+\.kerchunk\.json$")
+VERSION_PATTERN = re.compile(r"v\d+$")
 
 
 def load_or_build_mappings(
@@ -103,14 +100,42 @@ def _group_json_files_by_frequency(json_paths: list[str]) -> dict[str, list[str]
     freq_to_jsons = defaultdict(list)
 
     for path in json_paths:
-        fname = os.path.basename(path)
-        m = FREQ_PATTERN.search(fname)
-
-        if m:
-            freq = m.group(1)
+        freq = _extract_frequency_from_json_path(path)
+        if freq is not None:
             freq_to_jsons[freq].append(path)
 
     return freq_to_jsons
+
+
+def _extract_frequency_from_json_path(path: str) -> str | None:
+    """Extract the CMIP frequency token from a kerchunk JSON filename.
+
+    We see multiple filename variants in the archive, including:
+    - ``...Amon.tas.gn.v20200412.kerchunk.json``
+    - ``...Amon.tas.gnkerchunk.json``
+    - ``...Amon.tas.grkerchunk.json``
+
+    All of them share the same tail structure:
+    ``<freq>.<variable>.<grid>[.<version>]kerchunk.json``.
+    """
+    fname = os.path.basename(path)
+    suffix = "kerchunk.json"
+
+    if not fname.endswith(suffix):
+        return None
+
+    tail = fname[: -len(suffix)].rstrip(".")
+    parts = tail.split(".")
+
+    if len(parts) < 3:
+        return None
+
+    if VERSION_PATTERN.fullmatch(parts[-1]):
+        if len(parts) < 4:
+            return None
+        return parts[-4]
+
+    return parts[-3]
 
 
 def _get_netcdf_paths_by_json(
