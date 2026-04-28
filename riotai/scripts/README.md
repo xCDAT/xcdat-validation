@@ -114,6 +114,11 @@ python riotai/scripts/prepare_datasets.py \
 python riotai/scripts/prepare_datasets.py \
   --target-frequency Amon \
   --datasets-per-bin 10
+
+python riotai/scripts/prepare_datasets.py \
+  --target-frequency Amon \
+  --replace-bin 100-149 \
+  --exclude-dataset-pattern 'CMIP6\\..*\\.EC-Earth-Consortium\\..*\\.Amon\\.'
 ```
 
 ## Typical End-to-End Run

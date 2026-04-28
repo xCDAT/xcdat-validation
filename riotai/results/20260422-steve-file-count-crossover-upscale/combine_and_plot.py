@@ -2,18 +2,23 @@
 
 Usage examples
 --------------
-python combine_and_plot.py \
-  --inputs run_small.csv run_large.csv \
-  --out-csv final_combined.csv \
-  --out-plot final_timing_vs_nfiles.png \
-  --out-bin-plot final_timing_by_bin.png
+python riotai/results/20260422-steve-file-count-crossover-upscale/combine_and_plot.py
+
+python riotai/results/20260422-steve-file-count-crossover-upscale/combine_and_plot.py \
+    --inputs run_25_149.csv run_150_299.csv run_300_499.csv run_500_749.csv run_750_1000.csv
+
+python riotai/results/20260422-steve-file-count-crossover-upscale/combine_and_plot.py \
+    --out-csv custom_combined.csv \
+    --out-plot custom_timing_vs_nfiles.png \
+    --out-bin-plot custom_timing_by_bin.png
 """
 
 from __future__ import annotations
 
 import argparse
 import logging
-import os
+import re
+from pathlib import Path
 
 import pandas as pd
 
@@ -24,6 +29,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger("combine_plot")
 
+ROOT_DIR = Path(__file__).resolve().parent
+DEFAULT_INPUT_GLOB = "run_*.csv"
+DEFAULT_OUT_CSV = ROOT_DIR / "final_combined.csv"
+DEFAULT_OUT_PLOT = ROOT_DIR / "final_timing_vs_nfiles.png"
+DEFAULT_OUT_BIN_PLOT = ROOT_DIR / "final_timing_by_bin.png"
+
 NFILES_BIN_ORDER: tuple[str, ...] = (
     "25-49",
     "50-99",
@@ -31,46 +42,78 @@ NFILES_BIN_ORDER: tuple[str, ...] = (
     "150-199",
     "200-299",
     "300-499",
-    "500+",
+    "500-749",
+    "750-1000",
 )
+
+
+def _resolve_local_path(path_str: str) -> Path:
+    path = Path(path_str).expanduser()
+    if path.is_absolute():
+        return path
+    return ROOT_DIR / path
+
+
+def _run_csv_sort_key(path: Path) -> tuple[int, str]:
+    nums = [int(token) for token in re.findall(r"\d+", path.stem)]
+    first_num = nums[0] if nums else 10**9
+    return (first_num, path.name)
+
+
+def _default_input_paths() -> list[Path]:
+    return sorted(ROOT_DIR.glob(DEFAULT_INPUT_GLOB), key=_run_csv_sort_key)
 
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Combine two or more benchmark shard CSVs, deduplicate by key, "
+            "Combine benchmark shard CSVs, deduplicate by key, "
             "write final CSV, and generate dataset/bin timing plots"
         ),
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=(
             "Examples:\n"
-            "  python combine_and_plot.py --inputs run_small.csv run_large.csv "
-            "--out-csv final_combined.csv --out-plot final_timing_vs_nfiles.png\n\n"
-            "  python combine_and_plot.py --inputs run_small.csv run_large.csv "
-            "--out-csv final_combined.csv --out-plot final_timing_vs_nfiles.png "
-            "--out-bin-plot final_timing_by_bin.png"
+            "  python riotai/results/20260422-steve-file-count-crossover-upscale/combine_and_plot.py\n"
+            "    Auto-discovers run_*.csv in the script directory and writes:\n"
+            f"      {DEFAULT_OUT_CSV.name}\n"
+            f"      {DEFAULT_OUT_PLOT.name}\n"
+            f"      {DEFAULT_OUT_BIN_PLOT.name}\n\n"
+            "  python riotai/results/20260422-steve-file-count-crossover-upscale/combine_and_plot.py "
+            "--inputs run_25_149.csv run_150_299.csv run_300_499.csv run_500_749.csv run_750_1000.csv"
         ),
     )
     parser.add_argument(
         "--inputs",
         nargs="+",
-        required=True,
-        help="Two or more input shard CSV paths",
+        default=None,
+        help=(
+            "Input shard CSV paths relative to the script directory unless absolute. "
+            f"Defaults to all {DEFAULT_INPUT_GLOB} files in the script directory."
+        ),
     )
     parser.add_argument(
         "--out-csv",
-        required=True,
-        help="Output path for combined CSV",
+        default=str(DEFAULT_OUT_CSV),
+        help=(
+            "Output path for combined CSV relative to the script directory unless absolute "
+            f"(default: {DEFAULT_OUT_CSV.name})"
+        ),
     )
     parser.add_argument(
         "--out-plot",
-        required=True,
-        help="Output path for final per-dataset timing plot",
+        default=str(DEFAULT_OUT_PLOT),
+        help=(
+            "Output path for final per-dataset timing plot relative to the script directory unless absolute "
+            f"(default: {DEFAULT_OUT_PLOT.name})"
+        ),
     )
     parser.add_argument(
         "--out-bin-plot",
-        default=None,
-        help="Optional output path for per-bin median timing plot",
+        default=str(DEFAULT_OUT_BIN_PLOT),
+        help=(
+            "Output path for per-bin median timing plot relative to the script directory unless absolute "
+            f"(default: {DEFAULT_OUT_BIN_PLOT.name})"
+        ),
     )
     parser.add_argument(
         "--dedupe-key",
@@ -80,21 +123,26 @@ def _parse_args() -> argparse.Namespace:
 
     args = parser.parse_args()
 
-    if len(args.inputs) < 2:
-        parser.error("--inputs requires at least 2 CSV files")
+    input_paths = [_resolve_local_path(path_str) for path_str in args.inputs or []]
+    if not input_paths:
+        input_paths = _default_input_paths()
 
-    missing = [p for p in args.inputs if not os.path.exists(p)]
+    if len(input_paths) < 2:
+        parser.error(
+            "Need at least 2 input CSV files. Pass --inputs explicitly or ensure "
+            f"at least two {DEFAULT_INPUT_GLOB} files exist in {ROOT_DIR}"
+        )
+
+    missing = [str(path) for path in input_paths if not path.exists()]
     if missing:
         parser.error(f"Missing input CSV file(s): {', '.join(missing)}")
 
+    args.inputs = [str(path) for path in input_paths]
+    args.out_csv = str(_resolve_local_path(args.out_csv))
+    args.out_plot = str(_resolve_local_path(args.out_plot))
+    args.out_bin_plot = str(_resolve_local_path(args.out_bin_plot))
+
     return args
-
-
-def _fmt_nfiles_label(n: float | int) -> str:
-    n_int = int(n)
-    if n_int >= 1000:
-        return f"{n_int / 1000:.1f}k".replace(".0k", "k")
-    return str(n_int)
 
 
 def _prepare_plot_frame(df: pd.DataFrame) -> pd.DataFrame:
@@ -146,50 +194,160 @@ def _panel_specs() -> list[tuple[str, str, str]]:
     ]
 
 
+def _bin_color_map() -> dict[str, tuple[float, float, float, float]]:
+    import matplotlib.pyplot as plt
+
+    cmap = plt.get_cmap("tab10")
+    return {label: cmap(index % cmap.N) for index, label in enumerate(NFILES_BIN_ORDER)}
+
+
+def _axis_limits(x: pd.Series, y: pd.Series, log_scale: bool) -> tuple[float, float]:
+    import numpy as np
+
+    x_vals = np.asarray(x, dtype=float)
+    y_vals = np.asarray(y, dtype=float)
+    all_vals = np.concatenate([x_vals, y_vals])
+    finite_vals = all_vals[np.isfinite(all_vals)]
+    if finite_vals.size == 0:
+        return (1e-3, 1.0) if log_scale else (0.0, 1.0)
+
+    upper = float(np.nanmax(finite_vals))
+    if not np.isfinite(upper) or upper <= 0:
+        upper = 1.0
+
+    if not log_scale:
+        return (0.0, upper)
+
+    positive_vals = finite_vals[finite_vals > 0]
+    if positive_vals.size == 0:
+        return (1e-3, upper)
+
+    lower = float(np.nanmin(positive_vals))
+    lower *= 0.8
+    if lower <= 0:
+        lower = float(np.nanmin(positive_vals))
+    upper *= 1.05
+    return (lower, upper)
+
+
 def _plot_scatter_panels(
     df: pd.DataFrame,
     out_plot: str,
-    labels: list[str],
     title: str,
+    labels: list[str] | None = None,
+    *,
+    label_points: bool = True,
+    color_by_bin: bool = False,
+    show_legend: bool = True,
+    legend_outside: bool = False,
+    log_scale: bool = False,
+    marker_size: float = 40,
+    marker_alpha: float = 0.85,
 ) -> None:
     import matplotlib.pyplot as plt
-    import numpy as np
 
-    plt.figure(figsize=(9, 9))
+    fig = plt.figure(figsize=(11.5, 9))
+    color_map = _bin_color_map()
+    legend_handles: dict[str, object] = {}
 
     for i, (panel_title, kcol, ncol) in enumerate(_panel_specs()):
-        plt.subplot(2, 2, i + 1)
+        ax = plt.subplot(2, 2, i + 1)
         x = df[kcol]
         y = df[ncol]
-        mv = max(float(np.nanmax(x)), float(np.nanmax(y)))
-        if not np.isfinite(mv) or mv <= 0:
-            mv = 1.0
+        lower, upper = _axis_limits(x, y, log_scale)
 
-        plt.scatter(x, y)
-        offsets = [(4, 4), (4, -8), (-18, 4), (-18, -8)]
-        for j, (xv, yv, label) in enumerate(zip(x, y, labels)):
-            dx, dy = offsets[j % len(offsets)]
-            plt.annotate(
-                label,
-                (xv, yv),
-                xytext=(dx, dy),
-                textcoords="offset points",
-                fontsize=8,
-                color="dimgray",
-                bbox=dict(facecolor="white", edgecolor="none", alpha=0.7, pad=0.2),
+        if color_by_bin and "nfiles_bin" in df.columns:
+            for bin_label in NFILES_BIN_ORDER:
+                bin_df = df[df["nfiles_bin"] == bin_label]
+                if bin_df.empty:
+                    continue
+                handle = ax.scatter(
+                    bin_df[kcol],
+                    bin_df[ncol],
+                    s=marker_size,
+                    alpha=marker_alpha,
+                    color=color_map[bin_label],
+                    edgecolors="white",
+                    linewidths=0.5,
+                )
+                if show_legend and bin_label not in legend_handles:
+                    legend_handles[bin_label] = handle
+
+            other_df = df[~df["nfiles_bin"].isin(NFILES_BIN_ORDER)]
+            if not other_df.empty:
+                handle = ax.scatter(
+                    other_df[kcol],
+                    other_df[ncol],
+                    s=marker_size,
+                    alpha=marker_alpha,
+                    color="0.5",
+                    edgecolors="white",
+                    linewidths=0.5,
+                )
+                if show_legend and "other" not in legend_handles:
+                    legend_handles["other"] = handle
+        else:
+            ax.scatter(
+                x,
+                y,
+                s=marker_size,
+                alpha=marker_alpha,
+                edgecolors="white",
+                linewidths=0.5,
             )
 
-        plt.plot([0, mv], [0, mv], "k:")
-        plt.title(panel_title)
-        plt.xlabel("Kerchunk [s]")
-        plt.ylabel("NetCDF [s]")
-        plt.xlim(0, mv)
-        plt.ylim(0, mv)
+        if label_points and labels is not None:
+            offsets = [(4, 4), (4, -8), (-18, 4), (-18, -8)]
+            for j, (xv, yv, label) in enumerate(zip(x, y, labels)):
+                dx, dy = offsets[j % len(offsets)]
+                ax.annotate(
+                    label,
+                    (xv, yv),
+                    xytext=(dx, dy),
+                    textcoords="offset points",
+                    fontsize=8,
+                    color="dimgray",
+                    bbox=dict(facecolor="white", edgecolor="none", alpha=0.7, pad=0.2),
+                )
 
-    plt.suptitle(title)
-    plt.tight_layout()
-    plt.savefig(out_plot, dpi=300)
-    plt.close()
+        ax.plot([lower, upper], [lower, upper], "k:")
+        if log_scale:
+            ax.set_xscale("log")
+            ax.set_yscale("log")
+        ax.set_title(panel_title)
+        ax.set_xlabel("Kerchunk [s]")
+        ax.set_ylabel("NetCDF [s]")
+        ax.set_xlim(lower, upper)
+        ax.set_ylim(lower, upper)
+
+    fig.suptitle(title)
+    if show_legend and legend_handles:
+        if legend_outside:
+            fig.legend(
+                legend_handles.values(),
+                legend_handles.keys(),
+                title="nfiles_bin",
+                fontsize=8,
+                title_fontsize=9,
+                loc="center left",
+                bbox_to_anchor=(0.87, 0.5),
+                frameon=False,
+            )
+            fig.tight_layout(rect=[0, 0, 0.82, 0.97])
+        else:
+            fig.legend(
+                legend_handles.values(),
+                legend_handles.keys(),
+                title="nfiles_bin",
+                fontsize=8,
+                title_fontsize=9,
+                loc="upper right",
+            )
+            fig.tight_layout(rect=[0, 0, 1, 0.97])
+    else:
+        fig.tight_layout(rect=[0, 0, 1, 0.97])
+    fig.savefig(out_plot, dpi=300)
+    plt.close(fig)
     logger.info("Timing plot saved to %s", out_plot)
 
 
@@ -229,10 +387,23 @@ def _combine_csvs(input_paths: list[str], dedupe_key: str) -> pd.DataFrame:
 def _plot_timing(df: pd.DataFrame, out_plot: str) -> None:
     ok_df = _prepare_plot_frame(df)
     if "netcdf_file_count" not in ok_df.columns:
-        raise ValueError("Missing required timing column for plotting: netcdf_file_count")
+        raise ValueError(
+            "Missing required timing column for plotting: netcdf_file_count"
+        )
 
-    labels = [_fmt_nfiles_label(nf) for nf in ok_df["netcdf_file_count"]]
-    _plot_scatter_panels(ok_df, out_plot, labels, "Frequency: Amon")
+    _plot_scatter_panels(
+        ok_df,
+        out_plot,
+        "Frequency: Amon | Raw Datasets Colored by nfiles_bin (log scale)",
+        labels=None,
+        label_points=False,
+        color_by_bin=True,
+        show_legend=True,
+        legend_outside=True,
+        log_scale=True,
+        marker_size=45,
+        marker_alpha=0.75,
+    )
 
 
 def _build_bin_summary(df: pd.DataFrame) -> pd.DataFrame:
@@ -264,7 +435,9 @@ def _build_bin_summary(df: pd.DataFrame) -> pd.DataFrame:
 
     bin_order = {label: i for i, label in enumerate(NFILES_BIN_ORDER)}
     grouped["__bin_order"] = grouped["nfiles_bin"].map(bin_order).fillna(len(bin_order))
-    grouped = grouped.sort_values(["__bin_order", "nfiles_bin"]).drop(columns=["__bin_order"])
+    grouped = grouped.sort_values(["__bin_order", "nfiles_bin"]).drop(
+        columns=["__bin_order"]
+    )
     return grouped.reset_index(drop=True)
 
 
@@ -274,14 +447,31 @@ def _plot_timing_by_bin(df: pd.DataFrame, out_plot: str) -> None:
         f"{bin_label} (n={int(n_datasets)})"
         for bin_label, n_datasets in zip(bin_df["nfiles_bin"], bin_df["n_datasets"])
     ]
-    _plot_scatter_panels(bin_df, out_plot, labels, "Frequency: Amon | Bin Median")
+    _plot_scatter_panels(
+        bin_df,
+        out_plot,
+        "Frequency: Amon | Bin Median",
+        labels=labels,
+        label_points=True,
+        color_by_bin=True,
+        show_legend=False,
+        legend_outside=False,
+        log_scale=False,
+        marker_size=70,
+        marker_alpha=0.95,
+    )
 
 
 def main() -> None:
     args = _parse_args()
 
     logger.info("Combining %d input CSVs", len(args.inputs))
+    logger.info("Input CSVs: %s", ", ".join(args.inputs))
     combined_df = _combine_csvs(args.inputs, args.dedupe_key)
+
+    Path(args.out_csv).parent.mkdir(parents=True, exist_ok=True)
+    Path(args.out_plot).parent.mkdir(parents=True, exist_ok=True)
+    Path(args.out_bin_plot).parent.mkdir(parents=True, exist_ok=True)
 
     combined_df.to_csv(args.out_csv, index=False)
     logger.info("Combined CSV written to %s", args.out_csv)

@@ -14,6 +14,7 @@ import json
 import logging
 import os
 from pathlib import Path
+import re
 import sys
 
 import pandas as pd
@@ -275,6 +276,8 @@ def _select_rows_with_pandas(
     random_seed: int,
     min_files: int | None,
     max_files: int | None,
+    exclude_dataset_ids: tuple[str, ...],
+    exclude_dataset_patterns: tuple[str, ...],
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     df = _load_dataset_table(dataset_table_csv).copy()
 
@@ -282,6 +285,27 @@ def _select_rows_with_pandas(
         raise ValueError("Dataset table CSV missing required column: frequency")
 
     df = df[df["frequency"] == target_frequency].copy()
+    df["dataset_id"] = df["json_path"].astype(str).map(
+        lambda path: os.path.basename(path).removesuffix(".kerchunk.json")
+    )
+
+    if exclude_dataset_ids:
+        df = df[~df["dataset_id"].isin(exclude_dataset_ids)].copy()
+
+    if exclude_dataset_patterns:
+        compiled_patterns = [
+            re.compile(pattern) for pattern in exclude_dataset_patterns
+        ]
+        exclusion_mask = df.apply(
+            lambda row: any(
+                pattern.search(str(row["dataset_id"]))
+                or pattern.search(str(row["json_path"]))
+                for pattern in compiled_patterns
+            ),
+            axis=1,
+        )
+        df = df[~exclusion_mask].copy()
+
     df["__row_order"] = range(len(df))
     df["num_files"] = pd.to_numeric(df["num_files"], errors="coerce")
     df = df.dropna(subset=["num_files"]).copy()
@@ -508,6 +532,24 @@ def _parse_args() -> argparse.Namespace:
         default=None,
         help="Optional upper bound for num_files",
     )
+    parser.add_argument(
+        "--exclude-dataset-id",
+        action="append",
+        default=None,
+        help=(
+            "Exclude an exact dataset_id from candidate selection. "
+            "May be passed multiple times."
+        ),
+    )
+    parser.add_argument(
+        "--exclude-dataset-pattern",
+        action="append",
+        default=None,
+        help=(
+            "Exclude candidate rows whose dataset_id or json_path matches a regex. "
+            "May be passed multiple times."
+        ),
+    )
     args = parser.parse_args()
 
     if args.datasets_per_bin is not None and args.datasets_per_bin < 1:
@@ -549,6 +591,10 @@ def _parse_args() -> argparse.Namespace:
     args.replace_bin = replace_bins
     if args.out_csv is None:
         args.out_csv = _prepared_datasets_csv_path(args.target_frequency)
+    args.exclude_dataset_id = tuple(dict.fromkeys(args.exclude_dataset_id or []))
+    args.exclude_dataset_pattern = tuple(
+        dict.fromkeys(args.exclude_dataset_pattern or [])
+    )
     return args
 
 
@@ -570,6 +616,8 @@ def main() -> None:
         random_seed=args.random_seed,
         min_files=args.min_files,
         max_files=args.max_files,
+        exclude_dataset_ids=args.exclude_dataset_id,
+        exclude_dataset_patterns=args.exclude_dataset_pattern,
     )
     logger.info(
         "Candidate selection complete | filtered_rows=%d | validation_queue=%d",

@@ -67,6 +67,7 @@ python riotai/scripts/prepare_datasets.py \
 
 # nfiles 25-149
 salloc --nodes 1 --qos interactive --constraint cpu --time 02:00:00 --account m4581
+conda activate xcdat_test_stable_min
 python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py \
 --target-frequency Amon \
 --bins 25-49,50-99,100-149 \
@@ -76,6 +77,7 @@ python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.p
 
 # nfiles 150-299
 salloc --nodes 1 --qos interactive --constraint cpu --time 03:00:00 --account m4581
+conda activate xcdat_test_stable_min
 python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py \
 --target-frequency Amon \
 --bins 150-199,200-299 \
@@ -85,6 +87,7 @@ python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.p
 
 # nfiles 300-499
 salloc --nodes 1 --qos interactive --constraint cpu --time 04:00:00 --account m4581
+conda activate xcdat_test_stable_min
 python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py \
 --target-frequency Amon \
 --bins 300-499 \
@@ -94,6 +97,7 @@ python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.p
 
 # nfiles 500-749
 salloc --nodes 1 --qos interactive --constraint cpu --time 04:00:00 --account m4581
+conda activate xcdat_test_stable_min
 python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py \
 --target-frequency Amon \
 --bins 500-749 \
@@ -102,7 +106,8 @@ python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.p
 --skip-plot
 
 # nfiles 750-1000
-salloc --nodes 1 --qos interactive --constraint cpu --time 05:00:00 --account m4581
+salloc --nodes 1 --qos interactive --constraint cpu --time 04:00:00 --account m4581
+conda activate xcdat_test_stable_min
 python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py \
 --target-frequency Amon \
 --bins 750-1000 \
