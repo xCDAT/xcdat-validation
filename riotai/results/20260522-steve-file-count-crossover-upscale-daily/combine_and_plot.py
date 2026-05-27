@@ -2,12 +2,12 @@
 
 Usage examples
 --------------
-python riotai/results/20260422-steve-file-count-crossover-upscale/combine_and_plot.py
+python riotai/results/20260522-steve-file-count-crossover-upscale-daily/combine_and_plot.py
 
-python riotai/results/20260422-steve-file-count-crossover-upscale/combine_and_plot.py \
+python riotai/results/20260522-steve-file-count-crossover-upscale-daily/combine_and_plot.py \
     --inputs run_25_149.csv run_150_299.csv run_300_499.csv run_500_749.csv run_750_1000.csv
 
-python riotai/results/20260422-steve-file-count-crossover-upscale/combine_and_plot.py \
+python riotai/results/20260522-steve-file-count-crossover-upscale-daily/combine_and_plot.py \
     --out-csv custom_combined.csv \
     --out-plot custom_timing_vs_nfiles.png \
     --out-bin-plot custom_timing_by_bin.png \
@@ -22,7 +22,6 @@ import re
 from pathlib import Path
 
 import pandas as pd
-
 
 logging.basicConfig(
     level=logging.INFO,
@@ -75,14 +74,14 @@ def _parse_args() -> argparse.Namespace:
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=(
             "Examples:\n"
-            "  python riotai/results/20260422-steve-file-count-crossover-upscale/combine_and_plot.py\n"
+            "  python riotai/results/20260522-steve-file-count-crossover-upscale-daily/combine_and_plot.py\n"
             "    Auto-discovers run_*.csv in the script directory and writes:\n"
             f"      {DEFAULT_OUT_CSV.name}\n"
             f"      {DEFAULT_OUT_PLOT.name}\n"
             f"      {DEFAULT_OUT_BIN_PLOT.name}\n"
             f"      {DEFAULT_OUT_TOTAL_PLOT.name}\n\n"
-            "  python riotai/results/20260422-steve-file-count-crossover-upscale/combine_and_plot.py "
-            "--inputs run_25_149.csv run_150_299.csv run_300_499.csv run_500_749.csv run_750_1000.csv"
+            "  python riotai/results/20260522-steve-file-count-crossover-upscale-daily/combine_and_plot.py "
+            "--inputs run_25_149.csv run_150_299.csv"
         ),
     )
     parser.add_argument(
