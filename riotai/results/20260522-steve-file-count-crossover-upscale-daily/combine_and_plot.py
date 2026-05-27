@@ -11,7 +11,8 @@ python riotai/results/20260522-steve-file-count-crossover-upscale-daily/combine_
     --out-csv custom_combined.csv \
     --out-plot custom_timing_vs_nfiles.png \
     --out-bin-plot custom_timing_by_bin.png \
-    --out-total-plot custom_total_timing_vs_nfiles.png
+    --out-total-plot custom_total_timing_vs_nfiles.png \
+    --out-total-bin-plot custom_total_timing_by_bin.png
 """
 
 from __future__ import annotations
@@ -35,6 +36,7 @@ DEFAULT_OUT_CSV = ROOT_DIR / "final_combined.csv"
 DEFAULT_OUT_PLOT = ROOT_DIR / "final_timing_vs_nfiles.png"
 DEFAULT_OUT_BIN_PLOT = ROOT_DIR / "final_timing_by_bin.png"
 DEFAULT_OUT_TOTAL_PLOT = ROOT_DIR / "final_total_timing_vs_nfiles.png"
+DEFAULT_OUT_TOTAL_BIN_PLOT = ROOT_DIR / "final_total_timing_by_bin.png"
 
 NFILES_BIN_ORDER: tuple[str, ...] = (
     "25-49",
@@ -79,7 +81,8 @@ def _parse_args() -> argparse.Namespace:
             f"      {DEFAULT_OUT_CSV.name}\n"
             f"      {DEFAULT_OUT_PLOT.name}\n"
             f"      {DEFAULT_OUT_BIN_PLOT.name}\n"
-            f"      {DEFAULT_OUT_TOTAL_PLOT.name}\n\n"
+            f"      {DEFAULT_OUT_TOTAL_PLOT.name}\n"
+            f"      {DEFAULT_OUT_TOTAL_BIN_PLOT.name}\n\n"
             "  python riotai/results/20260522-steve-file-count-crossover-upscale-daily/combine_and_plot.py "
             "--inputs run_25_149.csv run_150_299.csv"
         ),
@@ -126,6 +129,14 @@ def _parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--out-total-bin-plot",
+        default=str(DEFAULT_OUT_TOTAL_BIN_PLOT),
+        help=(
+            "Output path for the total-time per-bin median plot relative to the script directory unless absolute "
+            f"(default: {DEFAULT_OUT_TOTAL_BIN_PLOT.name})"
+        ),
+    )
+    parser.add_argument(
         "--dedupe-key",
         default="dataset_id",
         help="Column used for deduplication (default: dataset_id)",
@@ -152,6 +163,7 @@ def _parse_args() -> argparse.Namespace:
     args.out_plot = str(_resolve_local_path(args.out_plot))
     args.out_bin_plot = str(_resolve_local_path(args.out_bin_plot))
     args.out_total_plot = str(_resolve_local_path(args.out_total_plot))
+    args.out_total_bin_plot = str(_resolve_local_path(args.out_total_bin_plot))
 
     return args
 
@@ -472,7 +484,9 @@ def _plot_total_timing(df: pd.DataFrame, out_plot: str) -> None:
     )
 
 
-def _build_bin_summary(df: pd.DataFrame) -> pd.DataFrame:
+def _build_bin_summary(
+    df: pd.DataFrame, agg_cols: list[str] | None = None
+) -> pd.DataFrame:
     ok_df = _prepare_plot_frame(df)
     if "nfiles_bin" not in ok_df.columns:
         raise ValueError("Combined CSV does not include nfiles_bin")
@@ -481,16 +495,17 @@ def _build_bin_summary(df: pd.DataFrame) -> pd.DataFrame:
     if ok_df.empty:
         raise ValueError("No successful rows with nfiles_bin; cannot generate bin plot")
 
-    agg_cols = [
-        "open_kerchunk",
-        "open_netcdf",
-        "load_kerchunk",
-        "load_netcdf",
-        "temporal_total_kerchunk",
-        "temporal_total_netcdf",
-        "spatial_total_kerchunk",
-        "spatial_total_netcdf",
-    ]
+    if agg_cols is None:
+        agg_cols = [
+            "open_kerchunk",
+            "open_netcdf",
+            "load_kerchunk",
+            "load_netcdf",
+            "temporal_total_kerchunk",
+            "temporal_total_netcdf",
+            "spatial_total_kerchunk",
+            "spatial_total_netcdf",
+        ]
     grouped = (
         ok_df.groupby("nfiles_bin", dropna=False)[agg_cols]
         .median(numeric_only=True)
@@ -529,6 +544,38 @@ def _plot_timing_by_bin(df: pd.DataFrame, out_plot: str) -> None:
     )
 
 
+def _plot_total_timing_by_bin(df: pd.DataFrame, out_plot: str) -> None:
+    bin_df = _build_bin_summary(
+        df,
+        agg_cols=[
+            "open_load_kerchunk",
+            "open_load_netcdf",
+            "open_temporal_kerchunk",
+            "open_temporal_netcdf",
+            "open_spatial_kerchunk",
+            "open_spatial_netcdf",
+        ],
+    )
+    labels = [
+        f"{bin_label} (n={int(n_datasets)})"
+        for bin_label, n_datasets in zip(bin_df["nfiles_bin"], bin_df["n_datasets"])
+    ]
+    _plot_scatter_panels(
+        bin_df,
+        out_plot,
+        "Frequency: Amon | Total Pipeline Bin Median",
+        _total_panel_specs(),
+        labels=labels,
+        label_points=True,
+        color_by_bin=True,
+        show_legend=False,
+        legend_outside=False,
+        log_scale=False,
+        marker_size=70,
+        marker_alpha=0.95,
+    )
+
+
 def main() -> None:
     args = _parse_args()
 
@@ -540,6 +587,7 @@ def main() -> None:
     Path(args.out_plot).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out_bin_plot).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out_total_plot).parent.mkdir(parents=True, exist_ok=True)
+    Path(args.out_total_bin_plot).parent.mkdir(parents=True, exist_ok=True)
 
     combined_df.to_csv(args.out_csv, index=False)
     logger.info("Combined CSV written to %s", args.out_csv)
@@ -551,6 +599,11 @@ def main() -> None:
             _plot_timing_by_bin(combined_df, args.out_bin_plot)
         except ValueError as e:
             logger.warning("Skipping bin timing plot: %s", e)
+    if args.out_total_bin_plot:
+        try:
+            _plot_total_timing_by_bin(combined_df, args.out_total_bin_plot)
+        except ValueError as e:
+            logger.warning("Skipping total bin timing plot: %s", e)
 
 
 if __name__ == "__main__":
