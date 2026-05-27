@@ -19,18 +19,32 @@ Bottom line from this run:
 
 Shows spread and outliers across individual selected datasets. The raw plot uses log scale because the timing range spans more than an order of magnitude.
 
+### Total pipeline timing
+
+![Total pipeline timing](final_total_timing_vs_nfiles.png)
+
+Shows raw end-to-end behavior for `open+load`, `open+temporal`, and `open+spatial`.
+
 ### Per-bin median timing
 
 ![Per-bin median timing](final_timing_by_bin.png)
 
 Shows median behavior by file-count bin; best high-level crossover view.
 
+### Total pipeline median timing
+
+![Total pipeline median timing](final_total_timing_by_bin.png)
+
+Shows median end-to-end behavior by file-count bin; best high-level view of the total pipeline crossover.
+
 ## Run Coverage
 
 - Artifacts:
   - `final_combined.csv`
   - `final_timing_vs_nfiles.png`
+  - `final_total_timing_vs_nfiles.png`
   - `final_timing_by_bin.png`
+  - `final_total_timing_by_bin.png`
 - Combined rows: `80`
 - Successful rows: `80`
 - Failed rows: `0`
@@ -66,12 +80,19 @@ Shows median behavior by file-count bin; best high-level crossover view.
   - median total ratio `= 0.5566`
   - same crossover shape as temporal, with stronger kerchunk wins in higher bins
   - strongest bin-level win is `300-499`, followed by `750-1000`
+- Total pipeline:
+  - `open+load`: kerchunk faster in `76/80`, median ratio `= 0.1145`
+  - `open+temporal`: kerchunk faster in `76/80`, median ratio `= 0.2437`
+  - `open+spatial`: kerchunk faster in `76/80`, median ratio `= 0.2251`
+  - bin medians favor kerchunk in every populated bin for all three total-time views
 
 ## Plot Read
 
 - `final_timing_vs_nfiles.png`: one point per dataset; use for spread and outliers.
+- `final_total_timing_vs_nfiles.png`: one point per dataset; use for raw end-to-end comparisons.
 - `final_timing_by_bin.png`: one point per bin; values are medians across successful rows in each bin; use for headline trend.
-- In both plots:
+- `final_total_timing_by_bin.png`: one point per bin; values are medians across successful rows in each bin; use for headline total-pipeline trend.
+- In all plots:
   - x-axis = kerchunk time
   - y-axis = NetCDF time
   - above diagonal = NetCDF slower

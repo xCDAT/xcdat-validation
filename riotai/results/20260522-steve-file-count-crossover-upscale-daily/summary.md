@@ -52,6 +52,17 @@ Raw end-to-end timings for `open+load`, `open+temporal`, and `open+spatial`. Log
   - `open+spatial`: kerchunk faster in `21/32`, median ratio `= 0.8104`
   - `150-199` is the clearest kerchunk bin for all three total-time views
 
+### Total pipeline median timing
+
+![Total pipeline median timing](final_total_timing_by_bin.png)
+
+Median end-to-end view by file-count bin.
+
+- `open+load` favors kerchunk in every populated bin.
+- `open+temporal` and `open+spatial` favor kerchunk in most populated bins.
+- `50-99` is the one bin where NetCDF keeps a slight edge for `open+temporal` and `open+spatial`.
+- `150-199` is still the clearest kerchunk bin across all three total-time views.
+
 ### Per-bin median timing
 
 ![Per-bin median timing](final_timing_by_bin.png)
@@ -70,6 +81,7 @@ Median view by file-count bin.
   - `final_combined.csv`
   - `final_timing_vs_nfiles.png`
   - `final_total_timing_vs_nfiles.png`
+  - `final_total_timing_by_bin.png`
   - `final_timing_by_bin.png`
 - Combined rows: `34`
 - Successful rows: `32`
@@ -85,6 +97,7 @@ Median view by file-count bin.
 
 - `final_timing_vs_nfiles.png`: raw component timings.
 - `final_total_timing_vs_nfiles.png`: raw end-to-end timings.
+- `final_total_timing_by_bin.png`: bin medians for end-to-end timings.
 - `final_timing_by_bin.png`: bin medians across successful rows.
 - In all plots:
   - x-axis = kerchunk time
