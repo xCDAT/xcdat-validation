@@ -3,7 +3,7 @@
 This script targets the ECMWF ``hus`` case flagged as ``input_file_missing`` in
 ``results.csv``. It checks the missing path recorded in the validation output,
 lists nearby candidate files from the same directory, and highlights likely
-filename-resolution variants such as ``.gr.kerchunk.json`` and
+filename-resolution variants such as ``..gr.kerchunk.json`` and
 ``.gr.v*.kerchunk.json``.
 
 Example usage:
@@ -21,7 +21,7 @@ ROOT_DIR = Path(__file__).resolve().parent
 DEFAULT_RESULTS_CSV = ROOT_DIR / "../results.csv"
 DEFAULT_DATASET_ID = (
     "CMIP6.HighResMIP.ECMWF.ECMWF-IFS-HR.hist-1950."
-    "r1i1p1f1.Amon.hus.grkerchunk.json"
+    "r1i1p1f1.Amon.hus.gr.kerchunk.json"
 )
 
 
@@ -87,7 +87,7 @@ def main() -> int:
         label = []
         if path.name == missing_path.name:
             label.append("exact")
-        if ".gr.kerchunk.json" in path.name:
+        if "..gr.kerchunk.json" in path.name:
             label.append("dot-before-kerchunk")
         if ".gr.v" in path.name and path.name.endswith(".kerchunk.json"):
             label.append("versioned")
@@ -97,8 +97,8 @@ def main() -> int:
     print()
     print("Likely resolution note:")
     print(
-        "  The recorded missing file uses '.grkerchunk.json', while nearby files "
-        "may use '.gr.kerchunk.json' or '.gr.v<version>.kerchunk.json'."
+        "  The recorded missing file uses '.gr.kerchunk.json', while nearby files "
+        "may use '..gr.kerchunk.json' or '.gr.v<version>.kerchunk.json'."
     )
     return 0
 

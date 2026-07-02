@@ -112,8 +112,8 @@ def _extract_frequency_from_json_path(path: str) -> str | None:
 
     We see multiple filename variants in the archive, including:
     - ``...Amon.tas.gn.v20200412.kerchunk.json``
-    - ``...Amon.tas.gnkerchunk.json``
-    - ``...Amon.tas.grkerchunk.json``
+    - ``...Amon.tas.gn.kerchunk.json``
+    - ``...Amon.tas.gr.kerchunk.json``
 
     All of them share the same tail structure:
     ``<freq>.<variable>.<grid>[.<version>]kerchunk.json``.
