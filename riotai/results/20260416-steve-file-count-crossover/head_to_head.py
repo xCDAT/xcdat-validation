@@ -110,7 +110,7 @@ NTESTS: int = 3
 # Disable for faster batch timing runs.
 COLLECT_DETAILED_METADATA: bool = False
 
-KERCHUNK_ROOT = "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk"
+KERCHUNK_ROOT = "/global/cfs/projectdirs/m4931/kerchunk"
 
 NFILES_BINS: list[tuple[str, int, int | None]] = [
     ("25-49", 25, 49),
@@ -129,107 +129,107 @@ DATASET_ENTRIES: list[tuple[str, str]] = [
     # nfiles=25
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3-Veg/historical/r4i1p1f1/day/tas/gr/v20190728/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/historical/day/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3-Veg.historical.r4i1p1f1.day.tas.gr.v20190728.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/tas/historical/day/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3-Veg.historical.r4i1p1f1.day.tas.gr.v20190728.kerchunk.json",
     ),
     # nfiles=33
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/MPI-M/MPI-ESM1-2-HR/historical/r1i1p1f1/Amon/tas/gn/v20190710/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/historical/mon/CMIP6.CMIP.MPI-M.MPI-ESM1-2-HR.historical.r1i1p1f1.Amon.tas.gn.v20190710.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/tas/historical/mon/CMIP6.CMIP.MPI-M.MPI-ESM1-2-HR.historical.r1i1p1f1.Amon.tas.gn.v20190710.kerchunk.json",
     ),
     # nfiles=45
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/historical/r130i1p1f1/Amon/tas/gr/v20200412/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/historical/mon/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.historical.r130i1p1f1.Amon.tas.gr.v20200412.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/tas/historical/mon/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.historical.r130i1p1f1.Amon.tas.gr.v20200412.kerchunk.json",
     ),
     # nfiles=50
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/piControl/r1i1p1f1/Amon/tas/gn/v20190710/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/mon/CMIP6.CMIP.MPI-M.MPI-ESM1-2-LR.piControl.r1i1p1f1.Amon.tas.gn.v20190710.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/tas/piControl/mon/CMIP6.CMIP.MPI-M.MPI-ESM1-2-LR.piControl.r1i1p1f1.Amon.tas.gn.v20190710.kerchunk.json",
     ),
     # nfiles=50
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/AS-RCEC/TaiESM1/piControl/r1i1p1f1/day/tas/gn/v20200309/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/day/CMIP6.CMIP.AS-RCEC.TaiESM1.piControl.r1i1p1f1.day.tas.gn.v20200309.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/tas/piControl/day/CMIP6.CMIP.AS-RCEC.TaiESM1.piControl.r1i1p1f1.day.tas.gn.v20200309.kerchunk.json",
     ),
     # nfiles=86
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/ScenarioMIP/EC-Earth-Consortium/EC-Earth3/ssp245/r124i1p1f1/Amon/tas/gr/v20210401/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/ssp245/mon/CMIP6.ScenarioMIP.EC-Earth-Consortium.EC-Earth3.ssp245.r124i1p1f1.Amon.tas.gr.v20210401.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/tas/ssp245/mon/CMIP6.ScenarioMIP.EC-Earth-Consortium.EC-Earth3.ssp245.r124i1p1f1.Amon.tas.gr.v20210401.kerchunk.json",
     ),
     # nfiles=100
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/AWI/AWI-ESM-1-1-LR/piControl/r1i1p1f1/Amon/tas/gn/v20200212/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/mon/CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.piControl.r1i1p1f1.Amon.tas.gn.v20200212.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/tas/piControl/mon/CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.piControl.r1i1p1f1.Amon.tas.gn.v20200212.kerchunk.json",
     ),
     # nfiles=100
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/AWI/AWI-ESM-1-1-LR/piControl/r1i1p1f1/day/tas/gn/v20200212/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/day/CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.piControl.r1i1p1f1.day.tas.gn.v20200212.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/tas/piControl/day/CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.piControl.r1i1p1f1.day.tas.gn.v20200212.kerchunk.json",
     ),
     # nfiles=100
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/MPI-M/MPI-ESM1-2-HR/piControl/r1i1p1f1/Amon/tas/gn/v20190710/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/mon/CMIP6.CMIP.MPI-M.MPI-ESM1-2-HR.piControl.r1i1p1f1.Amon.tas.gn.v20190710.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/tas/piControl/mon/CMIP6.CMIP.MPI-M.MPI-ESM1-2-HR.piControl.r1i1p1f1.Amon.tas.gn.v20190710.kerchunk.json",
     ),
     # nfiles=150
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3-AerChem/1pctCO2/r1i1p1f1/Amon/tas/gr/v20200729/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/1pctCO2/mon/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3-AerChem.1pctCO2.r1i1p1f1.Amon.tas.gr.v20200729.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/tas/1pctCO2/mon/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3-AerChem.1pctCO2.r1i1p1f1.Amon.tas.gr.v20200729.kerchunk.json",
     ),
     # nfiles=150
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3-AerChem/abrupt-4xCO2/r1i1p1f1/Amon/tas/gr/v20200622/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/abrupt-4xCO2/mon/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3-AerChem.abrupt-4xCO2.r1i1p1f1.Amon.tas.gr.v20200622.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/tas/abrupt-4xCO2/mon/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3-AerChem.abrupt-4xCO2.r1i1p1f1.Amon.tas.gr.v20200622.kerchunk.json",
     ),
     # nfiles=165
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/AWI/AWI-CM-1-1-MR/historical/r1i1p1f1/Amon/tas/gn/v20200720/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/historical/mon/CMIP6.CMIP.AWI.AWI-CM-1-1-MR.historical.r1i1p1f1.Amon.tas.gn.v20200720.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/tas/historical/mon/CMIP6.CMIP.AWI.AWI-CM-1-1-MR.historical.r1i1p1f1.Amon.tas.gn.v20200720.kerchunk.json",
     ),
     # nfiles=201
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3-LR/piControl/r1i1p1f1/Amon/tas/gr/v20200409/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/mon/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3-LR.piControl.r1i1p1f1.Amon.tas.gr.v20200409.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/tas/piControl/mon/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3-LR.piControl.r1i1p1f1.Amon.tas.gr.v20200409.kerchunk.json",
     ),
     # nfiles=223
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/piControl/r1i1p1f1/day/tas/gr/v20190712/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/day/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.piControl.r1i1p1f1.day.tas.gr.v20190712.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/tas/piControl/day/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.piControl.r1i1p1f1.day.tas.gr.v20190712.kerchunk.json",
     ),
     # nfiles=286
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/ScenarioMIP/EC-Earth-Consortium/EC-Earth3-Veg/ssp585/r13i1p1f1/Amon/tas/gr/v20201020/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/ssp585/mon/CMIP6.ScenarioMIP.EC-Earth-Consortium.EC-Earth3-Veg.ssp585.r13i1p1f1.Amon.tas.gr.v20201020.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/tas/ssp585/mon/CMIP6.ScenarioMIP.EC-Earth-Consortium.EC-Earth3-Veg.ssp585.r13i1p1f1.Amon.tas.gr.v20201020.kerchunk.json",
     ),
     # nfiles=432
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-VHR4/highres-future/r1i1p1f1/Amon/pr/gn/v20190509/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/pr/highres-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.pr.gn.v20190509.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/pr/highres-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.pr.gn.v20190509.kerchunk.json",
     ),
     # nfiles=432
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-VHR4/highresSST-future/r1i1p1f1/Amon/pr/gn/v20190725/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/pr/highresSST-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highresSST-future.r1i1p1f1.Amon.pr.gn.v20190725.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/pr/highresSST-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highresSST-future.r1i1p1f1.Amon.pr.gn.v20190725.kerchunk.json",
     ),
     # nfiles=432
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-HR4/highres-future/r1i1p1f1/Amon/pr/gn/v20190509/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/pr/highres-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highres-future.r1i1p1f1.Amon.pr.gn.v20190509.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/pr/highres-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highres-future.r1i1p1f1.Amon.pr.gn.v20190509.kerchunk.json",
     ),
     # nfiles=505
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3-CC/piControl/r1i1p1f1/Amon/tas/gr/v20210330/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/mon/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3-CC.piControl.r1i1p1f1.Amon.tas.gr.v20210330.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/tas/piControl/mon/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3-CC.piControl.r1i1p1f1.Amon.tas.gr.v20210330.kerchunk.json",
     ),
     # nfiles=604
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/piControl/r2i1p1f1/Amon/tas/gr/v20210601/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/tas/piControl/mon/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.piControl.r2i1p1f1.Amon.tas.gr.v20210601.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/tas/piControl/mon/CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.piControl.r2i1p1f1.Amon.tas.gr.v20210601.kerchunk.json",
     ),
     # nfiles=780
     (
         "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/EC-Earth-Consortium/EC-Earth3P/hist-1950/r3i1p2f1/Amon/pr/gr/v20190215/",
-        "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/pr/hist-1950/mon/CMIP6.HighResMIP.EC-Earth-Consortium.EC-Earth3P.hist-1950.r3i1p2f1.Amon.pr.gr.v20190215.kerchunk.json",
+        "/global/cfs/projectdirs/m4931/kerchunk/pr/hist-1950/mon/CMIP6.HighResMIP.EC-Earth-Consortium.EC-Earth3P.hist-1950.r3i1p2f1.Amon.pr.gr.v20190215.kerchunk.json",
     ),
 ]
 

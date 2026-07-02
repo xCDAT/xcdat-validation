@@ -183,7 +183,7 @@ def head_to_head(fn, ntests, chunk_size_mb, max_size_gb):
         return None
 
 # %% parameters
-kerchunk_directory =  '/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/'
+kerchunk_directory =  '/global/cfs/projectdirs/m4931/kerchunk/'
 max_size_gb = 0.5
 chunk_size_mb = 100
 ntests = 2

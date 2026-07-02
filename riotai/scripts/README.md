@@ -13,7 +13,7 @@ conda activate xcdat_test_stable_min
 ```
 
 - On HPC systems, the mapping and validation steps are typically run inside an interactive CPU allocation.
-- The scripts assume access to the kerchunk JSON archive rooted at `/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk`.
+- The scripts assume access to the kerchunk JSON archive rooted at `/global/cfs/projectdirs/m4931/kerchunk`.
 
 ## Script Order
 

@@ -40,7 +40,7 @@ except ModuleNotFoundError as exc:
     ) from exc
 
 
-ROOT_DATA_DIR = Path("/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk")
+ROOT_DATA_DIR = Path("/global/cfs/projectdirs/m4931/kerchunk")
 MAPPING_OUTPUT_DIR = Path(__file__).resolve().parents[1] / "json_to_netcdf_maps"
 MAPPING_PATH = MAPPING_OUTPUT_DIR / "json_to_netcdf.json"
 ERROR_PATH = MAPPING_OUTPUT_DIR / "json_to_netcdf_errors.json"

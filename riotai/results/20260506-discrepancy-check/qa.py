@@ -38,7 +38,7 @@ DATASETS = [
         "netcdf_dir": Path(
             "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/CMIP/MPI-M/MPI-ESM1-2-LR/esm-piControl/r1i1p1f1/Amon/ta/gn/v20190815"
         ),
-        "kerchunk_path": "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/ta/esm-piControl/mon/CMIP6.CMIP.MPI-M.MPI-ESM1-2-LR.esm-piControl.r1i1p1f1.Amon.ta.gn.v20190815.kerchunk.json",
+        "kerchunk_path": "/global/cfs/projectdirs/m4931/kerchunk/ta/esm-piControl/mon/CMIP6.CMIP.MPI-M.MPI-ESM1-2-LR.esm-piControl.r1i1p1f1.Amon.ta.gn.v20190815.kerchunk.json",
     },
 ]
 

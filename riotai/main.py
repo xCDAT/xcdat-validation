@@ -39,7 +39,7 @@ from riotai.benchmark import benchmark_all_frequencies
 from riotai.mapping import load_or_build_mappings
 
 # Root directory containing kerchunk reference JSON files for testing.
-ROOT_DATA_DIR = "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk"
+ROOT_DATA_DIR = "/global/cfs/projectdirs/m4931/kerchunk"
 JSON_PATHS = glob.glob(os.path.join(ROOT_DATA_DIR, "**", "*.json"), recursive=True)
 
 # Path to store JSON→NetCDF mapping files.

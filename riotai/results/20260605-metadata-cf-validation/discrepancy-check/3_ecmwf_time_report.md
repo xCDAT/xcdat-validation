@@ -6,7 +6,7 @@
 ## CMIP6.HighResMIP.ECMWF.ECMWF-IFS-HR.highresSST-present.r5i1p1f1.Amon.pr.gr.v20181119
 
 - NetCDF dir: `/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/ECMWF/ECMWF-IFS-HR/highresSST-present/r5i1p1f1/Amon/pr/gr/v20181119`
-- Kerchunk file: `/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/pr/highresSST-present/mon/CMIP6.HighResMIP.ECMWF.ECMWF-IFS-HR.highresSST-present.r5i1p1f1.Amon.pr.gr.v20181119.kerchunk.json`
+- Kerchunk file: `/global/cfs/projectdirs/m4931/kerchunk/pr/highresSST-present/mon/CMIP6.HighResMIP.ECMWF.ECMWF-IFS-HR.highresSST-present.r5i1p1f1.Amon.pr.gr.v20181119.kerchunk.json`
 - NetCDF files: 65
 - Time lengths: kerchunk=618, netcdf=780
 - Time start: kerchunk=1950-01-16 12:00:00, netcdf=1950-01-16 12:00:00

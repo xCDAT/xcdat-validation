@@ -94,7 +94,7 @@ NTESTS: int = 3
 NFILES: int = 10  # number per frequency
 
 KERCHUNK_DIRECTORY: str = (
-    "/global/cfs/projectdirs/m4931/sasha-tmp/kerchunk/ta/historical"
+    "/global/cfs/projectdirs/m4931/kerchunk/ta/historical"
 )
 
 _TS = datetime.now().strftime("%Y%m%d_%H%M%S")
