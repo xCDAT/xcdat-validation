@@ -153,5 +153,3 @@ Then kerchunk will faithfully reproduce that inefficiency.
 - Files live on fast HPC filesystems
 - File count is modest
 - You don’t want to manage reference files
-
-## Experimentation results by frequency
