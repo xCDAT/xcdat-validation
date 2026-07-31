@@ -77,8 +77,7 @@ Related source assets:
 - [Pipeline bin-median figure](../results/20260422-steve-file-count-crossover-upscale/final_total_timing_by_bin.png)
 - [Benchmark data](../results/20260422-steve-file-count-crossover-upscale/final_combined.csv)
 
-Redraw from the CSV using the displayed-count exclusions. Existing figures are
-too crowded for projection.
+Redraw from the CSV using the displayed-count exclusions. Existing figures are too crowded for projection.
 
 ### Say, but do not show
 
