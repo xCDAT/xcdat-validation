@@ -1,0 +1,26 @@
+# Conda environment for authoring and exporting RIOTAI Jupyter presentations.
+name: riotai-presentation
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  # Scientific Python and RIOTAI/xCDAT dependencies.
+  - python >=3.11,<3.14
+  - numpy >=2.0.0,<3.0.0
+  - pandas
+  - xarray >=2024.03.0
+  - xcdat >=0.11.1
+  - cartopy
+  - matplotlib-base >=3.8.4
+  - nc-time-axis =1.4.1
+  - fsspec
+  - kerchunk
+  - zarr
+  - orjson
+  - tqdm
+
+  # Jupyter authoring, live Reveal.js slides, and HTML export.
+  - ipykernel
+  - jupyterlab >=4.1.2,<5
+  - jupyterlab_rise
+  - nbconvert >=7,<8

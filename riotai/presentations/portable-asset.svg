@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="260" viewBox="0 0 900 260">
+  <rect width="900" height="260" rx="28" fill="#eff6ff"/>
+  <rect x="36" y="48" width="210" height="164" rx="18" fill="#2563eb"/>
+  <text x="141" y="138" text-anchor="middle" font-family="sans-serif" font-size="34" fill="white">Notebook</text>
+  <path d="M280 130h110" stroke="#475569" stroke-width="10"/>
+  <path d="m374 106 28 24-28 24" fill="none" stroke="#475569" stroke-width="10"/>
+  <rect x="426" y="48" width="210" height="164" rx="18" fill="#0f766e"/>
+  <text x="531" y="138" text-anchor="middle" font-family="sans-serif" font-size="34" fill="white">nbconvert</text>
+  <path d="M670 130h70" stroke="#475569" stroke-width="10"/>
+  <path d="m724 106 28 24-28 24" fill="none" stroke="#475569" stroke-width="10"/>
+  <rect x="774" y="72" width="90" height="116" rx="12" fill="#7c3aed"/>
+  <text x="819" y="138" text-anchor="middle" font-family="sans-serif" font-size="25" fill="white">HTML</text>
+</svg>
