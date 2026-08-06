@@ -27,4 +27,5 @@ dependencies:
     - ipykernel
     - jupyterlab
     - jupyter-server-proxy
+    - virtualizarr
 prefix: /opt/miniconda3/envs/xcdat_test_stable_min
