@@ -14,3 +14,5 @@ ds_kc.time
 # %%
 ds_nc.time
 #%%
+ds_nc.time[0:617] - ds_kc.time[0:617]
+# %%

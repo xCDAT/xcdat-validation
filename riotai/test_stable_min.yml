@@ -11,14 +11,19 @@ dependencies:
     - pandas
     - xarray >=2024.03.0
     - xcdat >=0.11.1
+    - kerchunk
+    - zarr
+    - h5py
+    - netcdf4
+    - virtualizarr
+    - obstore
+    - obspec-utils
     # Optional - enables additional features.
     # =========================================
     - cartopy
     - matplotlib-base >=3.8.4
     - nc-time-axis=1.4.1
     - fsspec
-    - kerchunk
-    - zarr
     - orjson
     - tqdm
     # Additional
@@ -27,5 +32,4 @@ dependencies:
     - ipykernel
     - jupyterlab
     - jupyter-server-proxy
-    - virtualizarr
 prefix: /opt/miniconda3/envs/xcdat_test_stable_min
