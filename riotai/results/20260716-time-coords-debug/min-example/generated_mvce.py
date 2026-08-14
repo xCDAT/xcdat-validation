@@ -22,14 +22,8 @@ KERCHUNK_PATH = Path(__file__).with_name(
 
 # Open all NetCDF files in NETCDF_DIR as xarray Dataset objects.
 netcdf_files = sorted(NETCDF_DIR.glob("*.nc"))
-ds_nc = xr.open_mfdataset(netcdf_files, chunks={}, engine="netcdf4")
+ds_nc = xr.open_mfdataset(netcdf_files, chunks={}, engine="netcdf4", data_vars="all")
 
-# Open the original Kerchunk reference file as an xarray Dataset.
-ds_kc_og = xr.open_dataset(
-    str(ORIGINAL_KERCHUNK_PATH),
-    engine="kerchunk",
-    chunks={}
-)
 
 # Open the newly generated Kerchunk reference file as an xarray Dataset.
 ds_kc = xr.open_dataset(
@@ -38,6 +32,14 @@ ds_kc = xr.open_dataset(
     chunks={}
 )
 
-print(ds_nc.dims)
-print(ds_kc_og.dims)
-print(ds_kc.dims)
+# Open the original Kerchunk reference file as an xarray Dataset.
+ds_kc_og = xr.open_dataset(
+    str(ORIGINAL_KERCHUNK_PATH),
+    engine="kerchunk",
+    chunks={}
+)
+
+
+print("NetCDF dims:", ds_nc.sizes)
+print("Original Kerchunk dims:", ds_kc_og.sizes)
+print("New Kerchunk dims:", ds_kc.sizes)
