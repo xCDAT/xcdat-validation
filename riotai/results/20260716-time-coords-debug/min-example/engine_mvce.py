@@ -23,12 +23,17 @@ try:
 except ImportError:
     from obspec_utils.registry import ObjectStoreRegistry
 
-
+# The path to the NetCDF source files used to create the Kerchunk reference.
 NC_DIR = Path(
-    "/global/cfs/cdirs/e3sm/www/vo13/kerchunk-mvce/v20181119"
+    "/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/"
+    "ECMWF/ECMWF-IFS-HR/highresSST-present/r5i1p1f1/Amon/pr/gr/v20181119"
 )
+# The path to the original Kerchunk reference file with the incorrect time coordinates
+# and missing references (50 referenced, 15 missing).
 KERCHUNK_PATH = Path(
-    "/global/cfs/cdirs/e3sm/www/vo13/kerchunk-mvce/CMIP6.HighResMIP.ECMWF.ECMWF-IFS-HR.highresSST-present.r5i1p1f1.Amon.pr.gr.v20181119.kerchunk.json"
+    "/global/cfs/projectdirs/m4931/kerchunk/pr/highresSST-present/mon/"
+    "CMIP6.HighResMIP.ECMWF.ECMWF-IFS-HR.highresSST-present.r5i1p1f1."
+    "Amon.pr.gr.v20181119.kerchunk.json"
 )
 
 
