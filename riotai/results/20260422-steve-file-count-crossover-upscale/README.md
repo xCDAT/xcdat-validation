@@ -14,10 +14,11 @@ that external-client path instead.
 The repository's `riotai/json_to_netcdf_maps/prepared_datasets_Amon.csv` is a
 local selection manifest only. It does not cause local data reads.
 
-## Quick start: run both benchmarks on Perlmutter
+## Quick start: run the remote benchmark on Perlmutter
 
-From the repository root, prepare the local manifest and submit all six shards
-(three remote Perlmutter-to-ORNL shards and three local comparison shards):
+From the repository root, prepare the manifest and submit the five remote
+Perlmutter-to-ORNL shards. The existing `final_combined.csv` is retained as the
+local baseline and is not rerun:
 
 ```bash
 conda activate xcdat_test_stable_min
@@ -26,18 +27,56 @@ python riotai/scripts/prepare_datasets.py --target-frequency Amon
 bash riotai/results/20260422-steve-file-count-crossover-upscale/submit_perlmutter_benchmarks.sh
 ```
 
-Check submitted jobs with:
+The helper submits these increasingly expensive workloads separately:
+
+- `25-49,50-99,100-149` (2 hours)
+- `150-199,200-299` (3 hours)
+- `300-499`, `500-749`, and `750-1000` (4 hours each)
+
+Check queued and running jobs with:
 
 ```bash
 squeue -u "$USER"
 ```
 
-The CSVs are written in this directory as `remote_perlmutter_to_ornl_*.csv`
-and `local_*.csv`. Each job checkpoints after each dataset. If a job times out
-or exits nonzero, it resubmits the same shard and resumes its CSV, up to two
-retries by default. Set `MAX_RETRIES=3` before the submission command to use a
-different retry limit. Change the account or time limit in
+Check completed, failed, and timed-out jobs after they leave the queue:
+
+```bash
+sacct -u "$USER" --starttime today \
+  --format=JobID,JobName%24,State,Elapsed,ExitCode
+```
+
+Job logs are written in the repository root. Inspect the newest log with:
+
+```bash
+ls -lt kerchunk-bench-*.out | head
+tail -n 80 kerchunk-bench-<job-id>.out
+```
+
+The CSVs are written in this directory as `remote_perlmutter_to_ornl_*.csv`.
+Each job checkpoints after each dataset. If a job times out or exits nonzero,
+it resubmits the same shard and resumes its CSV, up to two retries by default.
+Set `MAX_RETRIES=3` before the submission command to use a different retry
+limit. A resubmitted job receives a new Slurm job ID and continues from the
+same CSV. Change the account or time limit in
 `run_perlmutter_benchmark.sbatch` when necessary.
+
+After the jobs complete, check each remote CSV has successful rows:
+
+```bash
+python -c "import glob, pandas as pd; [print(p, pd.read_csv(p).status.value_counts().to_dict()) for p in sorted(glob.glob('riotai/results/20260422-steve-file-count-crossover-upscale/remote_perlmutter_to_ornl_*.csv'))]"
+```
+
+After all remote shards finish, merge them into a new comparison file alongside
+the unchanged local baseline:
+
+```bash
+python riotai/results/20260422-steve-file-count-crossover-upscale/combine_remote_into_final.py
+```
+
+This writes `final_combined_with_remote.csv`. Local benchmark columns have a
+`_local` suffix, remote columns have a `_remote` suffix, and shared Kerchunk
+timings also receive `_remote_to_local_ratio` columns.
 
 ## macOS setup
 
@@ -131,7 +170,7 @@ The local benchmark reads both the Kerchunk references and matching
 NetCDF files from Perlmutter storage, then reports direct backend comparisons
 and timing ratios. Do not run it on a Mac.
 
-## Perlmutter batch jobs
+## Perlmutter batch jobs (remote-only)
 
 Submit from the repository root after preparing the local manifest:
 
@@ -142,10 +181,10 @@ python riotai/scripts/prepare_datasets.py --target-frequency Amon
 bash riotai/results/20260422-steve-file-count-crossover-upscale/submit_perlmutter_benchmarks.sh
 ```
 
-The helper submits three remote jobs and three local jobs, one per bin shard.
-Remote results are labeled as Perlmutter-to-ORNL measurements. Each job uses
-the same resumable CSV after a timeout or nonzero benchmark exit, and resubmits
-itself up to two times. Override that limit when submitting, for example:
+The helper submits three remote jobs, one per bin shard. Remote results are
+labeled as Perlmutter-to-ORNL measurements. Each job uses the same resumable
+CSV after a timeout or nonzero benchmark exit, and resubmits itself up to two
+times. Override that limit when submitting, for example:
 
 ```bash
 MAX_RETRIES=3 bash riotai/results/20260422-steve-file-count-crossover-upscale/submit_perlmutter_benchmarks.sh
