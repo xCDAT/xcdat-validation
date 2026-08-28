@@ -17,7 +17,7 @@ dependencies:
     - netcdf4
     - virtualizarr
     - obstore
-    - obspec-utils
+    - obspec_utils
     # Optional - enables additional features.
     # =========================================
     - cartopy

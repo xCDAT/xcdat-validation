@@ -248,6 +248,7 @@ class RunConfig:
     plot_timing: str
     remote_kerchunk_root: str
     cache_mode: str
+    mode: str
 
 
 def _parse_args() -> RunConfig:
@@ -278,6 +279,15 @@ def _parse_args() -> RunConfig:
             "  python riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py "
             "--target-frequency Amon --bins 750-1000 --out-csv run_750_1000.csv "
             "--resume-csv run_750_1000.csv --skip-plot"
+        ),
+    )
+    parser.add_argument(
+        "--mode",
+        choices=("local", "remote"),
+        default="local",
+        help=(
+            "Benchmark mode: 'local' compares local Kerchunk and NetCDF on "
+            "Perlmutter; 'remote' measures only remote Kerchunk I/O."
         ),
     )
     parser.add_argument(
@@ -423,6 +433,7 @@ def _parse_args() -> RunConfig:
         plot_timing=_resolve_script_relative_path(args.plot_timing),
         remote_kerchunk_root=args.remote_kerchunk_root.rstrip("/"),
         cache_mode=args.cache_mode,
+        mode=args.mode,
     )
 
 
@@ -434,7 +445,7 @@ def _parse_args() -> RunConfig:
 def main() -> None:
     config = _parse_args()
 
-    logger.info("Starting bin-aware kerchunk vs netcdf benchmark")
+    logger.info("Starting bin-aware benchmark mode=%s", config.mode)
     prepared_datasets_csv = _prepared_datasets_csv_path(config.target_frequency)
     logger.info(
         "Run config | ntests=%d | datasets_per_bin=%s | dataset_table_csv=%s | "
@@ -497,11 +508,6 @@ def main() -> None:
             "dataset_id": spec.dataset_id,
             "data_dir": spec.data_dir,
             "kerchunk_file": spec.kerchunk_file,
-            "remote_kerchunk_file": _remote_kerchunk_url(
-                str(spec.kerchunk_file), config.remote_kerchunk_root
-            ),
-            "client_hostname": socket.gethostname(),
-            "cache_mode": config.cache_mode,
             "frequency": config.target_frequency,
             "variable": spec.var_id,
             "kerchunk_exists": True,
@@ -516,15 +522,31 @@ def main() -> None:
         var_id = spec.var_id or _infer_var_id(spec.kerchunk_file)
         row["variable"] = var_id
 
-        logger.info(
-            f"Running benchmark | files={dataset.nfiles} | bin={dataset.nfiles_bin} | "
-            f"var={var_id} | remote_json={row['remote_kerchunk_file']}"
-        )
+        if config.mode == "remote":
+            row["remote_kerchunk_file"] = _remote_kerchunk_url(
+                str(spec.kerchunk_file), config.remote_kerchunk_root
+            )
+            row["client_hostname"] = socket.gethostname()
+            row["cache_mode"] = config.cache_mode
+            logger.info(
+                f"Running remote benchmark | files={dataset.nfiles} | bin={dataset.nfiles_bin} | "
+                f"var={var_id} | remote_json={row['remote_kerchunk_file']}"
+            )
+        else:
+            logger.info(
+                f"Running local benchmark | files={dataset.nfiles} | bin={dataset.nfiles_bin} | "
+                f"var={var_id} | size_gb={_compute_physical_size_gb(list(dataset.netcdf_files)):.3f}"
+            )
 
         try:
-            result = run_remote_kerchunk_benchmark(
-                row["remote_kerchunk_file"], var_id, config.ntests, config.cache_mode
-            )
+            if config.mode == "remote":
+                result = run_remote_kerchunk_benchmark(
+                    row["remote_kerchunk_file"], var_id, config.ntests, config.cache_mode
+                )
+            else:
+                result = run_benchmark(
+                    spec.kerchunk_file, list(dataset.netcdf_files), var_id, config.ntests
+                )
         except Exception as e:
             row["status"] = "failed"
             row["error"] = f"{type(e).__name__}: {e}"
@@ -543,6 +565,8 @@ def main() -> None:
 
         row.update(result)
         row["status"] = "ok"
+        if config.mode == "local":
+            row.update(_compute_ratio_fields(row))
         rows_by_dataset_id[spec.dataset_id] = row
         _save_checkpoint(rows_by_dataset_id, config.out_csv)
 
