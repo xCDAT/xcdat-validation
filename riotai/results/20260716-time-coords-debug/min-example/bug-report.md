@@ -21,12 +21,12 @@ environment must be recreated to obtain the newly required dependencies.
   -n xcdat_test_stable_min python mvce.py
 ```
 
-The script keeps the default NERSC paths and also accepts `--nc-dir` and
-`--kerchunk-path`. All three backends are required: xarray opens the Kerchunk
-JSON and NetCDF collection through its `kerchunk` and `netcdf4` engines, while
-VirtualiZarr opens the same Kerchunk JSON directly. It evaluates only `time`
-and prints source count, coordinate endpoints, units/calendar, monotonicity,
-duplicates, and pairwise sequence comparisons.
+The script uses hard-coded NERSC paths for the source NetCDF directory and
+Kerchunk JSON. It compares four paths: xarray opening the Kerchunk JSON,
+xarray opening the NetCDF collection, VirtualiZarr opening the same Kerchunk
+JSON, and VirtualiZarr's HDFParser opening the NetCDF collection. It evaluates
+only `time` and prints source count, coordinate endpoints, units/calendar,
+monotonicity, duplicates, and pairwise sequence comparisons.
 
 The required runtime packages are Python, xarray, kerchunk, netCDF4,
 virtualizarr, obstore, and an ObjectStoreRegistry provider. VirtualiZarr 2.0
@@ -41,8 +41,8 @@ Environment from the earlier two-backend attempted run:
 | kerchunk | 0.2.10 |
 | netCDF4 | 1.7.4 |
 
-The three-backend command has not been run in the supplied environment. It
-must first be recreated after the YAML dependency change.
+Neither VirtualiZarr path has been run in the supplied environment. It must
+first be recreated after the YAML dependency change.
 
 ## Existing observations
 
