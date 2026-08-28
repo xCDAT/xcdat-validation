@@ -124,10 +124,13 @@ import gc
 import json
 import logging
 import os
+import socket
 import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import quote, urlparse
+from urllib.request import urlopen
 
 import dask
 import matplotlib.pyplot as plt
@@ -177,6 +180,10 @@ DEFAULT_DATASET_TABLE_CSV: str = str(
     JSON_TO_NETCDF_MAPS_DIR / "json_to_netcdf_table.csv"
 )
 DEFAULT_TARGET_FREQUENCY: str = "Amon"
+LOCAL_KERCHUNK_ROOT: Path = Path("/global/cfs/projectdirs/m4931/kerchunk")
+DEFAULT_REMOTE_KERCHUNK_ROOT: str = (
+    "https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk"
+)
 
 
 def _prepared_datasets_csv_path(
@@ -214,6 +221,7 @@ class DatasetSpec:
     kerchunk_file: str | None
     var_id: str | None
     inference_error: str | None
+    remote_kerchunk_file: str | None = None
 
 
 @dataclass(frozen=True)
@@ -238,6 +246,8 @@ class RunConfig:
     resume_csv: str | None
     skip_plot: bool
     plot_timing: str
+    remote_kerchunk_root: str
+    cache_mode: str
 
 
 def _parse_args() -> RunConfig:
@@ -269,6 +279,17 @@ def _parse_args() -> RunConfig:
             "--target-frequency Amon --bins 750-1000 --out-csv run_750_1000.csv "
             "--resume-csv run_750_1000.csv --skip-plot"
         ),
+    )
+    parser.add_argument(
+        "--remote-kerchunk-root",
+        default=DEFAULT_REMOTE_KERCHUNK_ROOT,
+        help="Public HTTP(S) root corresponding to the local Kerchunk inventory root",
+    )
+    parser.add_argument(
+        "--cache-mode",
+        choices=("warm", "uncontrolled"),
+        default="warm",
+        help="'warm' discards the first iteration; 'uncontrolled' retains all iterations.",
     )
     parser.add_argument(
         "--datasets-per-bin",
@@ -369,6 +390,10 @@ def _parse_args() -> RunConfig:
         if args.min_files > args.max_files:
             parser.error("--min-files cannot be greater than --max-files")
 
+    parsed_root = urlparse(args.remote_kerchunk_root)
+    if parsed_root.scheme not in {"http", "https"} or not parsed_root.netloc:
+        parser.error("--remote-kerchunk-root must be an absolute HTTP(S) URL")
+
     bins = tuple(
         dict.fromkeys(part.strip() for part in args.bins.split(",") if part.strip())
     )
@@ -396,6 +421,8 @@ def _parse_args() -> RunConfig:
         resume_csv=_resolve_script_relative_path(args.resume_csv),
         skip_plot=args.skip_plot,
         plot_timing=_resolve_script_relative_path(args.plot_timing),
+        remote_kerchunk_root=args.remote_kerchunk_root.rstrip("/"),
+        cache_mode=args.cache_mode,
     )
 
 
@@ -470,6 +497,11 @@ def main() -> None:
             "dataset_id": spec.dataset_id,
             "data_dir": spec.data_dir,
             "kerchunk_file": spec.kerchunk_file,
+            "remote_kerchunk_file": _remote_kerchunk_url(
+                str(spec.kerchunk_file), config.remote_kerchunk_root
+            ),
+            "client_hostname": socket.gethostname(),
+            "cache_mode": config.cache_mode,
             "frequency": config.target_frequency,
             "variable": spec.var_id,
             "kerchunk_exists": True,
@@ -486,15 +518,12 @@ def main() -> None:
 
         logger.info(
             f"Running benchmark | files={dataset.nfiles} | bin={dataset.nfiles_bin} | "
-            f"var={var_id} | size_gb={_compute_physical_size_gb(list(dataset.netcdf_files)):.3f}"
+            f"var={var_id} | remote_json={row['remote_kerchunk_file']}"
         )
 
         try:
-            result = run_benchmark(
-                spec.kerchunk_file,
-                list(dataset.netcdf_files),
-                var_id,
-                config.ntests,
+            result = run_remote_kerchunk_benchmark(
+                row["remote_kerchunk_file"], var_id, config.ntests, config.cache_mode
             )
         except Exception as e:
             row["status"] = "failed"
@@ -514,7 +543,6 @@ def main() -> None:
 
         row.update(result)
         row["status"] = "ok"
-        row.update(_compute_ratio_fields(row))
         rows_by_dataset_id[spec.dataset_id] = row
         _save_checkpoint(rows_by_dataset_id, config.out_csv)
 
@@ -734,6 +762,52 @@ def _save_checkpoint(rows_by_dataset_id: dict[str, dict], out_csv: str) -> None:
 # ============================================================
 # Benchmark core (kept close to original implementation)
 # ============================================================
+
+
+def _remote_kerchunk_url(local_path: str, remote_root: str) -> str:
+    """Map a presentation-inventory JSON path to its public ORNL URL."""
+    try:
+        relative = Path(local_path).relative_to(LOCAL_KERCHUNK_ROOT)
+    except ValueError as error:
+        raise ValueError(
+            f"Kerchunk path is not below {LOCAL_KERCHUNK_ROOT}: {local_path}"
+        ) from error
+    return f"{remote_root}/{quote(relative.as_posix(), safe='/')}"
+
+
+def run_remote_kerchunk_benchmark(
+    kerchunk_url: str, var_id: str, ntests: int, cache_mode: str
+) -> dict:
+    """Run the presentation workload through only public Kerchunk I/O."""
+    metrics: dict[str, list[float]] = {
+        "open": [], "load": [], "temporal_build": [], "temporal_compute": [],
+        "spatial_build": [], "spatial_compute": [],
+    }
+    task_counts: list[int | None] = []
+    for _ in range(ntests):
+        metrics["open"].append(_time_open(kerchunk_url, [], "kerchunk"))
+        metrics["load"].append(_time_load(kerchunk_url, [], var_id, "kerchunk"))
+        tb, tc, tasks = _time_temporal(kerchunk_url, [], var_id, "kerchunk")
+        sb, sc = _time_spatial(kerchunk_url, [], var_id, "kerchunk")
+        if tb is None or sb is None:
+            raise RuntimeError("Remote Kerchunk diagnostic failed")
+        metrics["temporal_build"].append(tb)
+        metrics["temporal_compute"].append(tc)
+        metrics["spatial_build"].append(sb)
+        metrics["spatial_compute"].append(sc)
+        task_counts.append(tasks)
+        gc.collect()
+
+    if cache_mode == "warm" and ntests > 1:
+        metrics = {name: values[1:] for name, values in metrics.items()}
+        task_counts = task_counts[1:]
+
+    result = {f"{name}_kerchunk": float(np.nanmedian(values)) for name, values in metrics.items()}
+    result["temporal_graph_tasks_kerchunk"] = (
+        int(np.median([value for value in task_counts if value is not None]))
+        if any(value is not None for value in task_counts) else None
+    )
+    return result
 
 
 def run_benchmark(
@@ -1164,6 +1238,30 @@ def _plot_results_batch(df: pd.DataFrame, out_plot_timing: str) -> None:
     ok_df = df[df["status"] == "ok"].copy()
     if ok_df.empty:
         logger.warning("No successful rows. Skipping plots.")
+        return
+
+    if "open_netcdf" not in ok_df or ok_df["open_netcdf"].isna().all():
+        ok_df["temporal_total_kerchunk"] = (
+            ok_df["temporal_build_kerchunk"] + ok_df["temporal_compute_kerchunk"]
+        )
+        ok_df["spatial_total_kerchunk"] = (
+            ok_df["spatial_build_kerchunk"] + ok_df["spatial_compute_kerchunk"]
+        )
+        plt.figure(figsize=(9, 9))
+        for i, (title, column) in enumerate([
+            ("Open", "open_kerchunk"), ("Load", "load_kerchunk"),
+            ("Temporal", "temporal_total_kerchunk"),
+            ("Spatial", "spatial_total_kerchunk"),
+        ]):
+            plt.subplot(2, 2, i + 1)
+            plt.scatter(ok_df["netcdf_file_count"], ok_df[column])
+            plt.title(title)
+            plt.xlabel("Source files (presentation binning)")
+            plt.ylabel("Remote Kerchunk time [s]")
+        plt.suptitle("Presentation-aligned external-client Kerchunk benchmark")
+        plt.tight_layout()
+        plt.savefig(out_plot_timing, dpi=300)
+        plt.close()
         return
 
     ok_df["temporal_total_kerchunk"] = (
