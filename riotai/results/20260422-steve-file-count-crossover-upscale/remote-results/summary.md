@@ -26,8 +26,10 @@ that 21-dataset benchmark as a whole.
 ## Failures
 
 Every failure is `ReferenceNotReachable` while resolving the `lat/0`
-reference. The remote Kerchunk JSON itself was reachable, but its embedded
-source NetCDF URL under ORNL's `/thredds/fileServer/css03_data/` path was not.
+reference. This confirms that the remote Kerchunk JSON was reachable, but its
+embedded source NetCDF URL under ORNL's `/thredds/fileServer/css03_data/` path
+was unavailable to the client. The exception alone cannot distinguish a missing
+object from an access-policy failure.
 The common error form is:
 
 ```text
