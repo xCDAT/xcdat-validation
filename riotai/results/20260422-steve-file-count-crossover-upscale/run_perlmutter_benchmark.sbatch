@@ -2,6 +2,7 @@
 #SBATCH --nodes=1
 #SBATCH --constraint=cpu
 #SBATCH --qos=regular
+#SBATCH --mem=64G
 #SBATCH --time=04:00:00
 #SBATCH --account=m4581
 #SBATCH --job-name=kerchunk-bench

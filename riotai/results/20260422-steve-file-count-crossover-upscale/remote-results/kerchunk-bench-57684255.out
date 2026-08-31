@@ -1,0 +1,161 @@
+mode=remote bins=500-749 cache_mode=warm retry=0/2
+host=nid005186 output=/global/homes/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/remote_perlmutter_to_ornl_500-749.csv
+2026-08-28 19:13:48,901 | INFO | Starting bin-aware benchmark mode=remote
+2026-08-28 19:13:48,902 | INFO | Run config | ntests=3 | datasets_per_bin=None | dataset_table_csv=/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/json_to_netcdf_maps/json_to_netcdf_table.csv | prepared_datasets_csv=/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/json_to_netcdf_maps/prepared_datasets_Amon.csv | target_frequency=Amon | bins=500-749 | min_files=None | max_files=None | out_csv=/global/homes/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/remote_perlmutter_to_ornl_500-749.csv
+2026-08-28 19:13:48,902 | WARNING | Resume CSV does not exist: /global/homes/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/remote_perlmutter_to_ornl_500-749.csv
+2026-08-28 19:13:49,104 | INFO | Per-bin selection summary:
+2026-08-28 19:13:49,104 | INFO |   bin=25-49 | discovered=10 | selected=0 | pending=0
+2026-08-28 19:13:49,104 | INFO |   bin=50-99 | discovered=10 | selected=0 | pending=0
+2026-08-28 19:13:49,104 | INFO |   bin=100-149 | discovered=10 | selected=0 | pending=0
+2026-08-28 19:13:49,104 | INFO |   bin=150-199 | discovered=10 | selected=0 | pending=0
+2026-08-28 19:13:49,104 | INFO |   bin=200-299 | discovered=10 | selected=0 | pending=0
+2026-08-28 19:13:49,104 | INFO |   bin=300-499 | discovered=10 | selected=0 | pending=0
+2026-08-28 19:13:49,104 | INFO |   bin=500-749 | discovered=10 | selected=10 | pending=10
+2026-08-28 19:13:49,104 | INFO |   bin=500-749 | selected_dataset_ids=CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.hur.gn.v20181218, CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.hus.gn.v20181218, CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.huss.gn.v20191015, CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.pr.gn.v20191015, CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.psl.gn.v20181218, CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.ta.gn.v20181218, CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.tas.gn.v20191015, CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.tasmax.gn.v20181218, CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.tasmax.gn.kerchunk.json, CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.tasmin.gn.v20181218
+2026-08-28 19:13:49,104 | INFO |   bin=750-1000 | discovered=10 | selected=0 | pending=0
+2026-08-28 19:13:49,104 | INFO | [1/10] dataset=CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.hur.gn.v20181218 | bin=500-749 | rank=1 | nfiles=500
+2026-08-28 19:13:49,104 | INFO | Running remote benchmark | files=500 | bin=500-749 | var=hur | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/hur/piControl/mon/CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.hur.gn.v20181218.kerchunk.json
+2026-08-28 19:14:06,325 | INFO |     [kerchunk] open: 17.221 s
+2026-08-28 19:15:35,882 | INFO |     [kerchunk] load compute: 75.576 s
+2026-08-28 19:16:52,246 | INFO |     [kerchunk] temporal build: 0.445 s, compute: 61.336 s, tasks: None
+2026-08-28 19:18:04,503 | INFO |     [kerchunk] spatial build: 0.432 s, compute: 62.174 s
+2026-08-28 19:18:13,927 | INFO |     [kerchunk] open: 9.092 s
+2026-08-28 19:19:09,092 | INFO |     [kerchunk] load compute: 47.252 s
+2026-08-28 19:20:06,831 | INFO |     [kerchunk] temporal build: 0.422 s, compute: 49.380 s, tasks: None
+2026-08-28 19:21:04,482 | INFO |     [kerchunk] spatial build: 0.370 s, compute: 49.404 s
+2026-08-28 19:21:12,449 | INFO |     [kerchunk] open: 7.781 s
+2026-08-28 19:22:05,252 | INFO |     [kerchunk] load compute: 45.397 s
+2026-08-28 19:23:02,033 | INFO |     [kerchunk] temporal build: 0.410 s, compute: 48.549 s, tasks: None
+2026-08-28 19:23:59,164 | INFO |     [kerchunk] spatial build: 0.426 s, compute: 48.681 s
+2026-08-28 19:23:59,498 | INFO | [2/10] dataset=CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.hus.gn.v20181218 | bin=500-749 | rank=2 | nfiles=500
+2026-08-28 19:23:59,498 | INFO | Running remote benchmark | files=500 | bin=500-749 | var=hus | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/hus/piControl/mon/CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.hus.gn.v20181218.kerchunk.json
+2026-08-28 19:24:08,826 | INFO |     [kerchunk] open: 9.328 s
+2026-08-28 19:25:07,048 | INFO |     [kerchunk] load compute: 50.196 s
+2026-08-28 19:26:03,387 | INFO |     [kerchunk] temporal build: 0.427 s, compute: 47.798 s, tasks: None
+2026-08-28 19:27:02,364 | INFO |     [kerchunk] spatial build: 0.337 s, compute: 50.701 s
+2026-08-28 19:27:10,711 | INFO |     [kerchunk] open: 8.118 s
+2026-08-28 19:28:01,268 | INFO |     [kerchunk] load compute: 43.098 s
+2026-08-28 19:28:56,331 | INFO |     [kerchunk] temporal build: 0.954 s, compute: 45.056 s, tasks: None
+2026-08-28 19:29:52,928 | INFO |     [kerchunk] spatial build: 1.913 s, compute: 41.803 s
+2026-08-28 19:29:59,510 | INFO |     [kerchunk] open: 6.357 s
+2026-08-28 19:30:45,178 | INFO |     [kerchunk] load compute: 38.274 s
+2026-08-28 19:31:36,112 | INFO |     [kerchunk] temporal build: 0.863 s, compute: 41.645 s, tasks: None
+2026-08-28 19:32:23,525 | INFO |     [kerchunk] spatial build: 0.347 s, compute: 42.090 s
+2026-08-28 19:32:23,861 | INFO | [3/10] dataset=CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.huss.gn.v20191015 | bin=500-749 | rank=3 | nfiles=500
+2026-08-28 19:32:23,861 | INFO | Running remote benchmark | files=500 | bin=500-749 | var=huss | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/huss/piControl/mon/CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.huss.gn.v20191015.kerchunk.json
+2026-08-28 19:32:25,650 | INFO |     [kerchunk] open: 1.789 s
+2026-08-28 19:32:31,401 | INFO |     [kerchunk] load compute: 4.474 s
+2026-08-28 19:32:37,099 | INFO |     [kerchunk] temporal build: 0.357 s, compute: 3.826 s, tasks: None
+2026-08-28 19:32:43,668 | INFO |     [kerchunk] spatial build: 0.349 s, compute: 4.607 s
+2026-08-28 19:32:45,172 | INFO |     [kerchunk] open: 1.411 s
+2026-08-28 19:32:49,785 | INFO |     [kerchunk] load compute: 3.332 s
+2026-08-28 19:32:55,509 | INFO |     [kerchunk] temporal build: 0.345 s, compute: 3.862 s, tasks: None
+2026-08-28 19:33:02,049 | INFO |     [kerchunk] spatial build: 0.326 s, compute: 4.574 s
+2026-08-28 19:33:03,586 | INFO |     [kerchunk] open: 1.413 s
+2026-08-28 19:33:08,058 | INFO |     [kerchunk] load compute: 3.190 s
+2026-08-28 19:33:13,831 | INFO |     [kerchunk] temporal build: 0.349 s, compute: 3.875 s, tasks: None
+2026-08-28 19:33:20,368 | INFO |     [kerchunk] spatial build: 0.404 s, compute: 4.576 s
+2026-08-28 19:33:20,588 | INFO | [4/10] dataset=CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.pr.gn.v20191015 | bin=500-749 | rank=4 | nfiles=500
+2026-08-28 19:33:20,588 | INFO | Running remote benchmark | files=500 | bin=500-749 | var=pr | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/pr/piControl/mon/CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.pr.gn.v20191015.kerchunk.json
+2026-08-28 19:33:22,092 | INFO |     [kerchunk] open: 1.504 s
+2026-08-28 19:33:26,658 | INFO |     [kerchunk] load compute: 3.421 s
+2026-08-28 19:33:32,288 | INFO |     [kerchunk] temporal build: 0.387 s, compute: 3.862 s, tasks: None
+2026-08-28 19:33:37,949 | INFO |     [kerchunk] spatial build: 0.383 s, compute: 3.771 s
+2026-08-28 19:33:39,548 | INFO |     [kerchunk] open: 1.431 s
+2026-08-28 19:33:42,977 | INFO |     [kerchunk] load compute: 2.350 s
+2026-08-28 19:33:48,854 | INFO |     [kerchunk] temporal build: 0.336 s, compute: 3.979 s, tasks: None
+2026-08-28 19:33:54,978 | INFO |     [kerchunk] spatial build: 0.330 s, compute: 4.395 s
+2026-08-28 19:33:56,380 | INFO |     [kerchunk] open: 1.233 s
+2026-08-28 19:33:59,939 | INFO |     [kerchunk] load compute: 2.423 s
+2026-08-28 19:34:05,844 | INFO |     [kerchunk] temporal build: 0.334 s, compute: 4.001 s, tasks: None
+2026-08-28 19:34:11,482 | INFO |     [kerchunk] spatial build: 0.326 s, compute: 3.919 s
+2026-08-28 19:34:11,745 | INFO | [5/10] dataset=CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.psl.gn.v20181218 | bin=500-749 | rank=5 | nfiles=500
+2026-08-28 19:34:11,745 | INFO | Running remote benchmark | files=500 | bin=500-749 | var=psl | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/psl/piControl/mon/CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.psl.gn.v20181218.kerchunk.json
+2026-08-28 19:34:13,338 | INFO |     [kerchunk] open: 1.593 s
+2026-08-28 19:34:17,716 | INFO |     [kerchunk] load compute: 3.160 s
+2026-08-28 19:34:23,350 | INFO |     [kerchunk] temporal build: 0.402 s, compute: 3.800 s, tasks: None
+2026-08-28 19:34:29,001 | INFO |     [kerchunk] spatial build: 0.401 s, compute: 3.665 s
+2026-08-28 19:34:30,590 | INFO |     [kerchunk] open: 1.420 s
+2026-08-28 19:34:34,094 | INFO |     [kerchunk] load compute: 2.301 s
+2026-08-28 19:34:39,615 | INFO |     [kerchunk] temporal build: 0.322 s, compute: 3.820 s, tasks: None
+2026-08-28 19:34:45,036 | INFO |     [kerchunk] spatial build: 0.332 s, compute: 3.705 s
+2026-08-28 19:34:46,494 | INFO |     [kerchunk] open: 1.303 s
+2026-08-28 19:34:49,872 | INFO |     [kerchunk] load compute: 2.245 s
+2026-08-28 19:34:55,511 | INFO |     [kerchunk] temporal build: 0.331 s, compute: 3.862 s, tasks: None
+2026-08-28 19:35:01,124 | INFO |     [kerchunk] spatial build: 0.320 s, compute: 3.736 s
+2026-08-28 19:35:01,383 | INFO | [6/10] dataset=CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.ta.gn.v20181218 | bin=500-749 | rank=6 | nfiles=500
+2026-08-28 19:35:01,383 | INFO | Running remote benchmark | files=500 | bin=500-749 | var=ta | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/ta/piControl/mon/CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.ta.gn.v20181218.kerchunk.json
+2026-08-28 19:35:06,177 | INFO |     [kerchunk] open: 4.794 s
+2026-08-28 19:35:48,840 | INFO |     [kerchunk] load compute: 38.208 s
+2026-08-28 19:36:34,035 | INFO |     [kerchunk] temporal build: 0.363 s, compute: 39.826 s, tasks: None
+2026-08-28 19:37:24,032 | INFO |     [kerchunk] spatial build: 2.513 s, compute: 38.508 s
+2026-08-28 19:37:31,107 | INFO |     [kerchunk] open: 6.820 s
+2026-08-28 19:38:12,271 | INFO |     [kerchunk] load compute: 34.712 s
+2026-08-28 19:39:03,579 | INFO |     [kerchunk] temporal build: 1.268 s, compute: 39.846 s, tasks: None
+2026-08-28 19:39:48,157 | INFO |     [kerchunk] spatial build: 0.958 s, compute: 38.377 s
+2026-08-28 19:39:54,161 | INFO |     [kerchunk] open: 5.739 s
+2026-08-28 19:40:33,517 | INFO |     [kerchunk] load compute: 34.695 s
+2026-08-28 19:41:18,313 | INFO |     [kerchunk] temporal build: 0.363 s, compute: 39.474 s, tasks: None
+2026-08-28 19:42:01,746 | INFO |     [kerchunk] spatial build: 0.362 s, compute: 38.001 s
+2026-08-28 19:42:02,124 | INFO | [7/10] dataset=CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.tas.gn.v20191015 | bin=500-749 | rank=7 | nfiles=500
+2026-08-28 19:42:02,125 | INFO | Running remote benchmark | files=500 | bin=500-749 | var=tas | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/tas/piControl/mon/CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.tas.gn.v20191015.kerchunk.json
+2026-08-28 19:42:03,896 | INFO |     [kerchunk] open: 1.771 s
+2026-08-28 19:42:09,332 | INFO |     [kerchunk] load compute: 4.134 s
+2026-08-28 19:42:15,028 | INFO |     [kerchunk] temporal build: 0.343 s, compute: 3.836 s, tasks: None
+2026-08-28 19:42:21,736 | INFO |     [kerchunk] spatial build: 0.450 s, compute: 4.646 s
+2026-08-28 19:42:23,467 | INFO |     [kerchunk] open: 1.629 s
+2026-08-28 19:42:28,005 | INFO |     [kerchunk] load compute: 3.207 s
+2026-08-28 19:42:33,717 | INFO |     [kerchunk] temporal build: 0.343 s, compute: 3.838 s, tasks: None
+2026-08-28 19:42:40,095 | INFO |     [kerchunk] spatial build: 0.333 s, compute: 4.510 s
+2026-08-28 19:42:41,554 | INFO |     [kerchunk] open: 1.351 s
+2026-08-28 19:42:46,097 | INFO |     [kerchunk] load compute: 3.140 s
+2026-08-28 19:42:51,788 | INFO |     [kerchunk] temporal build: 0.347 s, compute: 3.821 s, tasks: None
+2026-08-28 19:42:58,221 | INFO |     [kerchunk] spatial build: 0.328 s, compute: 4.541 s
+2026-08-28 19:42:58,453 | INFO | [8/10] dataset=CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.tasmax.gn.v20181218 | bin=500-749 | rank=8 | nfiles=500
+2026-08-28 19:42:58,453 | INFO | Running remote benchmark | files=500 | bin=500-749 | var=tasmax | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/tasmax/piControl/mon/CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.tasmax.gn.v20181218.kerchunk.json
+2026-08-28 19:42:59,991 | INFO |     [kerchunk] open: 1.538 s
+2026-08-28 19:43:05,307 | INFO |     [kerchunk] load compute: 4.061 s
+2026-08-28 19:43:11,046 | INFO |     [kerchunk] temporal build: 0.347 s, compute: 3.868 s, tasks: None
+2026-08-28 19:43:17,381 | INFO |     [kerchunk] spatial build: 0.330 s, compute: 4.475 s
+2026-08-28 19:43:18,920 | INFO |     [kerchunk] open: 1.437 s
+2026-08-28 19:43:23,306 | INFO |     [kerchunk] load compute: 3.107 s
+2026-08-28 19:43:28,990 | INFO |     [kerchunk] temporal build: 0.346 s, compute: 3.827 s, tasks: None
+2026-08-28 19:43:35,591 | INFO |     [kerchunk] spatial build: 0.334 s, compute: 4.726 s
+2026-08-28 19:43:37,153 | INFO |     [kerchunk] open: 1.432 s
+2026-08-28 19:43:41,545 | INFO |     [kerchunk] load compute: 3.133 s
+2026-08-28 19:43:47,317 | INFO |     [kerchunk] temporal build: 0.350 s, compute: 3.898 s, tasks: None
+2026-08-28 19:43:54,087 | INFO |     [kerchunk] spatial build: 0.415 s, compute: 4.721 s
+2026-08-28 19:43:54,348 | INFO | [9/10] dataset=CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.tasmax.gn.kerchunk.json | bin=500-749 | rank=9 | nfiles=500
+2026-08-28 19:43:54,348 | INFO | Running remote benchmark | files=500 | bin=500-749 | var=tasmax | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/tasmax/piControl/mon/CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.tasmax.gn.kerchunk.json
+2026-08-28 19:43:55,793 | INFO |     [kerchunk] open: 1.445 s
+2026-08-28 19:44:00,309 | INFO |     [kerchunk] load compute: 3.175 s
+2026-08-28 19:44:06,136 | INFO |     [kerchunk] temporal build: 0.359 s, compute: 3.908 s, tasks: None
+2026-08-28 19:44:12,709 | INFO |     [kerchunk] spatial build: 0.458 s, compute: 4.567 s
+2026-08-28 19:44:14,264 | INFO |     [kerchunk] open: 1.433 s
+2026-08-28 19:44:18,713 | INFO |     [kerchunk] load compute: 3.123 s
+2026-08-28 19:44:24,558 | INFO |     [kerchunk] temporal build: 0.398 s, compute: 3.839 s, tasks: None
+2026-08-28 19:44:31,153 | INFO |     [kerchunk] spatial build: 0.331 s, compute: 4.760 s
+2026-08-28 19:44:32,732 | INFO |     [kerchunk] open: 1.427 s
+2026-08-28 19:44:37,258 | INFO |     [kerchunk] load compute: 3.267 s
+2026-08-28 19:44:43,103 | INFO |     [kerchunk] temporal build: 0.347 s, compute: 3.866 s, tasks: None
+2026-08-28 19:44:49,630 | INFO |     [kerchunk] spatial build: 0.338 s, compute: 4.522 s
+2026-08-28 19:44:49,844 | INFO | [10/10] dataset=CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.tasmin.gn.v20181218 | bin=500-749 | rank=10 | nfiles=500
+2026-08-28 19:44:49,845 | INFO | Running remote benchmark | files=500 | bin=500-749 | var=tasmin | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/tasmin/piControl/mon/CMIP6.CMIP.AWI.AWI-CM-1-1-MR.piControl.r1i1p1f1.Amon.tasmin.gn.v20181218.kerchunk.json
+2026-08-28 19:44:51,702 | INFO |     [kerchunk] open: 1.858 s
+2026-08-28 19:44:57,184 | INFO |     [kerchunk] load compute: 4.141 s
+2026-08-28 19:45:02,950 | INFO |     [kerchunk] temporal build: 0.367 s, compute: 3.865 s, tasks: None
+2026-08-28 19:45:09,567 | INFO |     [kerchunk] spatial build: 0.348 s, compute: 4.680 s
+2026-08-28 19:45:11,844 | INFO |     [kerchunk] open: 2.170 s
+2026-08-28 19:45:17,745 | INFO |     [kerchunk] load compute: 3.263 s
+2026-08-28 19:45:23,542 | INFO |     [kerchunk] temporal build: 0.349 s, compute: 3.860 s, tasks: None
+2026-08-28 19:45:30,069 | INFO |     [kerchunk] spatial build: 0.360 s, compute: 4.575 s
+2026-08-28 19:45:34,113 | INFO |     [kerchunk] open: 3.909 s
+2026-08-28 19:45:40,540 | INFO |     [kerchunk] load compute: 3.261 s
+2026-08-28 19:45:52,370 | INFO |     [kerchunk] temporal build: 1.154 s, compute: 3.867 s, tasks: None
+2026-08-28 19:46:04,490 | INFO |     [kerchunk] spatial build: 2.610 s, compute: 4.580 s
+2026-08-28 19:46:04,892 | INFO | Results written to /global/homes/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/remote_perlmutter_to_ornl_500-749.csv
+2026-08-28 19:46:04,893 | INFO | Status counts:
+status
+ok    10
+Name: count, dtype: int64
+2026-08-28 19:46:04,893 | INFO | Skipping timing plot generation (--skip-plot)
