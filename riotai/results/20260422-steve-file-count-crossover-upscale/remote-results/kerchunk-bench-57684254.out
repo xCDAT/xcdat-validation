@@ -1,0 +1,1002 @@
+mode=remote bins=300-499 cache_mode=warm retry=0/2
+host=nid004414 output=/global/homes/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/remote_perlmutter_to_ornl_300-499.csv
+2026-08-28 19:10:17,710 | INFO | Starting bin-aware benchmark mode=remote
+2026-08-28 19:10:17,710 | INFO | Run config | ntests=3 | datasets_per_bin=None | dataset_table_csv=/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/json_to_netcdf_maps/json_to_netcdf_table.csv | prepared_datasets_csv=/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/json_to_netcdf_maps/prepared_datasets_Amon.csv | target_frequency=Amon | bins=300-499 | min_files=None | max_files=None | out_csv=/global/homes/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/remote_perlmutter_to_ornl_300-499.csv
+2026-08-28 19:10:17,711 | WARNING | Resume CSV does not exist: /global/homes/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/remote_perlmutter_to_ornl_300-499.csv
+2026-08-28 19:10:17,804 | INFO | Per-bin selection summary:
+2026-08-28 19:10:17,804 | INFO |   bin=25-49 | discovered=10 | selected=0 | pending=0
+2026-08-28 19:10:17,804 | INFO |   bin=50-99 | discovered=10 | selected=0 | pending=0
+2026-08-28 19:10:17,804 | INFO |   bin=100-149 | discovered=10 | selected=0 | pending=0
+2026-08-28 19:10:17,804 | INFO |   bin=150-199 | discovered=10 | selected=0 | pending=0
+2026-08-28 19:10:17,804 | INFO |   bin=200-299 | discovered=10 | selected=0 | pending=0
+2026-08-28 19:10:17,804 | INFO |   bin=300-499 | discovered=10 | selected=10 | pending=10
+2026-08-28 19:10:17,804 | INFO |   bin=300-499 | selected_dataset_ids=CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highres-future.r1i1p1f1.Amon.hus.gn.v20190509, CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.hus.gn.v20190509, CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highresSST-future.r1i1p1f1.Amon.hus.gn.v20190705, CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highresSST-future.r1i1p1f1.Amon.hus.gn.v20190725, CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highres-future.r1i1p1f1.Amon.huss.gn.v20190509, CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.huss.gn.v20190509, CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highresSST-future.r1i1p1f1.Amon.huss.gn.v20190705, CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highresSST-future.r1i1p1f1.Amon.huss.gn.v20190725, CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highres-future.r1i1p1f1.Amon.pr.gn.v20190509, CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.pr.gn.v20190509
+2026-08-28 19:10:17,804 | INFO |   bin=500-749 | discovered=10 | selected=0 | pending=0
+2026-08-28 19:10:17,804 | INFO |   bin=750-1000 | discovered=10 | selected=0 | pending=0
+2026-08-28 19:10:17,804 | INFO | [1/10] dataset=CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highres-future.r1i1p1f1.Amon.hus.gn.v20190509 | bin=300-499 | rank=1 | nfiles=432
+2026-08-28 19:10:17,804 | INFO | Running remote benchmark | files=432 | bin=300-499 | var=hus | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/hus/highres-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highres-future.r1i1p1f1.Amon.hus.gn.v20190509.kerchunk.json
+2026-08-28 19:10:22,384 | ERROR | Failed dataset CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highres-future.r1i1p1f1.Amon.hus.gn.v20190509: Reference "lat/0" failed to fetch target https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-HR4/highres-future/r1i1p1f1/Amon/hus/gn/v20190509/hus_Amon_CMCC-CM2-HR4_highres-future_r1i1p1f1_gn_204406-204406.nc
+Traceback (most recent call last):
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/reference.py", line 836, in _cat_file
+    return await self.fss[protocol]._cat_file(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        part_or_url, start=start0, end=end0
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/http.py", line 247, in _cat_file
+    self._raise_not_found_for_status(r, url)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/http.py", line 229, in _raise_not_found_for_status
+    raise FileNotFoundError(url)
+FileNotFoundError: https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-HR4/highres-future/r1i1p1f1/Amon/hus/gn/v20190509/hus_Amon_CMCC-CM2-HR4_highres-future_r1i1p1f1_gn_204406-204406.nc
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 543, in main
+    result = run_remote_kerchunk_benchmark(
+        row["remote_kerchunk_file"], var_id, config.ntests, config.cache_mode
+    )
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 812, in run_remote_kerchunk_benchmark
+    metrics["open"].append(_time_open(kerchunk_url, [], "kerchunk"))
+                           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 1096, in _time_open
+    ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 1083, in _open_dataset
+    return xc.open_dataset(kerchunk_fn, engine="kerchunk", chunks={})
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xcdat/dataset.py", line 115, in open_dataset
+    ds = xr.open_dataset(path, decode_times=False, **kwargs)  # type: ignore
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 607, in open_dataset
+    backend_ds = backend.open_dataset(
+        filename_or_obj,
+    ...<2 lines>...
+        **kwargs,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py", line 13, in open_dataset
+    ref_ds = open_reference_dataset(
+        filename_or_obj,
+        storage_options=storage_options,
+        open_dataset_options=open_dataset_options,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py", line 47, in open_reference_dataset
+    return xr.open_zarr(
+           ~~~~~~~~~~~~^
+        store, zarr_format=2, consolidated=False, **open_dataset_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 1658, in open_zarr
+    ds = open_dataset(
+        filename_or_obj=store,
+    ...<16 lines>...
+        use_zarr_fill_value_as_mask=use_zarr_fill_value_as_mask,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 613, in open_dataset
+    ds = _dataset_from_backend_dataset(
+        backend_ds,
+    ...<11 lines>...
+        **kwargs,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 303, in _dataset_from_backend_dataset
+    ds = _maybe_create_default_indexes(backend_ds)
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 279, in _maybe_create_default_indexes
+    return ds.assign_coords(Coordinates(to_index))
+                            ~~~~~~~~~~~^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/coordinates.py", line 324, in __init__
+    index, index_vars = create_default_index_implicit(var, list(coords))
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexes.py", line 1675, in create_default_index_implicit
+    index = PandasIndex.from_variables(dim_var, options={})
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexes.py", line 732, in from_variables
+    data = var._data if isinstance(var._data, PandasIndexingAdapter) else var.data  # type: ignore[redundant-expr]
+                                                                          ^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/variable.py", line 455, in data
+    duck_array = self._data.get_duck_array()
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 924, in get_duck_array
+    return self.array.get_duck_array()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 764, in get_duck_array
+    array = self.array[self.key]
+            ~~~~~~~~~~^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 316, in __getitem__
+    return indexing.explicit_indexing_adapter(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        key, array.shape, indexing.IndexingSupport.VECTORIZED, method
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 1156, in explicit_indexing_adapter
+    result = raw_indexing_method(raw_key.tuple)
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 279, in _getitem
+    return self._array[key]
+           ~~~~~~~~~~~^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 2832, in __getitem__
+    return self.get_orthogonal_selection(pure_selection, fields=fields)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 3303, in get_orthogonal_selection
+    return sync(
+        self.async_array._get_selection(
+            indexer=indexer, out=out, fields=fields, prototype=prototype
+        )
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/sync.py", line 159, in sync
+    raise return_result
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/sync.py", line 119, in _runner
+    return await coro
+           ^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 1584, in _get_selection
+    return await _get_selection(
+           ^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 5616, in _get_selection
+    await codec_pipeline.read(
+    ...<12 lines>...
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/codec_pipeline.py", line 475, in read
+    await concurrent_map(
+    ...<6 lines>...
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 117, in concurrent_map
+    return await asyncio.gather(*[asyncio.ensure_future(run(item)) for item in items])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 115, in run
+    return await func(*item)
+           ^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/codec_pipeline.py", line 272, in read_batch
+    chunk_bytes_batch = await concurrent_map(
+                        ^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 117, in concurrent_map
+    return await asyncio.gather(*[asyncio.ensure_future(run(item)) for item in items])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 115, in run
+    return await func(*item)
+           ^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/storage/_common.py", line 174, in get
+    return await self.store.get(self.path, prototype=prototype, byte_range=byte_range)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/storage/_fsspec.py", line 289, in get
+    value = prototype.buffer.from_bytes(await self.fs._cat_file(path))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/reference.py", line 840, in _cat_file
+    raise ReferenceNotReachable(path, part_or_url) from e
+fsspec.implementations.reference.ReferenceNotReachable: Reference "lat/0" failed to fetch target https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-HR4/highres-future/r1i1p1f1/Amon/hus/gn/v20190509/hus_Amon_CMCC-CM2-HR4_highres-future_r1i1p1f1_gn_204406-204406.nc
+2026-08-28 19:10:22,460 | INFO | [2/10] dataset=CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.hus.gn.v20190509 | bin=300-499 | rank=2 | nfiles=432
+2026-08-28 19:10:22,460 | INFO | Running remote benchmark | files=432 | bin=300-499 | var=hus | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/hus/highres-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.hus.gn.v20190509.kerchunk.json
+2026-08-28 19:10:24,114 | ERROR | Failed dataset CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.hus.gn.v20190509: Reference "lat/0" failed to fetch target https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-VHR4/highres-future/r1i1p1f1/Amon/hus/gn/v20190509/hus_Amon_CMCC-CM2-VHR4_highres-future_r1i1p1f1_gn_204504-204504.nc
+Traceback (most recent call last):
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/reference.py", line 836, in _cat_file
+    return await self.fss[protocol]._cat_file(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        part_or_url, start=start0, end=end0
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/http.py", line 247, in _cat_file
+    self._raise_not_found_for_status(r, url)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/http.py", line 229, in _raise_not_found_for_status
+    raise FileNotFoundError(url)
+FileNotFoundError: https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-VHR4/highres-future/r1i1p1f1/Amon/hus/gn/v20190509/hus_Amon_CMCC-CM2-VHR4_highres-future_r1i1p1f1_gn_204504-204504.nc
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 543, in main
+    result = run_remote_kerchunk_benchmark(
+        row["remote_kerchunk_file"], var_id, config.ntests, config.cache_mode
+    )
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 812, in run_remote_kerchunk_benchmark
+    metrics["open"].append(_time_open(kerchunk_url, [], "kerchunk"))
+                           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 1096, in _time_open
+    ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 1083, in _open_dataset
+    return xc.open_dataset(kerchunk_fn, engine="kerchunk", chunks={})
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xcdat/dataset.py", line 115, in open_dataset
+    ds = xr.open_dataset(path, decode_times=False, **kwargs)  # type: ignore
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 607, in open_dataset
+    backend_ds = backend.open_dataset(
+        filename_or_obj,
+    ...<2 lines>...
+        **kwargs,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py", line 13, in open_dataset
+    ref_ds = open_reference_dataset(
+        filename_or_obj,
+        storage_options=storage_options,
+        open_dataset_options=open_dataset_options,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py", line 47, in open_reference_dataset
+    return xr.open_zarr(
+           ~~~~~~~~~~~~^
+        store, zarr_format=2, consolidated=False, **open_dataset_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 1658, in open_zarr
+    ds = open_dataset(
+        filename_or_obj=store,
+    ...<16 lines>...
+        use_zarr_fill_value_as_mask=use_zarr_fill_value_as_mask,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 613, in open_dataset
+    ds = _dataset_from_backend_dataset(
+        backend_ds,
+    ...<11 lines>...
+        **kwargs,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 303, in _dataset_from_backend_dataset
+    ds = _maybe_create_default_indexes(backend_ds)
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 279, in _maybe_create_default_indexes
+    return ds.assign_coords(Coordinates(to_index))
+                            ~~~~~~~~~~~^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/coordinates.py", line 324, in __init__
+    index, index_vars = create_default_index_implicit(var, list(coords))
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexes.py", line 1675, in create_default_index_implicit
+    index = PandasIndex.from_variables(dim_var, options={})
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexes.py", line 732, in from_variables
+    data = var._data if isinstance(var._data, PandasIndexingAdapter) else var.data  # type: ignore[redundant-expr]
+                                                                          ^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/variable.py", line 455, in data
+    duck_array = self._data.get_duck_array()
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 924, in get_duck_array
+    return self.array.get_duck_array()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 764, in get_duck_array
+    array = self.array[self.key]
+            ~~~~~~~~~~^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 316, in __getitem__
+    return indexing.explicit_indexing_adapter(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        key, array.shape, indexing.IndexingSupport.VECTORIZED, method
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 1156, in explicit_indexing_adapter
+    result = raw_indexing_method(raw_key.tuple)
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 279, in _getitem
+    return self._array[key]
+           ~~~~~~~~~~~^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 2832, in __getitem__
+    return self.get_orthogonal_selection(pure_selection, fields=fields)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 3303, in get_orthogonal_selection
+    return sync(
+        self.async_array._get_selection(
+            indexer=indexer, out=out, fields=fields, prototype=prototype
+        )
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/sync.py", line 159, in sync
+    raise return_result
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/sync.py", line 119, in _runner
+    return await coro
+           ^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 1584, in _get_selection
+    return await _get_selection(
+           ^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 5616, in _get_selection
+    await codec_pipeline.read(
+    ...<12 lines>...
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/codec_pipeline.py", line 475, in read
+    await concurrent_map(
+    ...<6 lines>...
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 117, in concurrent_map
+    return await asyncio.gather(*[asyncio.ensure_future(run(item)) for item in items])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 115, in run
+    return await func(*item)
+           ^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/codec_pipeline.py", line 272, in read_batch
+    chunk_bytes_batch = await concurrent_map(
+                        ^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 117, in concurrent_map
+    return await asyncio.gather(*[asyncio.ensure_future(run(item)) for item in items])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 115, in run
+    return await func(*item)
+           ^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/storage/_common.py", line 174, in get
+    return await self.store.get(self.path, prototype=prototype, byte_range=byte_range)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/storage/_fsspec.py", line 289, in get
+    value = prototype.buffer.from_bytes(await self.fs._cat_file(path))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/reference.py", line 840, in _cat_file
+    raise ReferenceNotReachable(path, part_or_url) from e
+fsspec.implementations.reference.ReferenceNotReachable: Reference "lat/0" failed to fetch target https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-VHR4/highres-future/r1i1p1f1/Amon/hus/gn/v20190509/hus_Amon_CMCC-CM2-VHR4_highres-future_r1i1p1f1_gn_204504-204504.nc
+2026-08-28 19:10:24,151 | INFO | [3/10] dataset=CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highresSST-future.r1i1p1f1.Amon.hus.gn.v20190705 | bin=300-499 | rank=3 | nfiles=432
+2026-08-28 19:10:24,151 | INFO | Running remote benchmark | files=432 | bin=300-499 | var=hus | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/hus/highresSST-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highresSST-future.r1i1p1f1.Amon.hus.gn.v20190705.kerchunk.json
+2026-08-28 19:10:26,117 | INFO |     [kerchunk] open: 1.965 s
+2026-08-28 19:11:17,912 | INFO |     [kerchunk] load compute: 49.942 s
+2026-08-28 19:12:06,055 | INFO |     [kerchunk] temporal build: 0.379 s, compute: 45.588 s, tasks: None
+2026-08-28 19:12:53,354 | INFO |     [kerchunk] spatial build: 0.349 s, compute: 44.949 s
+2026-08-28 19:12:55,631 | INFO |     [kerchunk] open: 2.175 s
+2026-08-28 19:13:41,158 | INFO |     [kerchunk] load compute: 43.822 s
+2026-08-28 19:14:28,945 | INFO |     [kerchunk] temporal build: 0.415 s, compute: 45.026 s, tasks: None
+2026-08-28 19:15:15,957 | INFO |     [kerchunk] spatial build: 0.327 s, compute: 44.630 s
+2026-08-28 19:15:17,867 | INFO |     [kerchunk] open: 1.820 s
+2026-08-28 19:16:02,803 | INFO |     [kerchunk] load compute: 43.316 s
+2026-08-28 19:16:49,142 | INFO |     [kerchunk] temporal build: 0.406 s, compute: 44.045 s, tasks: None
+2026-08-28 19:17:35,366 | INFO |     [kerchunk] spatial build: 0.388 s, compute: 44.113 s
+2026-08-28 19:17:35,620 | INFO | [4/10] dataset=CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highresSST-future.r1i1p1f1.Amon.hus.gn.v20190725 | bin=300-499 | rank=4 | nfiles=432
+2026-08-28 19:17:35,621 | INFO | Running remote benchmark | files=432 | bin=300-499 | var=hus | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/hus/highresSST-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highresSST-future.r1i1p1f1.Amon.hus.gn.v20190725.kerchunk.json
+2026-08-28 19:17:39,116 | INFO |     [kerchunk] open: 3.495 s
+2026-08-28 19:26:50,782 | INFO |     [kerchunk] load compute: 548.965 s
+2026-08-28 19:36:02,792 | INFO |     [kerchunk] temporal build: 0.547 s, compute: 548.723 s, tasks: None
+2026-08-28 19:45:08,297 | INFO |     [kerchunk] spatial build: 2.479 s, compute: 538.708 s
+2026-08-28 19:45:12,424 | INFO |     [kerchunk] open: 3.914 s
+2026-08-28 19:49:10,102 | INFO |     [kerchunk] load compute: 235.181 s
+2026-08-28 19:52:49,664 | INFO |     [kerchunk] temporal build: 0.587 s, compute: 213.724 s, tasks: None
+2026-08-28 19:56:24,559 | INFO |     [kerchunk] spatial build: 0.353 s, compute: 211.360 s
+2026-08-28 19:56:29,810 | INFO |     [kerchunk] open: 5.132 s
+2026-08-28 19:59:58,015 | INFO |     [kerchunk] load compute: 203.453 s
+2026-08-28 20:03:37,589 | INFO |     [kerchunk] temporal build: 0.476 s, compute: 216.200 s, tasks: None
+2026-08-28 20:07:14,677 | INFO |     [kerchunk] spatial build: 0.353 s, compute: 213.931 s
+2026-08-28 20:07:14,906 | INFO | [5/10] dataset=CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highres-future.r1i1p1f1.Amon.huss.gn.v20190509 | bin=300-499 | rank=5 | nfiles=432
+2026-08-28 20:07:14,906 | INFO | Running remote benchmark | files=432 | bin=300-499 | var=huss | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/huss/highres-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highres-future.r1i1p1f1.Amon.huss.gn.v20190509.kerchunk.json
+2026-08-28 20:07:15,483 | ERROR | Failed dataset CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highres-future.r1i1p1f1.Amon.huss.gn.v20190509: Reference "lat/0" failed to fetch target https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-HR4/highres-future/r1i1p1f1/Amon/huss/gn/v20190509/huss_Amon_CMCC-CM2-HR4_highres-future_r1i1p1f1_gn_203906-203906.nc
+Traceback (most recent call last):
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/reference.py", line 836, in _cat_file
+    return await self.fss[protocol]._cat_file(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        part_or_url, start=start0, end=end0
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/http.py", line 247, in _cat_file
+    self._raise_not_found_for_status(r, url)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/http.py", line 229, in _raise_not_found_for_status
+    raise FileNotFoundError(url)
+FileNotFoundError: https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-HR4/highres-future/r1i1p1f1/Amon/huss/gn/v20190509/huss_Amon_CMCC-CM2-HR4_highres-future_r1i1p1f1_gn_203906-203906.nc
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 543, in main
+    result = run_remote_kerchunk_benchmark(
+        row["remote_kerchunk_file"], var_id, config.ntests, config.cache_mode
+    )
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 812, in run_remote_kerchunk_benchmark
+    metrics["open"].append(_time_open(kerchunk_url, [], "kerchunk"))
+                           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 1096, in _time_open
+    ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 1083, in _open_dataset
+    return xc.open_dataset(kerchunk_fn, engine="kerchunk", chunks={})
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xcdat/dataset.py", line 115, in open_dataset
+    ds = xr.open_dataset(path, decode_times=False, **kwargs)  # type: ignore
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 607, in open_dataset
+    backend_ds = backend.open_dataset(
+        filename_or_obj,
+    ...<2 lines>...
+        **kwargs,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py", line 13, in open_dataset
+    ref_ds = open_reference_dataset(
+        filename_or_obj,
+        storage_options=storage_options,
+        open_dataset_options=open_dataset_options,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py", line 47, in open_reference_dataset
+    return xr.open_zarr(
+           ~~~~~~~~~~~~^
+        store, zarr_format=2, consolidated=False, **open_dataset_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 1658, in open_zarr
+    ds = open_dataset(
+        filename_or_obj=store,
+    ...<16 lines>...
+        use_zarr_fill_value_as_mask=use_zarr_fill_value_as_mask,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 613, in open_dataset
+    ds = _dataset_from_backend_dataset(
+        backend_ds,
+    ...<11 lines>...
+        **kwargs,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 303, in _dataset_from_backend_dataset
+    ds = _maybe_create_default_indexes(backend_ds)
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 279, in _maybe_create_default_indexes
+    return ds.assign_coords(Coordinates(to_index))
+                            ~~~~~~~~~~~^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/coordinates.py", line 324, in __init__
+    index, index_vars = create_default_index_implicit(var, list(coords))
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexes.py", line 1675, in create_default_index_implicit
+    index = PandasIndex.from_variables(dim_var, options={})
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexes.py", line 732, in from_variables
+    data = var._data if isinstance(var._data, PandasIndexingAdapter) else var.data  # type: ignore[redundant-expr]
+                                                                          ^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/variable.py", line 455, in data
+    duck_array = self._data.get_duck_array()
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 924, in get_duck_array
+    return self.array.get_duck_array()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 764, in get_duck_array
+    array = self.array[self.key]
+            ~~~~~~~~~~^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 316, in __getitem__
+    return indexing.explicit_indexing_adapter(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        key, array.shape, indexing.IndexingSupport.VECTORIZED, method
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 1156, in explicit_indexing_adapter
+    result = raw_indexing_method(raw_key.tuple)
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 279, in _getitem
+    return self._array[key]
+           ~~~~~~~~~~~^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 2832, in __getitem__
+    return self.get_orthogonal_selection(pure_selection, fields=fields)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 3303, in get_orthogonal_selection
+    return sync(
+        self.async_array._get_selection(
+            indexer=indexer, out=out, fields=fields, prototype=prototype
+        )
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/sync.py", line 159, in sync
+    raise return_result
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/sync.py", line 119, in _runner
+    return await coro
+           ^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 1584, in _get_selection
+    return await _get_selection(
+           ^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 5616, in _get_selection
+    await codec_pipeline.read(
+    ...<12 lines>...
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/codec_pipeline.py", line 475, in read
+    await concurrent_map(
+    ...<6 lines>...
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 117, in concurrent_map
+    return await asyncio.gather(*[asyncio.ensure_future(run(item)) for item in items])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 115, in run
+    return await func(*item)
+           ^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/codec_pipeline.py", line 272, in read_batch
+    chunk_bytes_batch = await concurrent_map(
+                        ^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 117, in concurrent_map
+    return await asyncio.gather(*[asyncio.ensure_future(run(item)) for item in items])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 115, in run
+    return await func(*item)
+           ^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/storage/_common.py", line 174, in get
+    return await self.store.get(self.path, prototype=prototype, byte_range=byte_range)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/storage/_fsspec.py", line 289, in get
+    value = prototype.buffer.from_bytes(await self.fs._cat_file(path))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/reference.py", line 840, in _cat_file
+    raise ReferenceNotReachable(path, part_or_url) from e
+fsspec.implementations.reference.ReferenceNotReachable: Reference "lat/0" failed to fetch target https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-HR4/highres-future/r1i1p1f1/Amon/huss/gn/v20190509/huss_Amon_CMCC-CM2-HR4_highres-future_r1i1p1f1_gn_203906-203906.nc
+2026-08-28 20:07:15,610 | INFO | [6/10] dataset=CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.huss.gn.v20190509 | bin=300-499 | rank=6 | nfiles=432
+2026-08-28 20:07:15,610 | INFO | Running remote benchmark | files=432 | bin=300-499 | var=huss | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/huss/highres-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.huss.gn.v20190509.kerchunk.json
+2026-08-28 20:07:15,991 | ERROR | Failed dataset CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.huss.gn.v20190509: Reference "lat/0" failed to fetch target https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-VHR4/highres-future/r1i1p1f1/Amon/huss/gn/v20190509/huss_Amon_CMCC-CM2-VHR4_highres-future_r1i1p1f1_gn_201507-201507.nc
+Traceback (most recent call last):
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/reference.py", line 836, in _cat_file
+    return await self.fss[protocol]._cat_file(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        part_or_url, start=start0, end=end0
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/http.py", line 247, in _cat_file
+    self._raise_not_found_for_status(r, url)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/http.py", line 229, in _raise_not_found_for_status
+    raise FileNotFoundError(url)
+FileNotFoundError: https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-VHR4/highres-future/r1i1p1f1/Amon/huss/gn/v20190509/huss_Amon_CMCC-CM2-VHR4_highres-future_r1i1p1f1_gn_201507-201507.nc
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 543, in main
+    result = run_remote_kerchunk_benchmark(
+        row["remote_kerchunk_file"], var_id, config.ntests, config.cache_mode
+    )
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 812, in run_remote_kerchunk_benchmark
+    metrics["open"].append(_time_open(kerchunk_url, [], "kerchunk"))
+                           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 1096, in _time_open
+    ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 1083, in _open_dataset
+    return xc.open_dataset(kerchunk_fn, engine="kerchunk", chunks={})
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xcdat/dataset.py", line 115, in open_dataset
+    ds = xr.open_dataset(path, decode_times=False, **kwargs)  # type: ignore
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 607, in open_dataset
+    backend_ds = backend.open_dataset(
+        filename_or_obj,
+    ...<2 lines>...
+        **kwargs,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py", line 13, in open_dataset
+    ref_ds = open_reference_dataset(
+        filename_or_obj,
+        storage_options=storage_options,
+        open_dataset_options=open_dataset_options,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py", line 47, in open_reference_dataset
+    return xr.open_zarr(
+           ~~~~~~~~~~~~^
+        store, zarr_format=2, consolidated=False, **open_dataset_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 1658, in open_zarr
+    ds = open_dataset(
+        filename_or_obj=store,
+    ...<16 lines>...
+        use_zarr_fill_value_as_mask=use_zarr_fill_value_as_mask,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 613, in open_dataset
+    ds = _dataset_from_backend_dataset(
+        backend_ds,
+    ...<11 lines>...
+        **kwargs,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 303, in _dataset_from_backend_dataset
+    ds = _maybe_create_default_indexes(backend_ds)
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 279, in _maybe_create_default_indexes
+    return ds.assign_coords(Coordinates(to_index))
+                            ~~~~~~~~~~~^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/coordinates.py", line 324, in __init__
+    index, index_vars = create_default_index_implicit(var, list(coords))
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexes.py", line 1675, in create_default_index_implicit
+    index = PandasIndex.from_variables(dim_var, options={})
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexes.py", line 732, in from_variables
+    data = var._data if isinstance(var._data, PandasIndexingAdapter) else var.data  # type: ignore[redundant-expr]
+                                                                          ^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/variable.py", line 455, in data
+    duck_array = self._data.get_duck_array()
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 924, in get_duck_array
+    return self.array.get_duck_array()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 764, in get_duck_array
+    array = self.array[self.key]
+            ~~~~~~~~~~^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 316, in __getitem__
+    return indexing.explicit_indexing_adapter(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        key, array.shape, indexing.IndexingSupport.VECTORIZED, method
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 1156, in explicit_indexing_adapter
+    result = raw_indexing_method(raw_key.tuple)
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 279, in _getitem
+    return self._array[key]
+           ~~~~~~~~~~~^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 2832, in __getitem__
+    return self.get_orthogonal_selection(pure_selection, fields=fields)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 3303, in get_orthogonal_selection
+    return sync(
+        self.async_array._get_selection(
+            indexer=indexer, out=out, fields=fields, prototype=prototype
+        )
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/sync.py", line 159, in sync
+    raise return_result
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/sync.py", line 119, in _runner
+    return await coro
+           ^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 1584, in _get_selection
+    return await _get_selection(
+           ^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 5616, in _get_selection
+    await codec_pipeline.read(
+    ...<12 lines>...
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/codec_pipeline.py", line 475, in read
+    await concurrent_map(
+    ...<6 lines>...
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 117, in concurrent_map
+    return await asyncio.gather(*[asyncio.ensure_future(run(item)) for item in items])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 115, in run
+    return await func(*item)
+           ^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/codec_pipeline.py", line 272, in read_batch
+    chunk_bytes_batch = await concurrent_map(
+                        ^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 117, in concurrent_map
+    return await asyncio.gather(*[asyncio.ensure_future(run(item)) for item in items])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 115, in run
+    return await func(*item)
+           ^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/storage/_common.py", line 174, in get
+    return await self.store.get(self.path, prototype=prototype, byte_range=byte_range)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/storage/_fsspec.py", line 289, in get
+    value = prototype.buffer.from_bytes(await self.fs._cat_file(path))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/reference.py", line 840, in _cat_file
+    raise ReferenceNotReachable(path, part_or_url) from e
+fsspec.implementations.reference.ReferenceNotReachable: Reference "lat/0" failed to fetch target https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-VHR4/highres-future/r1i1p1f1/Amon/huss/gn/v20190509/huss_Amon_CMCC-CM2-VHR4_highres-future_r1i1p1f1_gn_201507-201507.nc
+2026-08-28 20:07:16,090 | INFO | [7/10] dataset=CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highresSST-future.r1i1p1f1.Amon.huss.gn.v20190705 | bin=300-499 | rank=7 | nfiles=432
+2026-08-28 20:07:16,090 | INFO | Running remote benchmark | files=432 | bin=300-499 | var=huss | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/huss/highresSST-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highresSST-future.r1i1p1f1.Amon.huss.gn.v20190705.kerchunk.json
+2026-08-28 20:07:19,205 | INFO |     [kerchunk] open: 3.115 s
+2026-08-28 20:07:26,741 | INFO |     [kerchunk] load compute: 5.322 s
+2026-08-28 20:07:32,718 | INFO |     [kerchunk] temporal build: 0.422 s, compute: 3.493 s, tasks: None
+2026-08-28 20:07:44,988 | INFO |     [kerchunk] spatial build: 2.929 s, compute: 4.069 s
+2026-08-28 20:07:47,287 | INFO |     [kerchunk] open: 2.116 s
+2026-08-28 20:07:53,926 | INFO |     [kerchunk] load compute: 3.217 s
+2026-08-28 20:08:01,757 | INFO |     [kerchunk] temporal build: 0.518 s, compute: 3.746 s, tasks: None
+2026-08-28 20:08:07,112 | INFO |     [kerchunk] spatial build: 0.344 s, compute: 4.114 s
+2026-08-28 20:08:08,038 | INFO |     [kerchunk] open: 0.756 s
+2026-08-28 20:08:11,985 | INFO |     [kerchunk] load compute: 3.294 s
+2026-08-28 20:08:16,901 | INFO |     [kerchunk] temporal build: 0.378 s, compute: 3.564 s, tasks: None
+2026-08-28 20:08:22,292 | INFO |     [kerchunk] spatial build: 0.404 s, compute: 4.050 s
+2026-08-28 20:08:22,578 | INFO | [8/10] dataset=CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highresSST-future.r1i1p1f1.Amon.huss.gn.v20190725 | bin=300-499 | rank=8 | nfiles=432
+2026-08-28 20:08:22,578 | INFO | Running remote benchmark | files=432 | bin=300-499 | var=huss | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/huss/highresSST-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highresSST-future.r1i1p1f1.Amon.huss.gn.v20190725.kerchunk.json
+2026-08-28 20:08:23,514 | INFO |     [kerchunk] open: 0.936 s
+2026-08-28 20:08:39,424 | INFO |     [kerchunk] load compute: 15.253 s
+2026-08-28 20:08:53,795 | INFO |     [kerchunk] temporal build: 0.375 s, compute: 12.959 s, tasks: None
+2026-08-28 20:09:07,826 | INFO |     [kerchunk] spatial build: 0.400 s, compute: 12.765 s
+2026-08-28 20:09:08,751 | INFO |     [kerchunk] open: 0.749 s
+2026-08-28 20:09:21,236 | INFO |     [kerchunk] load compute: 11.828 s
+2026-08-28 20:09:35,417 | INFO |     [kerchunk] temporal build: 0.334 s, compute: 12.944 s, tasks: None
+2026-08-28 20:09:49,620 | INFO |     [kerchunk] spatial build: 0.365 s, compute: 12.917 s
+2026-08-28 20:09:50,592 | INFO |     [kerchunk] open: 0.810 s
+2026-08-28 20:10:03,845 | INFO |     [kerchunk] load compute: 12.602 s
+2026-08-28 20:10:18,572 | INFO |     [kerchunk] temporal build: 0.383 s, compute: 13.356 s, tasks: None
+2026-08-28 20:10:33,208 | INFO |     [kerchunk] spatial build: 0.523 s, compute: 13.129 s
+2026-08-28 20:10:33,480 | INFO | [9/10] dataset=CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highres-future.r1i1p1f1.Amon.pr.gn.v20190509 | bin=300-499 | rank=9 | nfiles=432
+2026-08-28 20:10:33,480 | INFO | Running remote benchmark | files=432 | bin=300-499 | var=pr | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/pr/highres-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highres-future.r1i1p1f1.Amon.pr.gn.v20190509.kerchunk.json
+2026-08-28 20:10:33,886 | ERROR | Failed dataset CMIP6.HighResMIP.CMCC.CMCC-CM2-HR4.highres-future.r1i1p1f1.Amon.pr.gn.v20190509: Reference "lat/0" failed to fetch target https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-HR4/highres-future/r1i1p1f1/Amon/pr/gn/v20190509/pr_Amon_CMCC-CM2-HR4_highres-future_r1i1p1f1_gn_204310-204310.nc
+Traceback (most recent call last):
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/reference.py", line 836, in _cat_file
+    return await self.fss[protocol]._cat_file(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        part_or_url, start=start0, end=end0
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/http.py", line 247, in _cat_file
+    self._raise_not_found_for_status(r, url)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/http.py", line 229, in _raise_not_found_for_status
+    raise FileNotFoundError(url)
+FileNotFoundError: https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-HR4/highres-future/r1i1p1f1/Amon/pr/gn/v20190509/pr_Amon_CMCC-CM2-HR4_highres-future_r1i1p1f1_gn_204310-204310.nc
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 543, in main
+    result = run_remote_kerchunk_benchmark(
+        row["remote_kerchunk_file"], var_id, config.ntests, config.cache_mode
+    )
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 812, in run_remote_kerchunk_benchmark
+    metrics["open"].append(_time_open(kerchunk_url, [], "kerchunk"))
+                           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 1096, in _time_open
+    ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 1083, in _open_dataset
+    return xc.open_dataset(kerchunk_fn, engine="kerchunk", chunks={})
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xcdat/dataset.py", line 115, in open_dataset
+    ds = xr.open_dataset(path, decode_times=False, **kwargs)  # type: ignore
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 607, in open_dataset
+    backend_ds = backend.open_dataset(
+        filename_or_obj,
+    ...<2 lines>...
+        **kwargs,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py", line 13, in open_dataset
+    ref_ds = open_reference_dataset(
+        filename_or_obj,
+        storage_options=storage_options,
+        open_dataset_options=open_dataset_options,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py", line 47, in open_reference_dataset
+    return xr.open_zarr(
+           ~~~~~~~~~~~~^
+        store, zarr_format=2, consolidated=False, **open_dataset_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 1658, in open_zarr
+    ds = open_dataset(
+        filename_or_obj=store,
+    ...<16 lines>...
+        use_zarr_fill_value_as_mask=use_zarr_fill_value_as_mask,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 613, in open_dataset
+    ds = _dataset_from_backend_dataset(
+        backend_ds,
+    ...<11 lines>...
+        **kwargs,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 303, in _dataset_from_backend_dataset
+    ds = _maybe_create_default_indexes(backend_ds)
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 279, in _maybe_create_default_indexes
+    return ds.assign_coords(Coordinates(to_index))
+                            ~~~~~~~~~~~^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/coordinates.py", line 324, in __init__
+    index, index_vars = create_default_index_implicit(var, list(coords))
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexes.py", line 1675, in create_default_index_implicit
+    index = PandasIndex.from_variables(dim_var, options={})
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexes.py", line 732, in from_variables
+    data = var._data if isinstance(var._data, PandasIndexingAdapter) else var.data  # type: ignore[redundant-expr]
+                                                                          ^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/variable.py", line 455, in data
+    duck_array = self._data.get_duck_array()
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 924, in get_duck_array
+    return self.array.get_duck_array()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 764, in get_duck_array
+    array = self.array[self.key]
+            ~~~~~~~~~~^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 316, in __getitem__
+    return indexing.explicit_indexing_adapter(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        key, array.shape, indexing.IndexingSupport.VECTORIZED, method
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 1156, in explicit_indexing_adapter
+    result = raw_indexing_method(raw_key.tuple)
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 279, in _getitem
+    return self._array[key]
+           ~~~~~~~~~~~^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 2832, in __getitem__
+    return self.get_orthogonal_selection(pure_selection, fields=fields)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 3303, in get_orthogonal_selection
+    return sync(
+        self.async_array._get_selection(
+            indexer=indexer, out=out, fields=fields, prototype=prototype
+        )
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/sync.py", line 159, in sync
+    raise return_result
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/sync.py", line 119, in _runner
+    return await coro
+           ^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 1584, in _get_selection
+    return await _get_selection(
+           ^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 5616, in _get_selection
+    await codec_pipeline.read(
+    ...<12 lines>...
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/codec_pipeline.py", line 475, in read
+    await concurrent_map(
+    ...<6 lines>...
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 117, in concurrent_map
+    return await asyncio.gather(*[asyncio.ensure_future(run(item)) for item in items])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 115, in run
+    return await func(*item)
+           ^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/codec_pipeline.py", line 272, in read_batch
+    chunk_bytes_batch = await concurrent_map(
+                        ^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 117, in concurrent_map
+    return await asyncio.gather(*[asyncio.ensure_future(run(item)) for item in items])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 115, in run
+    return await func(*item)
+           ^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/storage/_common.py", line 174, in get
+    return await self.store.get(self.path, prototype=prototype, byte_range=byte_range)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/storage/_fsspec.py", line 289, in get
+    value = prototype.buffer.from_bytes(await self.fs._cat_file(path))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/reference.py", line 840, in _cat_file
+    raise ReferenceNotReachable(path, part_or_url) from e
+fsspec.implementations.reference.ReferenceNotReachable: Reference "lat/0" failed to fetch target https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-HR4/highres-future/r1i1p1f1/Amon/pr/gn/v20190509/pr_Amon_CMCC-CM2-HR4_highres-future_r1i1p1f1_gn_204310-204310.nc
+2026-08-28 20:10:33,909 | INFO | [10/10] dataset=CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.pr.gn.v20190509 | bin=300-499 | rank=10 | nfiles=432
+2026-08-28 20:10:33,909 | INFO | Running remote benchmark | files=432 | bin=300-499 | var=pr | remote_json=https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/kerchunk/pr/highres-future/mon/CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.pr.gn.v20190509.kerchunk.json
+2026-08-28 20:10:34,147 | ERROR | Failed dataset CMIP6.HighResMIP.CMCC.CMCC-CM2-VHR4.highres-future.r1i1p1f1.Amon.pr.gn.v20190509: Reference "lat/0" failed to fetch target https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-VHR4/highres-future/r1i1p1f1/Amon/pr/gn/v20190509/pr_Amon_CMCC-CM2-VHR4_highres-future_r1i1p1f1_gn_204409-204409.nc
+Traceback (most recent call last):
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/reference.py", line 836, in _cat_file
+    return await self.fss[protocol]._cat_file(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        part_or_url, start=start0, end=end0
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/http.py", line 247, in _cat_file
+    self._raise_not_found_for_status(r, url)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/http.py", line 229, in _raise_not_found_for_status
+    raise FileNotFoundError(url)
+FileNotFoundError: https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-VHR4/highres-future/r1i1p1f1/Amon/pr/gn/v20190509/pr_Amon_CMCC-CM2-VHR4_highres-future_r1i1p1f1_gn_204409-204409.nc
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 543, in main
+    result = run_remote_kerchunk_benchmark(
+        row["remote_kerchunk_file"], var_id, config.ntests, config.cache_mode
+    )
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 812, in run_remote_kerchunk_benchmark
+    metrics["open"].append(_time_open(kerchunk_url, [], "kerchunk"))
+                           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 1096, in _time_open
+    ds = _open_dataset(kerchunk_fn, netcdf_files, tool)
+  File "/global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/head_to_head.py", line 1083, in _open_dataset
+    return xc.open_dataset(kerchunk_fn, engine="kerchunk", chunks={})
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xcdat/dataset.py", line 115, in open_dataset
+    ds = xr.open_dataset(path, decode_times=False, **kwargs)  # type: ignore
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 607, in open_dataset
+    backend_ds = backend.open_dataset(
+        filename_or_obj,
+    ...<2 lines>...
+        **kwargs,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py", line 13, in open_dataset
+    ref_ds = open_reference_dataset(
+        filename_or_obj,
+        storage_options=storage_options,
+        open_dataset_options=open_dataset_options,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/kerchunk/xarray_backend.py", line 47, in open_reference_dataset
+    return xr.open_zarr(
+           ~~~~~~~~~~~~^
+        store, zarr_format=2, consolidated=False, **open_dataset_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 1658, in open_zarr
+    ds = open_dataset(
+        filename_or_obj=store,
+    ...<16 lines>...
+        use_zarr_fill_value_as_mask=use_zarr_fill_value_as_mask,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 613, in open_dataset
+    ds = _dataset_from_backend_dataset(
+        backend_ds,
+    ...<11 lines>...
+        **kwargs,
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 303, in _dataset_from_backend_dataset
+    ds = _maybe_create_default_indexes(backend_ds)
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/api.py", line 279, in _maybe_create_default_indexes
+    return ds.assign_coords(Coordinates(to_index))
+                            ~~~~~~~~~~~^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/coordinates.py", line 324, in __init__
+    index, index_vars = create_default_index_implicit(var, list(coords))
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexes.py", line 1675, in create_default_index_implicit
+    index = PandasIndex.from_variables(dim_var, options={})
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexes.py", line 732, in from_variables
+    data = var._data if isinstance(var._data, PandasIndexingAdapter) else var.data  # type: ignore[redundant-expr]
+                                                                          ^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/variable.py", line 455, in data
+    duck_array = self._data.get_duck_array()
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 924, in get_duck_array
+    return self.array.get_duck_array()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 764, in get_duck_array
+    array = self.array[self.key]
+            ~~~~~~~~~~^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 316, in __getitem__
+    return indexing.explicit_indexing_adapter(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        key, array.shape, indexing.IndexingSupport.VECTORIZED, method
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/core/indexing.py", line 1156, in explicit_indexing_adapter
+    result = raw_indexing_method(raw_key.tuple)
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/xarray/backends/zarr.py", line 279, in _getitem
+    return self._array[key]
+           ~~~~~~~~~~~^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 2832, in __getitem__
+    return self.get_orthogonal_selection(pure_selection, fields=fields)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 3303, in get_orthogonal_selection
+    return sync(
+        self.async_array._get_selection(
+            indexer=indexer, out=out, fields=fields, prototype=prototype
+        )
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/sync.py", line 159, in sync
+    raise return_result
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/sync.py", line 119, in _runner
+    return await coro
+           ^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 1584, in _get_selection
+    return await _get_selection(
+           ^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/array.py", line 5616, in _get_selection
+    await codec_pipeline.read(
+    ...<12 lines>...
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/codec_pipeline.py", line 475, in read
+    await concurrent_map(
+    ...<6 lines>...
+    )
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 117, in concurrent_map
+    return await asyncio.gather(*[asyncio.ensure_future(run(item)) for item in items])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 115, in run
+    return await func(*item)
+           ^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/codec_pipeline.py", line 272, in read_batch
+    chunk_bytes_batch = await concurrent_map(
+                        ^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 117, in concurrent_map
+    return await asyncio.gather(*[asyncio.ensure_future(run(item)) for item in items])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/core/common.py", line 115, in run
+    return await func(*item)
+           ^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/storage/_common.py", line 174, in get
+    return await self.store.get(self.path, prototype=prototype, byte_range=byte_range)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/zarr/storage/_fsspec.py", line 289, in get
+    value = prototype.buffer.from_bytes(await self.fs._cat_file(path))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/homes/v/vo13/miniforge3/envs/xcdat_test_stable_min/lib/python3.14/site-packages/fsspec/implementations/reference.py", line 840, in _cat_file
+    raise ReferenceNotReachable(path, part_or_url) from e
+fsspec.implementations.reference.ReferenceNotReachable: Reference "lat/0" failed to fetch target https://esgf-node.ornl.gov/thredds/fileServer/css03_data/CMIP6/HighResMIP/CMCC/CMCC-CM2-VHR4/highres-future/r1i1p1f1/Amon/pr/gn/v20190509/pr_Amon_CMCC-CM2-VHR4_highres-future_r1i1p1f1_gn_204409-204409.nc
+2026-08-28 20:10:34,167 | INFO | Results written to /global/homes/v/vo13/xCDAT/xcdat-validation/riotai/results/20260422-steve-file-count-crossover-upscale/remote_perlmutter_to_ornl_300-499.csv
+2026-08-28 20:10:34,168 | INFO | Status counts:
+status
+failed    6
+ok        4
+Name: count, dtype: int64
+2026-08-28 20:10:34,168 | INFO | Skipping timing plot generation (--skip-plot)

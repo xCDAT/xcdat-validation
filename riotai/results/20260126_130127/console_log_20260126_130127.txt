@@ -1,0 +1,49 @@
+2026-01-26 13:01:27,332 INFO: Loaded cached JSON→NetCDF mappings from disk.
+  * Mappings: /global/u2/v/vo13/xCDAT/xcdat-validation/riotai/json_to_netcdf_maps/json_to_netcdf.json
+  * Errors:   /global/u2/v/vo13/xCDAT/xcdat-validation/riotai/json_to_netcdf_maps/json_to_netcdf_errors.json
+2026-01-26 13:01:27,336 INFO:
+=== Summary ===
+2026-01-26 13:01:27,337 INFO: * Total JSON files processed: 1398
+2026-01-26 13:01:27,338 INFO: * Total NetCDF files found:   95043
+2026-01-26 13:01:27,338 INFO: * Frequencies (5): ['Amon', 'day', 'AERhr', '3hr', 'E1hr']
+2026-01-26 13:01:27,338 INFO:   - Amon: 1149 JSON files, 80883 NetCDF files
+2026-01-26 13:01:27,339 INFO:   - day: 182 JSON files, 10158 NetCDF files
+2026-01-26 13:01:27,339 INFO:   - AERhr: 9 JSON files, 297 NetCDF files
+2026-01-26 13:01:27,339 INFO:   - 3hr: 48 JSON files, 3489 NetCDF files
+2026-01-26 13:01:27,340 INFO:   - E1hr: 10 JSON files, 216 NetCDF files
+2026-01-26 13:01:27,340 INFO: * JSON files with errors:     0
+2026-01-26 13:01:27,340 INFO:
+=== Benchmarking Amon ===
+2026-01-26 13:01:27,341 INFO:   * Performing warm-up open...
+2026-01-26 13:01:31,450 INFO: Read reference from URL /global/cfs/projectdirs/m4931/kerchunk/tas/historical/mon/CMIP6.CMIP.CNRM-CERFACS.CNRM-CM6-1.historical.r14i1p1f2.Amon.tas.gr.v20191004.kerchunk.json
+2026-01-26 13:01:31,955 INFO: Read reference from URL /global/cfs/projectdirs/m4931/kerchunk/tas/historical/mon/CMIP6.CMIP.CNRM-CERFACS.CNRM-CM6-1.historical.r14i1p1f2.Amon.tas.gr.v20191004.kerchunk.json
+2026-01-26 13:01:31,999 INFO: Read reference from URL /global/cfs/projectdirs/m4931/kerchunk/tas/historical/mon/CMIP6.CMIP.CNRM-CERFACS.CNRM-CM6-1.historical.r14i1p1f2.Amon.tas.gr.v20191004.kerchunk.json
+2026-01-26 13:05:04,366 INFO:
+=== Benchmarking day ===
+2026-01-26 13:05:04,366 INFO:   * Performing warm-up open...
+2026-01-26 13:05:04,386 INFO: Read reference from URL /global/cfs/projectdirs/m4931/kerchunk/tas/historical/day/CMIP6.CMIP.IPSL.IPSL-CM6A-LR.historical.r22i1p1f1.day.tas.gr.v20190614.kerchunk.json
+2026-01-26 13:05:04,874 INFO: Read reference from URL /global/cfs/projectdirs/m4931/kerchunk/tas/historical/day/CMIP6.CMIP.IPSL.IPSL-CM6A-LR.historical.r22i1p1f1.day.tas.gr.v20190614.kerchunk.json
+2026-01-26 13:05:04,993 INFO: Read reference from URL /global/cfs/projectdirs/m4931/kerchunk/tas/historical/day/CMIP6.CMIP.IPSL.IPSL-CM6A-LR.historical.r22i1p1f1.day.tas.gr.v20190614.kerchunk.json
+2026-01-26 13:16:09,447 INFO:
+=== Benchmarking AERhr ===
+2026-01-26 13:16:09,453 INFO:   * Performing warm-up open...
+2026-01-26 13:16:09,501 INFO: Read reference from URL /global/cfs/projectdirs/m4931/kerchunk/tas/historical/hr-misc/CMIP6.CMIP.CNRM-CERFACS.CNRM-CM6-1.historical.r2i1p1f2.AERhr.tas.gr.v20181126.kerchunk.json
+2026-01-26 13:16:16,586 INFO: Read reference from URL /global/cfs/projectdirs/m4931/kerchunk/tas/historical/hr-misc/CMIP6.CMIP.CNRM-CERFACS.CNRM-CM6-1.historical.r2i1p1f2.AERhr.tas.gr.v20181126.kerchunk.json
+2026-01-26 13:16:20,705 INFO: Read reference from URL /global/cfs/projectdirs/m4931/kerchunk/tas/historical/hr-misc/CMIP6.CMIP.CNRM-CERFACS.CNRM-CM6-1.historical.r2i1p1f2.AERhr.tas.gr.v20181126.kerchunk.json
+2026-01-26 14:11:14,974 INFO:
+=== Benchmarking 3hr ===
+2026-01-26 14:11:14,974 INFO:   * Performing warm-up open...
+2026-01-26 14:11:15,033 INFO: Read reference from URL /global/cfs/projectdirs/m4931/kerchunk/pr/hist-1950/hr-misc/CMIP6.HighResMIP.CNRM-CERFACS.CNRM-CM6-1.hist-1950.r1i1p1f2.3hr.pr.gr.v20190401.kerchunk.json
+2026-01-26 14:11:16,319 INFO: Read reference from URL /global/cfs/projectdirs/m4931/kerchunk/pr/hist-1950/hr-misc/CMIP6.HighResMIP.CNRM-CERFACS.CNRM-CM6-1.hist-1950.r1i1p1f2.3hr.pr.gr.v20190401.kerchunk.json
+2026-01-26 14:11:16,748 INFO: Read reference from URL /global/cfs/projectdirs/m4931/kerchunk/pr/hist-1950/hr-misc/CMIP6.HighResMIP.CNRM-CERFACS.CNRM-CM6-1.hist-1950.r1i1p1f2.3hr.pr.gr.v20190401.kerchunk.json
+2026-01-26 15:15:23,563 INFO:
+=== Benchmarking E1hr ===
+2026-01-26 15:15:23,563 INFO:   * Performing warm-up open...
+2026-01-26 15:15:23,581 INFO: Read reference from URL /global/cfs/projectdirs/m4931/kerchunk/pr/highres-future/hr-misc/CMIP6.HighResMIP.CNRM-CERFACS.CNRM-CM6-1.highres-future.r1i1p1f2.E1hr.pr.gr.v20190314.kerchunk.json
+2026-01-26 15:15:25,101 INFO: Read reference from URL /global/cfs/projectdirs/m4931/kerchunk/pr/highres-future/hr-misc/CMIP6.HighResMIP.CNRM-CERFACS.CNRM-CM6-1.highres-future.r1i1p1f2.E1hr.pr.gr.v20190314.kerchunk.json
+2026-01-26 15:15:25,800 INFO: Read reference from URL /global/cfs/projectdirs/m4931/kerchunk/pr/highres-future/hr-misc/CMIP6.HighResMIP.CNRM-CERFACS.CNRM-CM6-1.highres-future.r1i1p1f2.E1hr.pr.gr.v20190314.kerchunk.json
+2026-01-26 15:55:50,654 INFO:
+Benchmarking complete.
+2026-01-26 15:55:50,654 INFO: Detailed results have been saved in:
+  /global/u2/v/vo13/xCDAT/xcdat-validation/riotai/results/20260126_130127
+

@@ -1,0 +1,36 @@
+metric,value
+netcdf_directory,/global/cfs/projectdirs/m4931/gsharing/css03_data/CMIP6/HighResMIP/ECMWF/ECMWF-IFS-HR/highresSST-present/r5i1p1f1/Amon/pr/gr/v20181119
+kerchunk_json,/global/cfs/projectdirs/m4931/kerchunk/pr/highresSST-present/mon/CMIP6.HighResMIP.ECMWF.ECMWF-IFS-HR.highresSST-present.r5i1p1f1.Amon.pr.gr.v20181119.kerchunk.json
+local_netcdf_file_count,65
+kerchunk_source_file_count,50
+kerchunk_sources_in_netcdf_directory,True
+file_counts_match,False
+source_filenames_match,False
+local_only_file_count,15
+kerchunk_only_file_count,0
+netcdf_time_length,780
+kerchunk_time_length,618
+time_length_difference,162
+netcdf_time_start,1950-01-16 12:00:00
+netcdf_time_end,2014-12-16 12:00:00
+kerchunk_time_start,1950-01-16 12:00:00
+kerchunk_time_end,1984-12-16 12:00:00
+netcdf_time_units,days since 1950-1-1 00:00:00
+kerchunk_time_units,days since 1950-1-1 00:00:00
+netcdf_declared_calendar,gregorian
+kerchunk_declared_calendar,gregorian
+declared_calendars_match,True
+netcdf_inferred_calendar,standard
+kerchunk_inferred_calendar,standard
+inferred_calendars_match,True
+exact_time_coordinates_match,False
+calendar_months_match,False
+netcdf_unique_month_count,780
+kerchunk_unique_month_count,420
+netcdf_duplicate_month_occurrences,0
+kerchunk_duplicate_month_occurrences,198
+netcdf_only_timestamp_count,387
+kerchunk_only_timestamp_count,225
+exact_difference_reconciles,True
+netcdf_only_month_count,360
+kerchunk_only_month_count,198
